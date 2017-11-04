@@ -27,13 +27,13 @@ Source
 ~~~~~~
 
 Models
-^^^^^^
+======
 
 .. automodule:: suricata.models
    :members:
 
 Views
-^^^^^
+=====
 
 .. automodule:: suricata.views
     :members:

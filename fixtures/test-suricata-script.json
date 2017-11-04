@@ -1,0 +1,21 @@
+[
+{
+    "model": "rules.rule",
+    "pk": 3,
+    "fields": {
+        "rev": 0,
+        "reference": null,
+        "rule_full": "function init (args)\r\n        local needs = {}\r\n        needs[\"http.request_line\"] = tostring(true)\r\n        return needs\r\n    end\r\n\r\n    function match(args)\r\n        a = tostring(args[\"http.request_line\"])\r\n        if #a > 0 then\r\n            if a:find(\"^POST%s+/.*%.php%s+HTTP/1.0$\") then\r\n                return 1\r\n            end\r\n        end\r\n\r\n        return 0\r\n    end\r\n\r\n    return 0",
+        "enabled": true,
+        "created_date": "2017-09-23T21:21:04.515Z",
+        "updated_date": "2017-09-23T21:21:04.515Z"
+    }
+},
+{
+    "model": "suricata.scriptsuricata",
+    "pk": 3,
+    "fields": {
+        "name": "test.lua"
+    }
+}
+]

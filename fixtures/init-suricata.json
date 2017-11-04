@@ -1,0 +1,37 @@
+[
+{
+    "model": "suricata.validationtype",
+    "pk": 0,
+    "fields": {
+        "name": "yes"
+    }
+},
+{
+    "model": "suricata.validationtype",
+    "pk": 1,
+    "fields": {
+        "name": "no"
+    }
+},
+{
+    "model": "suricata.applayertype",
+    "pk": 0,
+    "fields": {
+        "name": "yes"
+    }
+},
+{
+    "model": "suricata.applayertype",
+    "pk": 1,
+    "fields": {
+        "name": "no"
+    }
+},
+{
+    "model": "suricata.applayertype",
+    "pk": 2,
+    "fields": {
+        "name": "detection-only"
+    }
+}
+]

@@ -1,0 +1,2 @@
+alert ip [192.169.40.66] any -> $HOME_NET any (msg:"Test Pcap fail"; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; sid:301; rev:1;)
+alert ip [192.168.0.66,104.199.65.12] any -> $HOME_NET any (msg:"Test Pcap match"; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; sid:300; rev:1;)

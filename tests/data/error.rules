@@ -1,0 +1,49 @@
+#
+# $Id: emerging-drop.rules $
+# Emerging Threats Spamhaus DROP List rules.
+#
+# Rules to block Spamhaus DROP listed networks (www.spamhaus.org)
+#
+# More information available at www.emergingthreats.net
+#
+# Please submit any feedback or ideas to emerging@emergingthreats.net or the emerging-sigs mailing list
+#
+#*************************************************************
+#
+#  Copyright (c) 2003-2017, Emerging Threats
+#  All rights reserved.
+#  
+#  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the 
+#  following conditions are met:
+#  
+#  * Redistributions of source code must retain the above copyright notice, this list of conditions and the following 
+#    disclaimer.
+#  * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
+#    following disclaimer in the documentation and/or other materials provided with the distribution.
+#  * Neither the name of the nor the names of its contributors may be used to endorse or promote products derived 
+#    from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+#  INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+#  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+#  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+#  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+#  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+#
+#
+
+#  VERSION 2616
+
+
+#  Generated 2017-08-27 00:05:01 EDT
+
+alert ip [5.134.128.0/19,5.157.0.0/18,14.4.0.0/14,23.226.48.0/20,23.246.128.0/18,23.251.224.0/19,24.51.0.0/19,24.233.0.0/19,27.126.160.0/20,31.11.43.0/24,31.184.238.0/24,31.222.200.0/21,36.0.8.0/21,36.37.48.0/20,36.93.0.0/16,36.116.0.0/16,36.119.0.0/16,36.255.212.0/22,37.18.42.0/24,37.139.49.0/24] any -> $HOME_NET any (msg:"ET DROP Spamhaus DROP Listed Traffic Inbound group 1"; reference:url,www.spamhaus.org/drop/drop.lasso; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; flowbits:set,ET.Evil; flowbits:set,ET.DROPIP; sid:2400000; rev:2616;)
+alert ip [42.1.56.0/22,42.1.128.0/17,42.52.0.0/14,42.83.80.0/22,42.96.0.0/18,42.123.36.0/22,42.128.0.0/12,42.160.0.0/12,42.194.8.0/22,42.194.12.0/22,42.194.128.0/17,42.208.0.0/12,43.229.52.0/22,43.236.0.0/16,43.250.116.0/22,43.252.80.0/22,43.252.152.0/22,43.252.180.0/22,45.4.128.0/22,45.4.136.0/22] any -> $HOME_NET any (msg:"ET DROP Spamhaus DROP Listed Traffic Inbound group 2"; reference:url,www.spamhaus.org/drop/drop.lasso; threshold: type limit, track by_src, seconds 3600, count 1; flowbits:set,ET.Evil; flowbits:set,ET.DROPIP; rev:2616;)
+alert ip [46.29.248.0/22,46.29.248.0/21,46.151.48.0/21,46.232.192.0/21,46.243.140.0/24,46.243.142.0/24,46.243.173.0/24,49.8.0.0/14,49.238.64.0/18,59.254.0.0/15,60.233.0.0/16,61.11.224.0/19,61.13.128.0/17,61.14.224.0/22,61.45.251.0/24,64.57.48.0/20,66.98.112.0/20,66.231.64.0/20,67.213.112.0/20,67.213.136.0/21] any -> $HOME_NET any (reference:url,www.spamhaus.org/drop/drop.lasso; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; flowbits:set,ET.Evil; flowbits:set,ET.DROPIP; sid:2400002; rev:2616;)
+alert ip [74.122.56.0/21,79.110.17.0/24,79.110.18.0/24,79.110.19.0/24,79.110.25.0/24,79.173.104.0/21,83.175.0.0/18,84.238.160.0/22,85.93.0.0/24,85.93.5.0/24,85.121.39.0/24,86.55.40.0/23,86.55.42.0/23,91.194.254.0/23,91.200.12.0/22,91.200.248.0/22,91.207.4.0/22,91.209.12.0/24,91.212.104.0/24,91.212.124.0/24] any -> $HOME_NET any (msg:"ET DROP Spamhaus DROP Listed Traffic Inbound group 4"; reference:url,www.spamhaus.org/drop/drop.lasso; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; flowbits:set,ET.Evil; flowbits:set,ET.DROPIP; sid:2400003; rev:2616;)
+alert ip [91.224.160.0/23,91.225.216.0/22,91.230.252.0/23,91.234.36.0/24,91.235.2.0/24,91.236.74.0/23,91.238.82.0/24,91.240.165.0/24,93.179.89.0/24,93.179.90.0/24,93.179.91.0/24,95.216.0.0/15,101.192.0.0/14,101.202.0.0/16,101.203.128.0/19,101.248.0.0/15,101.252.0.0/15,103.2.44.0/22,103.16.76.0/24,103.23.8.0/22] any -> $HOME_NET any (msg:"ET DROP Spamhaus DROP Listed Traffic Inbound group 5"; reference:url,www.spamhaus.org/drop/drop.lasso; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; flowbits:set,ET.Evil; flowbits:set,ET.DROPIP; sid:2400004; rev:2616;)
+alert ip [103.69.212.0/22,103.194.8.0/22,103.197.8.0/22,103.205.84.0/22,103.207.160.0/22,103.210.12.0/22,103.215.80.0/22,103.227.4.0/22,103.228.8.0/22,103.229.36.0/22,103.229.40.0/22,103.230.144.0/22,103.231.84.0/22,103.232.136.0/22,103.232.172.0/22,103.236.32.0/22,103.239.56.0/22,104.36.184.0/22,104.153.96.0/21,104.153.112.0/21] any -> $HOME_NET any (msg:"ET DROP Spamhaus DROP Listed Traffic Inbound group 6"; reference:url,www.spamhaus.org/drop/drop.lasso; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; flowbits:set,ET.Evil; flowbits:set,ET.DROPIP; sid:2400005; rev:2616;)
+alert ip [104.245.40.0/21,104.245.188.0/22,104.245.248.0/21,104.255.56.0/21,108.166.224.0/19,110.172.64.0/18,114.118.0.0/17,115.166.136.0/22,116.78.0.0/15,116.119.0.0/17,116.128.0.0/10,116.144.0.0/15,116.146.0.0/15,116.197.156.0/22,116.206.16.0/22,117.58.0.0/17,117.120.64.0/18,119.42.52.0/22,119.58.0.0/16,119.232.0.0/16] any -> $HOME_NET any (msg:"ET DROP Spamhaus DROP Listed Traffic Inbound group 7"; reference:url,www.spamhaus.org/drop/drop.lasso; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; flowbits:set,ET.Evil; flowbits:set,ET.DROPIP; sid:2400006; rev:2616;)
+alert ip [123.249.0.0/16,124.68.0.0/15,124.70.0.0/15,124.157.0.0/18,124.242.0.0/16,125.31.192.0/18,125.58.0.0/18,125.169.0.0/16,128.13.0.0/16,128.85.0.0/16,128.94.0.0/16,128.168.0.0/16,128.188.0.0/16,130.148.0.0/16,130.196.0.0/16,130.222.0.0/16,131.72.208.0/22,131.108.16.0/22,131.108.232.0/22,131.200.0.0/16] any -> $HOME_NET any (msg:"ET DROP Spamhaus DROP Listed Traffic Inbound group 8"; reference:url,www.spamhaus.org/drop/drop.lasso; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; flowbits:set,ET.Evil; flowbits:set,ET.DROPIP; sid:2400007; rev:2616;)
+alert ip [134.62.0.0/15,134.127.0.0/16,134.172.0.0/16,134.209.0.0/16,136.230.0.0/16,137.19.0.0/16,137.33.0.0/16,137.55.0.0/16,137.76.0.0/16,137.105.0.0/16,137.171.0.0/16,137.218.0.0/16,138.31.0.0/16,138.36.92.0/22,138.36.136.0/22,138.36.148.0/22,138.43.0.0/16,138.52.0.0/16,138.59.4.0/22,138.59.204.0/22] any -> $HOME_NET any (msg:"ET DROP Spamhaus DROP Listed Traffic Inbound group 9"; reference:url,www.spamhaus.org/drop/drop.lasso; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; flowbits:set,ET.Evil; flowbits:set,ET.DROPIP; sid:2400008;)

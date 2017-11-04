@@ -1,0 +1,76 @@
+import yaml
+from probemanager.settings import BASE_DIR
+
+
+def convert_conf(configuration):
+    conf = yaml.load(configuration.conf_advanced_text)
+    configuration.conf_advanced_text = """
+%YAML 1.1
+---
+
+"""
+    configuration.conf_advanced_text += yaml.dump(conf, default_flow_style=False)
+    return configuration
+
+
+def create_conf(configuration):
+    with open(BASE_DIR + "/suricata/default-Suricata-conf.yaml") as f:
+        CONF_FULL_DEFAULT = f.read()
+    conf = yaml.load(CONF_FULL_DEFAULT)
+    conf['vars']['address-groups']['HOME_NET'] = configuration.conf_HOME_NET
+    conf['vars']['address-groups']['EXTERNAL_NET'] = configuration.conf_EXTERNAL_NET
+    conf['vars']['address-groups']['HTTP_SERVERS'] = configuration.conf_HTTP_SERVERS
+    conf['vars']['address-groups']['SMTP_SERVERS'] = configuration.conf_SMTP_SERVERS
+    conf['vars']['address-groups']['SQL_SERVERS'] = configuration.conf_SQL_SERVERS
+    conf['vars']['address-groups']['DNS_SERVERS'] = configuration.conf_DNS_SERVERS
+    conf['vars']['address-groups']['TELNET_SERVERS'] = configuration.conf_TELNET_SERVERS
+    conf['vars']['address-groups']['AIM_SERVERS'] = configuration.conf_AIM_SERVERS
+    conf['vars']['address-groups']['DNP3_SERVER'] = configuration.conf_DNP3_SERVER
+    conf['vars']['address-groups']['DNP3_CLIENT'] = configuration.conf_DNP3_CLIENT
+    conf['vars']['address-groups']['MODBUS_CLIENT'] = configuration.conf_MODBUS_CLIENT
+    conf['vars']['address-groups']['MODBUS_SERVER'] = configuration.conf_MODBUS_SERVER
+    conf['vars']['address-groups']['ENIP_CLIENT'] = configuration.conf_ENIP_CLIENT
+    conf['vars']['address-groups']['ENIP_SERVER'] = configuration.conf_ENIP_SERVER
+    conf['vars']['port-groups']['HTTP_PORTS'] = configuration.conf_HTTP_PORTS
+    conf['vars']['port-groups']['SHELLCODE_PORTS'] = configuration.conf_SHELLCODE_PORTS
+    conf['vars']['port-groups']['ORACLE_PORTS'] = configuration.conf_ORACLE_PORTS
+    conf['vars']['port-groups']['SSH_PORTS'] = configuration.conf_SSH_PORTS
+    conf['vars']['port-groups']['DNP3_PORTS'] = configuration.conf_DNP3_PORTS
+    conf['vars']['port-groups']['MODBUS_PORTS'] = configuration.conf_MODBUS_PORTS
+
+    conf['stats']['enabled'] = str(configuration.conf_stats)
+    conf['af-packet'][0]['interface'] = str(configuration.conf_afpacket_interface)
+    conf['outputs'][0]['fast']['enabled'] = str(configuration.conf_outputs_fast)
+    conf['outputs'][1]['eve-log']['enabled'] = str(configuration.conf_outputs_evelog)
+    conf['outputs'][1]['eve-log']['types'][0]['alert']['http'] = str(configuration.conf_outputs_evelog_alert_http)
+    conf['outputs'][1]['eve-log']['types'][0]['alert']['tls'] = str(configuration.conf_outputs_evelog_alert_tls)
+    conf['outputs'][1]['eve-log']['types'][0]['alert']['ssh'] = str(configuration.conf_outputs_evelog_alert_ssh)
+    conf['outputs'][1]['eve-log']['types'][0]['alert']['smtp'] = str(configuration.conf_outputs_evelog_alert_smtp)
+    conf['outputs'][1]['eve-log']['types'][0]['alert']['dnp3'] = str(configuration.conf_outputs_evelog_alert_dnp3)
+    conf['outputs'][1]['eve-log']['types'][0]['alert']['tagged-packets'] = str(configuration.conf_outputs_evelog_alert_taggedpackets)
+    conf['outputs'][1]['eve-log']['types'][0]['alert']['xff']['enabled'] = str(configuration.conf_outputs_evelog_xff)
+    conf['outputs'][1]['eve-log']['types'][1]['http']['extended'] = str(configuration.conf_outputs_evelog_http_extended)
+    conf['outputs'][1]['eve-log']['types'][2]['dns']['query'] = str(configuration.conf_outputs_evelog_dns_query)
+    conf['outputs'][1]['eve-log']['types'][2]['dns']['answer'] = str(configuration.conf_outputs_evelog_dns_answer)
+    conf['outputs'][1]['eve-log']['types'][3]['tls']['extended'] = str(configuration.conf_outputs_evelog_tls_extended)
+    conf['outputs'][1]['eve-log']['types'][4]['files']['force-magic'] = str(configuration.conf_outputs_evelog_files_forcemagic)
+    conf['outputs'][2]['unified2-alert']['enabled'] = str(configuration.conf_outputs_unified2alert)
+    conf['outputs'][17]['lua']['enabled'] = str(configuration.conf_lua)
+
+    conf['app-layer']['protocols']['tls']['enabled'] = str(configuration.conf_applayer_tls)
+    conf['app-layer']['protocols']['dcerpc']['enabled'] = str(configuration.conf_applayer_dcerpc)
+    conf['app-layer']['protocols']['ftp']['enabled'] = str(configuration.conf_applayer_ftp)
+    conf['app-layer']['protocols']['ssh']['enabled'] = str(configuration.conf_applayer_ssh)
+    conf['app-layer']['protocols']['smtp']['enabled'] = str(configuration.conf_applayer_smtp)
+    conf['app-layer']['protocols']['imap']['enabled'] = str(configuration.conf_applayer_imap)
+    conf['app-layer']['protocols']['msn']['enabled'] = str(configuration.conf_applayer_msn)
+    conf['app-layer']['protocols']['smb']['enabled'] = str(configuration.conf_applayer_smb)
+    conf['app-layer']['protocols']['dns']['enabled'] = str(configuration.conf_applayer_dns)
+    conf['app-layer']['protocols']['http']['enabled'] = str(configuration.conf_applayer_http)
+
+    configuration.conf_advanced_text = """%YAML 1.1
+---
+
+"""
+    configuration.conf_advanced_text += yaml.dump(conf, default_flow_style=False)
+    return configuration

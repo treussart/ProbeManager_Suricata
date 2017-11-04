@@ -5,7 +5,7 @@ Presentation
 Module for Suricata IDS
 
 Features
-^^^^^^^^
+========
 
  * Install and update Suricata NIDS on a remote server.
  * Configure the settings.
@@ -18,7 +18,7 @@ Features
 
 
 TODO
-^^^^
+====
 
  * increase tests
 

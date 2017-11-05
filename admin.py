@@ -1,9 +1,8 @@
 from django.contrib import admin
 from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, SourceSuricata, PcapTestSuricata
-from suricata.forms import ProbeForm
 from suricata.utils import create_conf, convert_conf
 from home.tasks import upload_url_http
-from home.utils import encrypt, create_deploy_rules, create_upload_task, add_10_min
+from home.utils import create_deploy_rules, create_upload_task, add_10_min
 import logging
 import traceback
 from django.conf import settings
@@ -41,20 +40,12 @@ class RuleSetSuricataAdmin(admin.ModelAdmin):
 
 
 class SuricataAdmin(admin.ModelAdmin):
-    form = ProbeForm
 
     def save_model(self, request, obj, form, change):
-        if obj.ansible_become_pass:
-            obj.ansible_become_pass = encrypt(obj.ansible_become_pass)
         if obj.scheduled_enabled:
             logger.debug("create scheduled")
             create_deploy_rules(obj)
         super().save_model(request, obj, form, change)
-        response = obj.test_root()
-        if response['result'] == 0:
-            messages.add_message(request, messages.SUCCESS, "Connection to the server OK")
-        else:
-            messages.add_message(request, messages.ERROR, "Connection to the server Failed : " + str(response['message']))
 
     def delete_model(self, request, obj):
         try:

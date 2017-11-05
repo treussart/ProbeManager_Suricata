@@ -598,13 +598,13 @@ class Suricata(Probe):
             dict(action=dict(module='apt_repository', repo="deb http://http.debian.net/debian stretch-backports main", state='present', update_cache='yes')),
             dict(action=dict(module='apt', default_release="stretch-backports", name=self.__class__.__name__.lower(), state='present', update_cache='yes')),
         ]
-        return execute(self, tasks)
+        return execute(self.server, tasks)
 
     def reload(self):
         tasks = [
             dict(action=dict(module='shell', args='kill -USR2 $( pidof suricata )')),
         ]
-        return execute(self, tasks)
+        return execute(self.server, tasks)
 
     def test_rules(self):
         test = True
@@ -652,7 +652,7 @@ class Suricata(Probe):
                              owner='root', group='root', mode='0600')),
         ]
         tasks += scripts_to_deploy
-        response = execute(self, tasks)
+        response = execute(self.server, tasks)
         for file in glob.glob(tmpdir + '*.lua'):
             os.remove(tmpdir + file)
         if os.path.isfile(tmpdir + 'temp.rules'):
@@ -670,7 +670,7 @@ class Suricata(Probe):
         tasks = [
             dict(action=dict(module='copy', src=os.path.abspath(tmpdir + 'temp.conf'), dest=self.configuration.conf_file, owner='root', group='root', mode='0600')),
         ]
-        response = execute(self, tasks)
+        response = execute(self.server, tasks)
         if os.path.isfile(tmpdir + 'temp.conf'):
             os.remove(tmpdir + "temp.conf")
         return response

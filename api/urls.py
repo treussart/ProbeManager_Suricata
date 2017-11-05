@@ -9,5 +9,4 @@ urls_to_register = [
     (r'suricata/script', views.ScriptSuricataViewSet),
     (r'suricata/source', views.SourceSuricataViewSet),
     (r'suricata/ruleset', views.RuleSetSuricataViewSet),
-    (r'suricata/applayertype', views.AppLayerTypeViewSet),
 ]

@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 from suricata.api.serializers import ConfSuricataSerializer, SuricataSerializer, SignatureSuricataSerializer, ScriptSuricataSerializer, SourceSuricataSerializer, RuleSetSuricataSerializer
-from suricata.models import Suricata, ConfSuricata, SignatureSuricata, ScriptSuricata, SourceSuricata, RuleSetSuricata, AppLayerType
+from suricata.models import Suricata, ConfSuricata, SignatureSuricata, ScriptSuricata, SourceSuricata, RuleSetSuricata
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 
 

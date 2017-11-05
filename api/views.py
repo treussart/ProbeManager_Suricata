@@ -1,5 +1,5 @@
 from rest_framework import viewsets
-from suricata.api.serializers import ClassTypeSerializer, ConfSuricataSerializer, SuricataSerializer, SignatureSuricataSerializer, ScriptSuricataSerializer, SourceSuricataSerializer, RuleSetSuricataSerializer, AppLayerTypeSerializer
+from suricata.api.serializers import ConfSuricataSerializer, SuricataSerializer, SignatureSuricataSerializer, ScriptSuricataSerializer, SourceSuricataSerializer, RuleSetSuricataSerializer
 from suricata.models import Suricata, ConfSuricata, SignatureSuricata, ScriptSuricata, SourceSuricata, RuleSetSuricata, AppLayerType
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 
@@ -50,11 +50,3 @@ class RuleSetSuricataViewSet(viewsets.ModelViewSet):
     """
     queryset = RuleSetSuricata.objects.all()
     serializer_class = RuleSetSuricataSerializer
-
-
-class AppLayerTypeViewSet(ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet):
-    """
-    API endpoint that allows groups to be viewed or edited.
-    """
-    queryset = AppLayerType.objects.all()
-    serializer_class = AppLayerTypeSerializer

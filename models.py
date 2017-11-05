@@ -169,12 +169,12 @@ logging:
         with open(conf_file, 'w') as f:
             f.write(config)
         cmd = [settings.SURICATA_BINARY, '-T',
-                    '-l', tmpdir,
-                    '-S', rule_file,
-                    '-c', conf_file,
-                    '--set', 'classification-file=' + settings.BASE_DIR + '/suricata/tests/data/classification.config',
-                    '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
-                    ]
+               '-l', tmpdir,
+               '-S', rule_file,
+               '-c', conf_file,
+               '--set', 'classification-file=' + settings.BASE_DIR + '/suricata/tests/data/classification.config',
+               '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
+               ]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (outdata, errdata) = process.communicate()
         f.close()
@@ -301,10 +301,10 @@ class SignatureSuricata(Rule):
         with open(rule_file, 'w') as f:
             f.write(self.rule_full)
         cmd = [settings.SURICATA_BINARY, '-T',
-                    '-l', tmpdir,
-                    '-S', rule_file,
-                    '-c', settings.SURICATA_CONFIG
-                    ]
+               '-l', tmpdir,
+               '-S', rule_file,
+               '-c', settings.SURICATA_CONFIG
+               ]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (outdata, errdata) = process.communicate()
         logger.debug(outdata)
@@ -737,14 +737,14 @@ logging:
         f.close()
         # test pcap success
         cmd = [settings.SURICATA_BINARY,
-                    '-l', tmpdir,
-                    '-S', rule_file,
-                    '-c', conf_file,
-                    '-r', settings.BASE_DIR + "/" + self.pcap_success.name,
-                    '--set', 'outputs.0.fast.enabled=yes',
-                    '--set', 'classification-file=' + settings.BASE_DIR + '/suricata/tests/data/classification.config',
-                    '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
-                    ]
+               '-l', tmpdir,
+               '-S', rule_file,
+               '-c', conf_file,
+               '-r', settings.BASE_DIR + "/" + self.pcap_success.name,
+               '--set', 'outputs.0.fast.enabled=yes',
+               '--set', 'classification-file=' + settings.BASE_DIR + '/suricata/tests/data/classification.config',
+               '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
+               ]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (outdata, errdata) = process.communicate()
         # test if alert is generated :

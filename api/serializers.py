@@ -1,12 +1,5 @@
-from rules.models import ClassType
 from suricata.models import ConfSuricata, Suricata, SignatureSuricata, ScriptSuricata, SourceSuricata, RuleSetSuricata, AppLayerType
 from rest_framework import serializers
-
-
-class ClassTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ClassType
-        fields = "__all__"
 
 
 class ConfSuricataSerializer(serializers.ModelSerializer):

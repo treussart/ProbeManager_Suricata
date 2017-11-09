@@ -324,7 +324,8 @@ class SourceSuricataAdmin(admin.ModelAdmin):
             else:
                 for file in glob.glob(settings.BASE_DIR + "/tmp/upload/*"):
                     os.remove(file)
-            os.remove(settings.BASE_DIR + "/tmp/" + 'progress.json')
+            if os.path.isfile(settings.BASE_DIR + "/tmp/" + 'progress.json'):
+                os.remove(settings.BASE_DIR + "/tmp/" + 'progress.json')
 
     class Media:
         js = (

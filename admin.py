@@ -272,7 +272,6 @@ class SourceSuricataAdmin(admin.ModelAdmin):
             return super(SourceSuricataAdmin, self).response_change(request, obj)
 
     def save_model(self, request, obj, form, change):
-        update_progress(0)
         try:
             rulesets = list()
             rulesets_id = list()
@@ -305,6 +304,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                 messages.add_message(request, messages.SUCCESS, "Upload source in progress")
             # Upload file
             elif obj.method.name == "Upload file":
+                update_progress(0)
                 obj.uri = str(time.time()) + "_to_delete"
                 obj.save()
                 message = obj.upload_file(request, rulesets)

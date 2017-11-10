@@ -16,10 +16,10 @@ else
     echo 'Bad argument'
     exit 1
 fi
-destfull="$dest"/ProbeManager/
+
 
 if [ $arg == 'prod' ]; then
-    "$destfull"venv/bin/python "$destfull"probemanager/manage.py loaddata init-suricata.json --settings=probemanager.settings.$arg
+    "$dest"venv/bin/python "$dest"probemanager/manage.py loaddata init-suricata.json --settings=probemanager.settings.$arg
 else
     venv/bin/python probemanager/manage.py loaddata init-suricata.json --settings=probemanager.settings.$arg
 fi

@@ -301,7 +301,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                 except Exception as e:
                                     logger.error(e.__str__())
                 upload_url_http.delay(obj.uri, rulesets_id)
-                messages.add_message(request, messages.SUCCESS, "Upload source in progress")
+                messages.add_message(request, messages.SUCCESS, "Upload source in progress. <a href='/admin/home/job/'> View Job</a>")
             # Upload file
             elif obj.method.name == "Upload file":
                 update_progress(0)

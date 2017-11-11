@@ -306,7 +306,9 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                         create_deploy_rules(probe, schedule)
                                 except Exception as e:
                                     logger.error(e.__str__())
+                logger.info("test1")
                 upload_url_http.delay(obj.uri, rulesets_id)
+                logger.info("test2")
                 messages.add_message(request, messages.SUCCESS, "Upload source in progress. View Jobs")
             # Upload file
             elif obj.method.name == "Upload file":
@@ -332,6 +334,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                     os.remove(file)
             if os.path.isfile(settings.BASE_DIR + "/tmp/" + 'progress.json'):
                 os.remove(settings.BASE_DIR + "/tmp/" + 'progress.json')
+            logger.info("test3")
 
     class Media:
         js = (

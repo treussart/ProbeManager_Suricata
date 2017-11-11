@@ -41,6 +41,11 @@ class RuleSetSuricataAdmin(admin.ModelAdmin):
 
 class SuricataAdmin(admin.ModelAdmin):
 
+    class Media:
+        js = (
+            'suricata/js/mask-crontab.js',
+        )
+
     def save_model(self, request, obj, form, change):
         if obj.scheduled_enabled:
             logger.debug("create scheduled")

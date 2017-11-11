@@ -287,6 +287,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
             # URL HTTP
             if obj.method.name == "URL HTTP":
                 obj.save()
+                logger.info("obj source saved : " + str(obj.id))
                 if obj.scheduled_enabled and obj.scheduled_crontab:
                     create_upload_task(obj)
                     if obj.scheduled_deploy:

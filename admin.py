@@ -11,7 +11,6 @@ from django_celery_beat.models import PeriodicTask, CrontabSchedule
 from django.contrib.admin.helpers import ActionForm
 from django import forms
 import time
-from django.db import transaction, IntegrityError
 import os
 import glob
 from django.http import HttpResponseRedirect
@@ -287,13 +286,8 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                     rulesets.append(RuleSetSuricata.get_by_id(ruleset_id))
             # URL HTTP
             if obj.method.name == "URL HTTP":
-                try:
-                    with transaction.atomic():
-                        obj.save()
-                except IntegrityError:
-                    logger.error("Transaction source save not finished")
-                    obj.save()
-
+                obj.save()
+                time.sleep(5)
                 if obj.scheduled_enabled and obj.scheduled_crontab:
                     create_upload_task(obj)
                     if obj.scheduled_deploy:

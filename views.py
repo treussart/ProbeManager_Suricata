@@ -4,6 +4,7 @@ from suricata.models import Suricata
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 import logging
+from home.tasks import deploy_rules as deploy_rules_probe
 
 
 logger = logging.getLogger(__name__)
@@ -41,10 +42,6 @@ def deploy_rules(request, id):
             messages.add_message(request, messages.SUCCESS, "Test pcap OK")
         else:
             messages.add_message(request, messages.ERROR, "Test pcap failed ! " + str(errors))
-        response_deploy_rules = suricata.deploy_rules()
-        response_reload = suricata.reload()
-        if response_deploy_rules['result'] == 0 and response_reload['result'] == 0:
-            messages.add_message(request, messages.SUCCESS, 'Deployed rules successfully')
-        else:
-            messages.add_message(request, messages.ERROR, 'Error during the rules deployed')
+        deploy_rules_probe.delay(suricata.name)
+        messages.add_message(request, messages.SUCCESS, 'Deployed rules launched with succeed. View Job')
         return render(request, 'suricata/index.html', {'probe': suricata})

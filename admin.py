@@ -252,7 +252,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
             try:
                 for ruleset in source.rulesets.all():
                     for probe in ruleset.suricata_set.all():
-                        periodic_task = PeriodicTask.objects.get(name__contains=probe.name + "_source_deploy_rules_")
+                        periodic_task = PeriodicTask.objects.get(name__contains=probe.name + "_" + source.uri + "_deploy_rules_")
                         periodic_task.delete()
                         logger.debug(str(periodic_task) + " deleted")
             except PeriodicTask.DoesNotExist:
@@ -287,7 +287,6 @@ class SourceSuricataAdmin(admin.ModelAdmin):
             # URL HTTP
             if obj.method.name == "URL HTTP":
                 obj.save()
-                logger.info("obj source saved : " + str(obj.id))
                 if obj.scheduled_enabled and obj.scheduled_crontab:
                     create_upload_task(obj)
                     if obj.scheduled_deploy:
@@ -303,12 +302,10 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                                                                             month_of_year=schedule.month_of_year,
                                                                                             )
                                         schedule.save()
-                                        create_deploy_rules(probe, schedule)
+                                        create_deploy_rules(probe, schedule, obj)
                                 except Exception as e:
                                     logger.error(e.__str__())
-                logger.info("test1")
                 upload_url_http.delay(obj.uri, rulesets_id)
-                logger.info("test2")
                 messages.add_message(request, messages.SUCCESS, "Upload source in progress. View Jobs")
             # Upload file
             elif obj.method.name == "Upload file":
@@ -321,7 +318,6 @@ class SourceSuricataAdmin(admin.ModelAdmin):
             else:
                 logger.error('Upload method unknown : ' + obj.method.name)
                 messages.add_message(request, messages.ERROR, 'Upload method unknown : ' + obj.method.name)
-                super()
         except Exception as e:
             logger.error(e.__str__())
             logger.error(traceback.print_exc())
@@ -334,7 +330,6 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                     os.remove(file)
             if os.path.isfile(settings.BASE_DIR + "/tmp/" + 'progress.json'):
                 os.remove(settings.BASE_DIR + "/tmp/" + 'progress.json')
-            logger.info("test3")
 
     class Media:
         js = (

@@ -287,7 +287,6 @@ class SourceSuricataAdmin(admin.ModelAdmin):
             # URL HTTP
             if obj.method.name == "URL HTTP":
                 obj.save()
-                time.sleep(5)
                 if obj.scheduled_enabled and obj.scheduled_crontab:
                     create_upload_task(obj)
                     if obj.scheduled_deploy:

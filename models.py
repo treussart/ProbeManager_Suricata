@@ -437,7 +437,7 @@ class SourceSuricata(Source):
         try:
             object = cls.objects.get(id=id)
         except cls.DoesNotExist as e:
-            # logger.debug('Tries to access an object that does not exist : ' + str(e))
+            logger.debug('Tries to access an object that does not exist : ' + str(e))
             return None
         return object
 

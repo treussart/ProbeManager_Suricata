@@ -1,6 +1,6 @@
 """ python manage.py test suricata.tests.test_models """
 from django.test import TestCase
-from suricata.models import HashType, AppLayerType, ConfSuricata, Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, SourceSuricata
+from suricata.models import AppLayerType, ConfSuricata, Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, SourceSuricata
 from rules.models import ClassType
 from django.db.utils import IntegrityError
 from django.utils import timezone
@@ -78,29 +78,6 @@ class ConfSuricataTest(TestCase):
             ConfSuricata.get_by_id(99)
         with self.assertRaises(IntegrityError):
             ConfSuricata.objects.create(name="confSuricata1")
-
-
-class HashTypeTest(TestCase):
-    fixtures = ['init']
-
-    @classmethod
-    def setUpTestData(cls):
-        pass
-
-    def test_hash_type(self):
-        all_hash_type = HashType.get_all()
-        hash_type = HashType.get_by_id(1)
-        self.assertEqual(len(all_hash_type), 3)
-        self.assertEqual(hash_type.name, "sha1")
-        self.assertEqual(str(hash_type), "sha1")
-        hash_type = HashType.get_by_id(99)
-        self.assertEqual(hash_type, None)
-        with self.assertRaises(AttributeError):
-            hash_type.name
-        with self.assertLogs('suricata.models', level='DEBUG'):
-            HashType.get_by_id(99)
-        with self.assertRaises(IntegrityError):
-            HashType.objects.create(name="sha1")
 
 
 class RuleSetSuricataTest(TestCase):

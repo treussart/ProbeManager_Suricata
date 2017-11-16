@@ -1,5 +1,6 @@
 from django.db import models
-from home.ansible_tasks import execute
+# from home.ansible_tasks import execute
+from home.ssh import execute, execute_copy
 from home.models import Probe, ProbeConfiguration
 from rules.models import RuleSet, Rule, ClassType, Source
 import logging
@@ -593,18 +594,29 @@ class Suricata(Probe):
         return self.name + "  " + self.description
 
     def install(self):
-        tasks = [
-            dict(name="install_python3-apt", action=dict(module='shell', args='apt install python3-apt')),
-            dict(name="install_repository", action=dict(module='apt_repository', repo="deb http://http.debian.net/debian stretch-backports main", state='present', update_cache='yes')),
-            dict(name="install_" + self.__class__.__name__, action=dict(module='apt', default_release="stretch-backports", name=self.__class__.__name__.lower(), state='present', update_cache='yes')),
-        ]
-        return execute(self.server, tasks)
+        command1 = "echo 'deb http://http.debian.net/debian stretch-backports main' >> /etc/apt/sources.list.d/stretch-backports.list"
+        command2 = "apt update"
+        command3 = "apt -t stretch-backports install " + self.__class__.__name__.lower()
+        tasks = {"add_repo": command1, "update_repo": command2, "install": command3}
+        try:
+            response = execute(self, tasks)
+        except Exception as e:
+            logger.error(e)
+            return False
+        logger.debug("output : " + str(response))
+        return True
 
     def reload(self):
-        tasks = [
-            dict(name="reload_suricata", action=dict(module='shell', args='kill -USR2 $( pidof suricata )')),
-        ]
-        return execute(self.server, tasks)
+        # Don't works TODO
+        command1 = "kill -USR2 $( pidof suricata )"
+        tasks = {"reload": command1}
+        try:
+            response = execute(self, tasks)
+        except Exception as e:
+            logger.error(e)
+            return False
+        logger.debug("output : " + str(response))
+        return True
 
     def test_rules(self):
         test = True
@@ -635,29 +647,36 @@ class Suricata(Probe):
         f.close()
 
         # Scripts
-        scripts_to_deploy = []
+        deploy = True
+        response = dict()
         for ruleset in self.rulesets.all():
             for script in ruleset.scripts.all():
                 if script.enabled:
                     f = open(tmpdir + script.name, 'w')
                     f.write(script.rule_full)
                     f.close()
-                    scripts_to_deploy.append(dict(action=dict(module='copy', src=tmpdir + script.name,
-                                                  dest=self.configuration.conf_script_directory.rstrip('/') + '/' + script.name,
-                                                  owner='root', group='root', mode='0600')))
+                    try:
+                        response = execute_copy(self.server, src=tmpdir + script.name,
+                                                dest=self.configuration.conf_script_directory.rstrip('/') + '/' + script.name,
+                                                owner='root', group='root', mode='0600')
+                    except Exception as e:
+                        logger.error(e)
+                        deploy = False
+                    logger.debug("output : " + str(response))
+        try:
+            response = execute_copy(self.server, src=tmpdir + 'temp.rules',
+                                    dest=self.configuration.conf_rules_directory.rstrip('/') + '/deployed.rules',
+                                    owner='root', group='root', mode='0600')
+        except Exception as e:
+            logger.error(e)
+            deploy = False
+        logger.debug("output : " + str(response))
 
-        tasks = [
-            dict(name="deploy_rules", action=dict(module='copy', src=tmpdir + 'temp.rules',
-                 dest=self.configuration.conf_rules_directory.rstrip('/') + '/deployed.rules',
-                 owner='root', group='root', mode='0600')),
-        ]
-        tasks += scripts_to_deploy
-        response = execute(self.server, tasks)
         for file in glob.glob(tmpdir + '*.lua'):
             os.remove(tmpdir + file)
         if os.path.isfile(tmpdir + 'temp.rules'):
             os.remove(tmpdir + "temp.rules")
-        return response
+        return deploy
 
     def deploy_conf(self):
         tmpdir = settings.BASE_DIR + "/tmp/" + self.name + "/"
@@ -667,13 +686,20 @@ class Suricata(Probe):
         f = open(tmpdir + "temp.conf", 'w')
         f.write(value)
         f.close()
-        tasks = [
-            dict(name="deploy_conf", action=dict(module='copy', src=os.path.abspath(tmpdir + 'temp.conf'), dest=self.configuration.conf_file, owner='root', group='root', mode='0600')),
-        ]
-        response = execute(self.server, tasks)
+        deploy = True
+        response = dict()
+        try:
+            response = execute_copy(self.server, src=os.path.abspath(tmpdir + 'temp.conf'),
+                                    dest=self.configuration.conf_file,
+                                    owner='root', group='root', mode='0600')
+        except Exception as e:
+            logger.error(e)
+            deploy = False
+        logger.debug("output : " + str(response))
+
         if os.path.isfile(tmpdir + 'temp.conf'):
             os.remove(tmpdir + "temp.conf")
-        return response
+        return deploy
 
     @classmethod
     def get_all(cls):

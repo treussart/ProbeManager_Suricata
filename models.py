@@ -599,7 +599,7 @@ class Suricata(Probe):
         command3 = "apt -t stretch-backports install " + self.__class__.__name__.lower()
         tasks = {"add_repo": command1, "update_repo": command2, "install": command3}
         try:
-            response = execute(self, tasks)
+            response = execute(self, tasks, become=True)
         except Exception as e:
             logger.error(e)
             return False
@@ -611,7 +611,7 @@ class Suricata(Probe):
         command1 = "kill -USR2 $( pidof suricata )"
         tasks = {"reload": command1}
         try:
-            response = execute(self, tasks)
+            response = execute(self, tasks, become=True)
         except Exception as e:
             logger.error(e)
             return False

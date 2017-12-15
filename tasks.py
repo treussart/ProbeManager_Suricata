@@ -2,7 +2,7 @@ from celery import task
 from celery.utils.log import get_task_logger
 from home.models import Probe, Job
 import importlib
-from home.utils import send_notification
+from home.notifications import send_notification
 import traceback
 
 
@@ -54,4 +54,3 @@ def deploy_rules(probe_name):
         job.update_job(e.__str__(), 'Error')
         send_notification("Probe " + str(probe.name), e.__str__())
         return {"message": "Error for probe " + str(probe.name) + " to deploy rules", "exception": e.__str__()}
-    send_notification("Probe " + str(probe.name), "deployed rules successfully")

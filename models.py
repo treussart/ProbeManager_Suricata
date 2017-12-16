@@ -656,16 +656,14 @@ class Suricata(Probe):
                     f.close()
                     try:
                         response = execute_copy(self.server, src=tmpdir + script.name,
-                                                dest=self.configuration.conf_script_directory.rstrip('/') + '/' + script.name,
-                                                owner='root', group='root', mode='0600')
+                                                dest=self.configuration.conf_script_directory.rstrip('/') + '/' + script.name, become=True)
                     except Exception as e:
                         logger.error(e)
                         deploy = False
                     logger.debug("output : " + str(response))
         try:
             response = execute_copy(self.server, src=tmpdir + 'temp.rules',
-                                    dest=self.configuration.conf_rules_directory.rstrip('/') + '/deployed.rules',
-                                    owner='root', group='root', mode='0600')
+                                    dest=self.configuration.conf_rules_directory.rstrip('/') + '/deployed.rules', become=True)
         except Exception as e:
             logger.error(e)
             deploy = False
@@ -689,8 +687,7 @@ class Suricata(Probe):
         response = dict()
         try:
             response = execute_copy(self.server, src=os.path.abspath(tmpdir + 'temp.conf'),
-                                    dest=self.configuration.conf_file,
-                                    owner='root', group='root', mode='0600')
+                                    dest=self.configuration.conf_file, become=True)
         except Exception as e:
             logger.error(e)
             deploy = False

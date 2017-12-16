@@ -1,5 +1,4 @@
 from django.db import models
-# from home.ansible_tasks import execute
 from home.ssh import execute, execute_copy
 from home.models import Probe, ProbeConfiguration
 from rules.models import RuleSet, Rule, ClassType, Source

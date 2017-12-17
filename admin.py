@@ -15,6 +15,7 @@ import os
 import glob
 from django.http import HttpResponseRedirect
 from home.utils import update_progress
+from suricata.forms import SuricataChangeForm
 
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,13 @@ class SuricataAdmin(admin.ModelAdmin):
         js = (
             'suricata/js/mask-crontab.js',
         )
+
+    """A ModelAdmin that uses a different form class when adding an object."""
+    def get_form(self, request, obj=None, **kwargs):
+        if obj is None:
+            return super(SuricataAdmin, self).get_form(request, obj, **kwargs)
+        else:
+            return SuricataChangeForm
 
     def save_model(self, request, obj, form, change):
         if obj.scheduled_enabled:

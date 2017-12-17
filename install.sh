@@ -39,9 +39,9 @@ if [ $arg == 'prod' ]; then
     touch /var/log/suricata/suricata.log
     chmod a+w  /var/log/suricata/suricata.log
     chmod a+r  /var/log/suricata/suricata.log
-    echo "SURICATA_BINARY = '$( which suricata )'" >> "$dest"probemanager/suricata/settings.py
+    echo "SURICATA_BINARY = '$( which suricata )'" > "$dest"probemanager/suricata/settings.py
     echo "SURICATA_CONFIG = '$config'" >> "$dest"probemanager/suricata/settings.py
 else
-    echo "SURICATA_BINARY = '$( which suricata )'" >> probemanager/suricata/settings.py
+    echo "SURICATA_BINARY = '$( which suricata )'" > probemanager/suricata/settings.py
     echo "SURICATA_CONFIG = '$config'" >> probemanager/suricata/settings.py
 fi

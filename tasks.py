@@ -38,15 +38,20 @@ def deploy_rules(probe_name):
                 return {"message": "Error during the pcap test for probe " + str(probe.name)}
         if not response_tests['status']:
             job.update_job('Error during the rules test: ' + str(response_tests['errors']), 'Error')
+            send_notification('Error', 'Error during the rules test: ' + str(response_tests['errors']))
         elif not test_pcap:
-            job.update_job('Error during the pcap test: ', 'Error')
+            job.update_job('Error during the pcap test', 'Error')
+            send_notification('Error', 'Error during the pcap test')
         else:
             response_deploy_rules = probe.deploy_rules()
+            logger.info(response_deploy_rules)
             response_reload = probe.reload()
+            logger.info(response_reload)
             if response_deploy_rules and response_reload:
                 job.update_job('Deployed rules successfully', 'Completed')
             else:
-                job.update_job('Error during the rules deployed', 'Error')
+                job.update_job('Error during the rules deployed - reload: ' + str(response_reload) + ' deploy rules: ' + str(response_deploy_rules), 'Error')
+                send_notification('Error', 'Error during the rules deployed - reload: ' + str(response_reload) + ' deploy rules: ' + str(response_deploy_rules))
             logger.info("task - deploy_rules : " + str(probe_name) + " - " + str(response_deploy_rules) + " - " + str(response_reload))
     except Exception as e:
         logger.error(e.__str__())

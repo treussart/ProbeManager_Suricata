@@ -18,7 +18,7 @@ import select2.fields
 from django.db.models import Q
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('suricata')
 
 
 class ValidationType(models.Model):
@@ -598,7 +598,7 @@ class Suricata(Probe):
         command3 = "apt -t stretch-backports install " + self.__class__.__name__.lower()
         tasks = {"add_repo": command1, "update_repo": command2, "install": command3}
         try:
-            response = execute(self, tasks, become=True)
+            response = execute(self.server, tasks, become=True)
         except Exception as e:
             logger.error(e)
             return False
@@ -606,13 +606,12 @@ class Suricata(Probe):
         return True
 
     def reload(self):
-        # Don't works TODO
-        command1 = "kill -USR2 $( pidof suricata )"
-        tasks = {"reload": command1}
+        command = "kill -USR2 $( pidof suricata )"
+        tasks = {"reload": command}
         try:
-            response = execute(self, tasks, become=True)
+            response = execute(self.server, tasks, become=True)
         except Exception as e:
-            logger.error(e)
+            logger.error(e.__str__())
             return False
         logger.debug("output : " + str(response))
         return True

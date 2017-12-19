@@ -672,6 +672,9 @@ class Suricata(Probe):
             os.remove(tmpdir + file)
         if os.path.isfile(tmpdir + 'temp.rules'):
             os.remove(tmpdir + "temp.rules")
+        if deploy:
+            self.rules_updated_date = timezone.now()
+            self.save()
         return deploy
 
     def deploy_conf(self):

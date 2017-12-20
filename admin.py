@@ -2,7 +2,7 @@ from django.contrib import admin
 from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, SourceSuricata, PcapTestSuricata
 from suricata.utils import create_conf, convert_conf
 from home.tasks import upload_url_http
-from home.utils import create_deploy_rules, create_upload_task, add_10_min
+from home.utils import create_deploy_rules, create_upload_task, add_1_hour
 import logging
 import traceback
 from django.conf import settings
@@ -302,7 +302,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                             for ruleset in rulesets:
                                 try:
                                     for probe in ruleset.suricata_set.all():
-                                        schedule = add_10_min(obj.scheduled_crontab)
+                                        schedule = add_1_hour(obj.scheduled_crontab)
                                         schedule, _ = CrontabSchedule.objects.get_or_create(minute=schedule.minute,
                                                                                             hour=schedule.hour,
                                                                                             day_of_week=schedule.day_of_week,

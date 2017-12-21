@@ -70,8 +70,8 @@ class ViewsSuricataSourceAdminTest(TestCase):
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
                                     {'method': MethodUpload.get_by_name("URL HTTP").id,
                                      'uri': 'https://rules.emergingthreats.net/open/suricata-2.0.1/emerging.rules.tar.gz',
-                                     'scheduled_enabled': 'True',
-                                     'scheduled_crontab': CrontabSchedule.objects.get(id=1).id,
+                                     'scheduled_rules_deployment_enabled': 'True',
+                                     'scheduled_rules_deployment_crontab': CrontabSchedule.objects.get(id=1).id,
                                      'scheduled_deploy': 'False',
                                      'data_type': DataTypeUpload.get_by_name("multiple files in compressed file").id
                                      }, follow=True)
@@ -85,8 +85,8 @@ class ViewsSuricataSourceAdminTest(TestCase):
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
                                     {'method': MethodUpload.get_by_name("URL HTTP").id,
                                      'uri': 'https://sslbl.abuse.ch/blacklist/sslblacklist.rules',
-                                     'scheduled_enabled': 'True',
-                                     'scheduled_crontab': CrontabSchedule.objects.get(id=1).id,
+                                     'scheduled_rules_deployment_enabled': 'True',
+                                     'scheduled_rules_deployment_crontab': CrontabSchedule.objects.get(id=1).id,
                                      'scheduled_deploy': 'False',
                                      'data_type': DataTypeUpload.get_by_name("one file not compressed").id
                                      }, follow=True)
@@ -99,8 +99,8 @@ class ViewsSuricataSourceAdminTest(TestCase):
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
                                     {'method': MethodUpload.get_by_name("URL HTTP").id,
                                      'uri': 'https://sslbl.abuse.ch/blacklist/sslblacklist.rules',
-                                     'scheduled_enabled': 'True',
-                                     'scheduled_crontab': CrontabSchedule.objects.get(id=1).id,
+                                     'scheduled_rules_deployment_enabled': 'True',
+                                     'scheduled_rules_deployment_crontab': CrontabSchedule.objects.get(id=1).id,
                                      'scheduled_deploy': 'True',
                                      'rulesets': '1',
                                      'data_type': DataTypeUpload.get_by_name("one file not compressed").id
@@ -114,8 +114,8 @@ class ViewsSuricataSourceAdminTest(TestCase):
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
                                     {'method': MethodUpload.get_by_name("URL HTTP").id,
                                      'uri': 'https://sslbl.abuse.ch/blacklist/sslblacklist.rules',
-                                     'scheduled_enabled': 'True',
-                                     'scheduled_crontab': CrontabSchedule.objects.get(id=1).id,
+                                     'scheduled_rules_deployment_enabled': 'True',
+                                     'scheduled_rules_deployment_crontab': CrontabSchedule.objects.get(id=1).id,
                                      'scheduled_deploy': 'True',
                                      'rulesets': '1',
                                      'data_type': DataTypeUpload.get_by_name("one file not compressed").id
@@ -132,7 +132,7 @@ class ViewsSuricataSourceAdminTest(TestCase):
             response = self.client.post('/admin/suricata/sourcesuricata/add/', {
                 'method': MethodUpload.get_by_name("Upload file").id,
                 'file': fp,
-                'scheduled_enabled': 'False',
+                'scheduled_rules_deployment_enabled': 'False',
                 'scheduled_deploy': 'False',
                 'data_type': DataTypeUpload.get_by_name("one file not compressed").id
             }, follow=True)
@@ -146,7 +146,7 @@ class ViewsSuricataSourceAdminTest(TestCase):
             response = self.client.post('/admin/suricata/sourcesuricata/add/', {
                 'method': MethodUpload.get_by_name("Upload file").id,
                 'file': fp,
-                'scheduled_enabled': 'False',
+                'scheduled_rules_deployment_enabled': 'False',
                 'scheduled_deploy': 'False',
                 'data_type': DataTypeUpload.get_by_name("one file not compressed").id,
                 'rulesets': '1',
@@ -160,7 +160,7 @@ class ViewsSuricataSourceAdminTest(TestCase):
             response = self.client.post('/admin/suricata/sourcesuricata/add/', {
                 'method': MethodUpload.get_by_name("Upload file").id,
                 'file': fp,
-                'scheduled_enabled': 'False',
+                'scheduled_rules_deployment_enabled': 'False',
                 'scheduled_deploy': 'False',
                 'data_type': DataTypeUpload.get_by_name("multiple files in compressed file").id
             }, follow=True)

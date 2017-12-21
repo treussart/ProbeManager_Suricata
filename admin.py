@@ -2,7 +2,7 @@ from django.contrib import admin
 from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, SourceSuricata, PcapTestSuricata
 from suricata.utils import create_conf, convert_conf
 from home.tasks import upload_url_http
-from home.utils import create_deploy_rules, create_upload_task, add_1_hour
+from home.utils import create_deploy_rules_task, create_upload_task, add_1_hour, create_check_task
 import logging
 import traceback
 from django.conf import settings
@@ -55,14 +55,14 @@ class SuricataAdmin(admin.ModelAdmin):
             return SuricataChangeForm
 
     def save_model(self, request, obj, form, change):
-        if obj.scheduled_enabled:
-            logger.debug("create scheduled")
-            create_deploy_rules(obj)
+        logger.debug("create scheduled")
+        create_deploy_rules_task(obj)
+        create_check_task(obj)
         super().save_model(request, obj, form, change)
 
     def delete_model(self, request, obj):
         try:
-            periodic_task = PeriodicTask.objects.get(name=obj.name + "_deploy_rules_" + obj.scheduled_crontab.__str__())
+            periodic_task = PeriodicTask.objects.get(name=obj.name + "_deploy_rules_" + obj.scheduled_rules_deployment_crontab.__str__())
             periodic_task.delete()
             logger.debug(str(periodic_task) + " deleted")
         except PeriodicTask.DoesNotExist:
@@ -79,7 +79,7 @@ class SuricataAdmin(admin.ModelAdmin):
         for probe in obj:
             try:
                 periodic_task = PeriodicTask.objects.get(
-                    name=probe.name + "_deploy_rules_" + probe.scheduled_crontab.__str__())
+                    name=probe.name + "_deploy_rules_" + probe.scheduled_rules_deployment_crontab.__str__())
                 periodic_task.delete()
                 logger.debug(str(periodic_task) + " deleted")
             except PeriodicTask.DoesNotExist:
@@ -295,14 +295,14 @@ class SourceSuricataAdmin(admin.ModelAdmin):
             # URL HTTP
             if obj.method.name == "URL HTTP":
                 obj.save()
-                if obj.scheduled_enabled and obj.scheduled_crontab:
+                if obj.scheduled_rules_deployment_enabled and obj.scheduled_rules_deployment_crontab:
                     create_upload_task(obj)
                     if obj.scheduled_deploy:
                         if rulesets:
                             for ruleset in rulesets:
                                 try:
                                     for probe in ruleset.suricata_set.all():
-                                        schedule = add_1_hour(obj.scheduled_crontab)
+                                        schedule = add_1_hour(obj.scheduled_rules_deployment_crontab)
                                         schedule, _ = CrontabSchedule.objects.get_or_create(minute=schedule.minute,
                                                                                             hour=schedule.hour,
                                                                                             day_of_week=schedule.day_of_week,
@@ -310,7 +310,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                                                                             month_of_year=schedule.month_of_year,
                                                                                             )
                                         schedule.save()
-                                        create_deploy_rules(probe, schedule, obj)
+                                        create_deploy_rules_task(probe, schedule, obj)
                                 except Exception as e:
                                     logger.error(e.__str__())
                 upload_url_http.delay(obj.uri, rulesets_id)

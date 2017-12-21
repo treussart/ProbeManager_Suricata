@@ -593,9 +593,12 @@ class Suricata(Probe):
         return self.name + "  " + self.description
 
     def install(self):
-        command1 = "echo 'deb http://http.debian.net/debian stretch-backports main' >> /etc/apt/sources.list.d/stretch-backports.list"
-        command2 = "apt update"
-        command3 = "apt -t stretch-backports install " + self.__class__.__name__.lower()
+        if self.server.os.name == 'debian':
+            command1 = "echo 'deb http://http.debian.net/debian stretch-backports main' >> /etc/apt/sources.list.d/stretch-backports.list"
+            command2 = "apt update"
+            command3 = "apt -t stretch-backports install " + self.__class__.__name__.lower()
+        else:
+            raise Exception("Not yet implemented")
         tasks = {"add_repo": command1, "update_repo": command2, "install": command3}
         try:
             response = execute(self.server, tasks, become=True)
@@ -606,7 +609,10 @@ class Suricata(Probe):
         return True
 
     def reload(self):
-        command = "kill -USR2 $( pidof suricata )"
+        if self.server.os.name == 'debian':
+            command = "kill -USR2 $( pidof suricata )"
+        else:
+            raise Exception("Not yet implemented")
         tasks = {"reload": command}
         try:
             response = execute(self.server, tasks, become=True)

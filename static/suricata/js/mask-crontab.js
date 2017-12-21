@@ -12,3 +12,18 @@ django.jQuery(document).ready(function(){
         }
     });
 });
+
+django.jQuery(document).ready(function(){
+    if(django.jQuery('#id_scheduled_check_enabled').is(':checked')){
+        django.jQuery('.form-row.field-scheduled_check_crontab').show();
+    } else {
+        django.jQuery('.form-row.field-scheduled_check_crontab').hide();
+    }
+    django.jQuery('#id_scheduled_check_enabled').change(function(){
+        if(django.jQuery('#id_scheduled_check_enabled').is(':checked')){
+            django.jQuery('.form-row.field-scheduled_check_crontab').show();
+        } else {
+            django.jQuery('.form-row.field-scheduled_check_crontab').hide();
+        }
+    });
+});

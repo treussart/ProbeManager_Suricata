@@ -810,7 +810,6 @@ class BlackListSuricata(models.Model):
     """
     Stores an instance of a pattern in blacklist.
     """
-    INCREMENT = 0
     TYPE_CHOICES = (
         ('IP', 'IP'),
         ('MD5', 'MD5'),
@@ -863,7 +862,6 @@ class BlackListSuricata(models.Model):
                                       created_date=timezone.now(),
                                       )
         signature.save()
-        if len(self.rulesets.all()) > 0:
-            for ruleset in self.rulesets.all():
-                ruleset.add(signature)
-                ruleset.save()
+        for ruleset in self.rulesets.all():
+            ruleset.add(signature)
+            ruleset.save()

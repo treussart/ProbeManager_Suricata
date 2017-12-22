@@ -16,6 +16,7 @@ from django.conf import settings
 from home.utils import update_progress
 import select2.fields
 from django.db.models import Q
+from jinja2 import Template
 
 
 logger = logging.getLogger('suricata')
@@ -795,3 +796,74 @@ logging:
         # if not -> return error
         errdata += b"Alert not generated"
         return {'status': False, 'errors': errdata}
+
+
+def increment_sid():
+    last_sid = BlackListSuricata.objects.all().order_by('id').last()
+    if not last_sid:
+        return 41000000
+    else:
+        return last_sid.sid + 1
+
+
+class BlackListSuricata(models.Model):
+    """
+    Stores an instance of a pattern in blacklist.
+    """
+    INCREMENT = 0
+    TYPE_CHOICES = (
+        ('IP', 'IP'),
+        ('MD5', 'MD5'),
+        ('URL', 'URL'),
+    )
+    type = models.CharField(max_length=255, choices=TYPE_CHOICES)
+    value = models.CharField(max_length=600, unique=True, null=False, blank=False)
+    comment = models.CharField(max_length=600, null=True, blank=True)
+    sid = models.IntegerField(unique=True, editable=False, null=False, default=increment_sid)
+    rulesets = models.ManyToManyField(RuleSetSuricata, blank=True)
+
+    def __str__(self):
+        return self.type + "  " + self.value
+
+    @classmethod
+    def get_by_value(cls, value):
+        try:
+            object = cls.objects.get(value=value)
+        except cls.DoesNotExist as e:
+            logger.debug('Tries to access an object that does not exist : ' + str(e))
+            return None
+        return object
+
+    def create_rule(self):
+        rule_ip_template = "alert ip $HOME_NET any -> {{ value }} any (msg:\"{{ comment }}\"; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
+        rule_md5_template = "alert ip $HOME_NET any -> any any (msg:\"{{ comment }}\"; filemd5:{{ value }}; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
+        rule_url_template = "alert http $HOME_NET any -> any any (msg:\"{{ comment }}\"; http_uri:{{ value }}; classtype:string-detect; target:src_ip; reference:{{ type }},{{ value }}; sid:{{ sid }}; rev:1;)\n"
+        if self.type == "IP":
+            t = Template(rule_ip_template)
+        elif self.type == "MD5":
+            t = Template(rule_md5_template)
+        elif self.type == "URL":
+            t = Template(rule_url_template)
+        else:
+            raise Exception("Blacklist type unknown")
+        if not self.comment:
+            self.comment = self.type + " " + self.value + " in BlackList"
+        rule_created = t.render(value=self.value,
+                                type=self.type,
+                                comment=self.comment,
+                                sid=self.sid
+                                )
+        signature = SignatureSuricata(sid=self.sid,
+                                      classtype=ClassType.get_by_name("string-detect"),
+                                      msg=self.comment,
+                                      rev=1,
+                                      reference=self.type + "," + self.value,
+                                      rule_full=rule_created,
+                                      enabled=True,
+                                      created_date=timezone.now(),
+                                      )
+        signature.save()
+        if len(self.rulesets.all()) > 0:
+            for ruleset in self.rulesets.all():
+                ruleset.add(signature)
+                ruleset.save()

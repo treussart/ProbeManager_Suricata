@@ -1,5 +1,5 @@
 from django.contrib import admin
-from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, SourceSuricata, PcapTestSuricata
+from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, SourceSuricata, PcapTestSuricata, BlackListSuricata
 from suricata.utils import create_conf, convert_conf
 from home.tasks import upload_url_http
 from home.utils import create_deploy_rules_task, create_upload_task, add_1_hour, create_check_task
@@ -377,6 +377,30 @@ class PcapTestSuricataAdmin(admin.ModelAdmin):
     actions = [test_rule_with_pcap]
 
 
+class BlackListSuricataAdmin(admin.ModelAdmin):
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        obj.create_rule()
+
+    def get_actions(self, request):
+        actions = super(BlackListSuricataAdmin, self).get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def delete_blacklist(self, request, obj):
+        for blacklist in obj:
+            if SignatureSuricata.get_by_sid(blacklist.sid):
+                signature = SignatureSuricata.get_by_sid(blacklist.sid)
+                signature.delete()
+        super().delete_model(request, obj)
+
+    list_display = ('__str__',)
+    list_display_links = None
+    actions = [delete_blacklist]
+
+
 admin.site.register(Suricata, SuricataAdmin)
 admin.site.register(SignatureSuricata, SignatureSuricataAdmin)
 admin.site.register(ScriptSuricata, ScriptSuricataAdmin)
@@ -384,3 +408,4 @@ admin.site.register(RuleSetSuricata, RuleSetSuricataAdmin)
 admin.site.register(ConfSuricata, ConfSuricataAdmin)
 admin.site.register(SourceSuricata, SourceSuricataAdmin)
 admin.site.register(PcapTestSuricata, PcapTestSuricataAdmin)
+admin.site.register(BlackListSuricata, BlackListSuricataAdmin)

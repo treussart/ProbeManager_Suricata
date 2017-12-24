@@ -834,9 +834,9 @@ class BlackListSuricata(models.Model):
         return object
 
     def create_rule(self):
-        rule_ip_template = "alert ip $HOME_NET any -> {{ value }} any (msg:\"{{ comment }}\"; classtype:string-detect; target:src_ip; reference:{{ type }},{{ value }}; sid:{{ sid }}; rev:1;)\n"
-        rule_md5_template = "alert ip $HOME_NET any -> any any (msg:\"{{ comment }}\"; filemd5:{{ value }}; classtype:string-detect; target:src_ip; reference:{{ type }},{{ value }}; sid:{{ sid }}; rev:1;)\n"
-        rule_url_template = "alert http $HOME_NET any -> any any (msg:\"{{ comment }}\"; http_uri:{{ value }}; classtype:string-detect; target:src_ip; reference:{{ type }},{{ value }}; sid:{{ sid }}; rev:1;)\n"
+        rule_ip_template = "alert ip $HOME_NET any -> {{ value }} any (msg:\"{{ comment }}\"; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
+        rule_md5_template = "alert ip $HOME_NET any -> any any (msg:\"{{ comment }}\"; filemd5:{{ value }}; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
+        rule_url_template = "alert http $HOME_NET any -> any any (msg:\"{{ comment }}\"; http_uri:{{ value }}; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
         if self.type == "IP":
             t = Template(rule_ip_template)
         elif self.type == "MD5":

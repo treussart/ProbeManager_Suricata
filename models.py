@@ -863,5 +863,5 @@ class BlackListSuricata(models.Model):
                                       )
         signature.save()
         for ruleset in self.rulesets.all():
-            ruleset.add(signature)
+            ruleset.signatures.add(signature)
             ruleset.save()

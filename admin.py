@@ -380,8 +380,10 @@ class PcapTestSuricataAdmin(admin.ModelAdmin):
 class BlackListSuricataAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
+        obj.save()
+        obj.rulesets = form.cleaned_data['rulesets']
         obj.create_rule()
+        # super().save_model(request, obj, form, change)
 
     def get_actions(self, request):
         actions = super(BlackListSuricataAdmin, self).get_actions(request)

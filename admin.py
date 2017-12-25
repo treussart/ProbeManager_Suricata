@@ -1,5 +1,5 @@
 from django.contrib import admin
-from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, SourceSuricata, PcapTestSuricata, BlackListSuricata
+from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, SourceSuricata, BlackListSuricata
 from suricata.utils import create_conf, convert_conf
 from home.tasks import upload_url_http
 from home.utils import create_deploy_rules_task, create_upload_task, add_1_hour, create_check_task
@@ -212,6 +212,11 @@ class SignatureSuricataAdmin(admin.ModelAdmin):
         errors = list()
         for signature in obj:
             response = signature.test()
+            if signature.pcap_success:
+                response_pcap = signature.test_pcap()
+                if not response_pcap['status']:
+                    test = False
+                    errors.append(str(signature) + " : " + str(response_pcap['errors']))
             if not response['status']:
                 test = False
                 errors.append(str(signature) + " : " + str(response['errors']))
@@ -350,33 +355,6 @@ class SourceSuricataAdmin(admin.ModelAdmin):
         }
 
 
-class PcapTestSuricataAdmin(admin.ModelAdmin):
-
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
-        response = obj.test()
-        if response['status']:
-            messages.add_message(request, messages.SUCCESS, "Test signature with pcap OK")
-        else:
-            messages.add_message(request, messages.ERROR,
-                                 "Test signatures with pcap failed ! " + str(response['errors']))
-
-    def test_rule_with_pcap(self, request, obj):
-        test = True
-        errors = list()
-        for pcap_test in obj:
-            response = pcap_test.test()
-            if not response['status']:
-                test = False
-                errors.append(str(pcap_test.signature) + " : " + str(response['errors']))
-        if test:
-            messages.add_message(request, messages.SUCCESS, "Test signatures with pcap OK")
-        else:
-            messages.add_message(request, messages.ERROR, "Test signatures with pcap failed ! " + str(errors))
-
-    actions = [test_rule_with_pcap]
-
-
 class BlackListSuricataAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
@@ -409,5 +387,4 @@ admin.site.register(ScriptSuricata, ScriptSuricataAdmin)
 admin.site.register(RuleSetSuricata, RuleSetSuricataAdmin)
 admin.site.register(ConfSuricata, ConfSuricataAdmin)
 admin.site.register(SourceSuricata, SourceSuricataAdmin)
-admin.site.register(PcapTestSuricata, PcapTestSuricataAdmin)
 admin.site.register(BlackListSuricata, BlackListSuricataAdmin)

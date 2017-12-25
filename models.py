@@ -17,6 +17,7 @@ from home.utils import update_progress
 import select2.fields
 from django.db.models import Q
 from jinja2 import Template
+from home.notifications import send_notification
 
 
 logger = logging.getLogger('suricata')
@@ -194,6 +195,7 @@ class SignatureSuricata(Rule):
     sid = models.IntegerField(unique=True, db_index=True, help_text="<a target='_blank' href='http://doc.emergingthreats.net/bin/view/Main/SidAllocation'>help</a>")
     classtype = models.ForeignKey(ClassType)
     msg = models.CharField(max_length=1000)
+    pcap_success = models.FileField(name='pcap_success', upload_to='tmp/pcap/', blank=True)
 
     def __str__(self):
         return str(self.sid) + " : " + str(self.msg)
@@ -315,6 +317,64 @@ class SignatureSuricata(Rule):
         if process.returncode == 0:
             return {'status': True}
         # if not -> return error
+        return {'status': False, 'errors': errdata}
+
+    def test_pcap(self):
+        tmpdir = settings.BASE_DIR + "/tmp/test_pcap/" + str(self.sid) + "/"
+        if not os.path.exists(tmpdir):
+            os.makedirs(tmpdir)
+        rule_file = tmpdir + "rule.rules"
+        conf_file = tmpdir + "suricata.yaml"
+        with open(rule_file, 'w') as f:
+            f.write(self.rule_full)
+        f.close()
+        with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml") as f:
+            CONF_FULL_DEFAULT = f.read()
+        config = CONF_FULL_DEFAULT
+        config += """
+
+logging:
+  default-log-level: error
+  outputs:
+  - console:
+      enabled: yes
+  - file:
+      enabled: no
+      filename: /var/log/suricata/suricata.log
+      level: info
+"""
+        with open(conf_file, 'w') as f:
+            f.write(config)
+        f.close()
+        # test pcap success
+        cmd = [settings.SURICATA_BINARY,
+               '-l', tmpdir,
+               '-S', rule_file,
+               '-c', conf_file,
+               '-r', settings.BASE_DIR + "/" + self.pcap_success.name,
+               '--set', 'outputs.0.fast.enabled=yes',
+               '--set', 'classification-file=' + settings.BASE_DIR + '/suricata/tests/data/classification.config',
+               '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
+               ]
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (outdata, errdata) = process.communicate()
+        # test if alert is generated :
+        test = False
+        if os.path.isfile(tmpdir + "fast.log"):
+            with open(tmpdir + "fast.log", "r") as f:
+                if self.msg in f.read():
+                    test = True
+
+        # Remove files
+        os.remove(rule_file)
+        os.remove(conf_file)
+        for file in glob.glob(tmpdir + "*.log"):
+            os.remove(file)
+        # if success ok
+        if process.returncode == 0 and test:
+            return {'status': True}
+        # if not -> return error
+        errdata += b"Alert not generated"
         return {'status': False, 'errors': errdata}
 
 
@@ -637,7 +697,43 @@ class Suricata(Probe):
         else:
             return {'status': False, 'errors': errors}
 
+    def test_pcaps(self):
+        test = True
+        errors = list()
+        for ruleset in self.rulesets.all():
+            for signature in ruleset.signatures.all():
+                if signature.pcap_success:
+                    response_pcap_test = signature.test_pcap()
+                    if not response_pcap_test['status']:
+                        test = False
+                        errors.append(str(signature) + " : " + str(response_pcap_test['errors']))
+                else:
+                    return {'status': True}
+        if test:
+            return {'status': True}
+        else:
+            return {'status': False, 'errors': errors}
+
     def deploy_rules(self):
+        # Tests
+        try:
+            response_rules = self.test_rules()
+            response_pcaps = self.test_pcaps()
+            if self.secure_deployment:
+                if not response_rules['status']:
+                    if self.secure_deployment:
+                        return {"message": "Error during the rules test for probe " + str(self.name) + ' : ' + str(response_rules['errors'])}
+                    else:
+                        send_notification('Error', 'Error during the rules test for probe ' + str(self.name) + ' : ' + str(response_rules['errors']))
+                elif not response_pcaps['status']:
+                    if self.secure_deployment:
+                        return {"message": "Error during the pcap test for probe " + str(self.name) + ' : ' + str(response_pcaps['errors'])}
+                    else:
+                        send_notification('Error', 'Error during the pcap test for probe ' + str(self.name) + ' : ' + str(response_pcaps['errors']))
+        except Exception as e:
+            logger.error(e.__str__())
+            return {"message": "Error for probe " + str(self.name) + " during the tests", "exception": e.__str__()}
+
         # Signatures
         tmpdir = settings.BASE_DIR + "/tmp/" + self.name + "/"
         if not os.path.exists(tmpdir):
@@ -671,7 +767,7 @@ class Suricata(Probe):
             response = execute_copy(self.server, src=tmpdir + 'temp.rules',
                                     dest=self.configuration.conf_rules_directory.rstrip('/') + '/deployed.rules', become=True)
         except Exception as e:
-            logger.error(e)
+            logger.error(e.__str__())
             deploy = False
         logger.debug("output : " + str(response))
 
@@ -718,84 +814,6 @@ class Suricata(Probe):
             logger.debug('Tries to access an object that does not exist : ' + str(e))
             return None
         return object
-
-
-class PcapTestSuricata(models.Model):
-    """
-    Stores a Pcap file for testing signature or script.
-    """
-    signature = select2.fields.ForeignKey(SignatureSuricata,
-                                          limit_choices_to=models.Q(enabled=True),
-                                          ajax=True,
-                                          search_field='sid',
-                                          overlay="Choose a signature...",
-                                          js_options={
-                                              'quiet_millis': 200,
-                                          },
-                                          on_delete=models.CASCADE
-                                          )
-    probe = models.ForeignKey(Suricata)
-    pcap_success = models.FileField(name='pcap_success', upload_to='tmp/pcap/', blank=True)
-    # pcap_fail = models.FileField(name='pcap_fail', upload_to=tmpdir, blank=True)
-
-    def __str__(self):
-        return str(self.signature) + "  " + str(self.probe)
-
-    def test(self):
-        tmpdir = settings.BASE_DIR + "/tmp/pcap/" + str(self.signature.sid) + "/" + self.probe.name + "/"
-        if not os.path.exists(tmpdir):
-            os.makedirs(tmpdir)
-        rule_file = tmpdir + "rule.rules"
-        conf_file = tmpdir + "suricata.yaml"
-        with open(rule_file, 'w') as f:
-            f.write(self.signature.rule_full)
-        f.close()
-        config = self.probe.configuration.conf_advanced_text
-        config += """
-
-logging:
-  default-log-level: error
-  outputs:
-  - console:
-      enabled: yes
-  - file:
-      enabled: no
-      filename: /var/log/suricata/suricata.log
-      level: info
-"""
-        with open(conf_file, 'w') as f:
-            f.write(config)
-        f.close()
-        # test pcap success
-        cmd = [settings.SURICATA_BINARY,
-               '-l', tmpdir,
-               '-S', rule_file,
-               '-c', conf_file,
-               '-r', settings.BASE_DIR + "/" + self.pcap_success.name,
-               '--set', 'outputs.0.fast.enabled=yes',
-               '--set', 'classification-file=' + settings.BASE_DIR + '/suricata/tests/data/classification.config',
-               '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
-               ]
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (outdata, errdata) = process.communicate()
-        # test if alert is generated :
-        test = False
-        if os.path.isfile(tmpdir + "fast.log"):
-            with open(tmpdir + "fast.log", "r") as f:
-                if self.signature.msg in f.read():
-                    test = True
-
-        # Remove files
-        os.remove(rule_file)
-        os.remove(conf_file)
-        for file in glob.glob(tmpdir + "*.log"):
-            os.remove(file)
-        # if success ok
-        if process.returncode == 0 and test:
-            return {'status': True}
-        # if not -> return error
-        errdata += b"Alert not generated"
-        return {'status': False, 'errors': errdata}
 
 
 def increment_sid():

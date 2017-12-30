@@ -893,31 +893,43 @@ class BlackListSuricata(models.Model):
                                 comment=self.comment,
                                 sid=self.sid
                                 )
-        signature = SignatureSuricata(sid=self.sid,
-                                      classtype=ClassType.get_by_name("string-detect"),
-                                      msg=self.comment,
-                                      rev=1,
-                                      reference=self.type + "," + self.value,
-                                      rule_full=rule_created,
-                                      enabled=True,
-                                      created_date=timezone.now(),
-                                      )
-        signature.save()
+        if self.type == "MD5":
+            signature = SignatureSuricata(sid=self.sid,
+                                          classtype=ClassType.get_by_name("string-detect"),
+                                          msg="MD5 in blacklist",
+                                          rev=1,
+                                          rule_full=rule_created,
+                                          enabled=True,
+                                          created_date=timezone.now(),
+                                          )
+        else:
+            signature = SignatureSuricata(sid=self.sid,
+                                          classtype=ClassType.get_by_name("string-detect"),
+                                          msg=self.comment,
+                                          rev=1,
+                                          reference=self.type + "," + self.value,
+                                          rule_full=rule_created,
+                                          enabled=True,
+                                          created_date=timezone.now(),
+                                          )
         return signature
 
     def create_blacklist(self):
         rule_ip_template = "alert ip $HOME_NET any -> {{ value }} any (msg:\"{{ comment }}\"; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
-        rule_md5_template = "alert ip $HOME_NET any -> any any (msg:\"{{ comment }}\"; filemd5:md5-blacklist; classtype:string-detect; sid:{{ sid }}; rev:1;)\n"
+        rule_md5_template = "alert ip $HOME_NET any -> any any (msg:\"MD5 in blacklist\"; filemd5:md5-blacklist; classtype:string-detect; sid:{{ sid }}; rev:1;)\n"
         rule_host_template = "alert http $HOME_NET any -> any any (msg:\"{{ comment }}\"; content:\"{{ value }}\"; http_host; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
         if self.type == "IP":
             signature = self.create_signature(Template(rule_ip_template))
+            signature.save()
         elif self.type == "HOST":
             signature = self.create_signature(Template(rule_host_template))
+            signature.save()
         elif self.type == "MD5":
             # savoir si signature blacklist existe deja:
             signature = SignatureSuricata.objects.filter(rule_full__icontains="filemd5:md5-blacklist").first()
             if not signature:
                 signature = self.create_signature(Template(rule_md5_template))
+                signature.save()
             md5_suricata = Md5Suricata(value=self.value, signature=signature)
             md5_suricata.save()
         else:

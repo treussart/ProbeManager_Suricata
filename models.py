@@ -785,12 +785,13 @@ class Suricata(Probe):
                         deploy = False
                     logger.debug("output : " + str(response))
 
-        logger.debug("output : " + str(response))
-
+        # clean
         for file in glob.glob(tmpdir + '*.lua'):
             os.remove(tmpdir + file)
         if os.path.isfile(tmpdir + 'temp.rules'):
             os.remove(tmpdir + "temp.rules")
+        if os.path.isfile(tmpdir + 'md5-blacklist'):
+            os.remove(tmpdir + "md5-blacklist")
         if deploy:
             self.rules_updated_date = timezone.now()
             self.save()
@@ -895,7 +896,7 @@ class BlackListSuricata(models.Model):
                                 )
         if self.type == "MD5":
             signature = SignatureSuricata(sid=self.sid,
-                                          classtype=ClassType.get_by_name("string-detect"),
+                                          classtype=ClassType.get_by_name("misc-attack"),
                                           msg="MD5 in blacklist",
                                           rev=1,
                                           rule_full=rule_created,
@@ -904,7 +905,7 @@ class BlackListSuricata(models.Model):
                                           )
         else:
             signature = SignatureSuricata(sid=self.sid,
-                                          classtype=ClassType.get_by_name("string-detect"),
+                                          classtype=ClassType.get_by_name("misc-attack"),
                                           msg=self.comment,
                                           rev=1,
                                           reference=self.type + "," + self.value,
@@ -915,9 +916,9 @@ class BlackListSuricata(models.Model):
         return signature
 
     def create_blacklist(self):
-        rule_ip_template = "alert ip $HOME_NET any -> {{ value }} any (msg:\"{{ comment }}\"; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
-        rule_md5_template = "alert ip $HOME_NET any -> any any (msg:\"MD5 in blacklist\"; filemd5:md5-blacklist; classtype:string-detect; sid:{{ sid }}; rev:1;)\n"
-        rule_host_template = "alert http $HOME_NET any -> any any (msg:\"{{ comment }}\"; content:\"{{ value }}\"; http_host; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
+        rule_ip_template = "alert ip $HOME_NET any -> {{ value }} any (msg:\"{{ comment }}\"; classtype:misc-attack; target:src_ip; sid:{{ sid }}; rev:1;)\n"
+        rule_md5_template = "alert ip $HOME_NET any -> any any (msg:\"MD5 in blacklist\"; filemd5:md5-blacklist; classtype:misc-attack; sid:{{ sid }}; rev:1;)\n"
+        rule_host_template = "alert http $HOME_NET any -> any any (msg:\"{{ comment }}\"; content:\"{{ value }}\"; http_host; classtype:misc-attack; target:src_ip; sid:{{ sid }}; rev:1;)\n"
         if self.type == "IP":
             signature = self.create_signature(Template(rule_ip_template))
             signature.save()

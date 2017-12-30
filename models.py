@@ -734,10 +734,13 @@ class Suricata(Probe):
             logger.error(e.__str__())
             return {"message": "Error for probe " + str(self.name) + " during the tests", "exception": e.__str__()}
 
-        # Signatures
         tmpdir = settings.BASE_DIR + "/tmp/" + self.name + "/"
         if not os.path.exists(tmpdir):
             os.makedirs(tmpdir)
+        deploy = True
+        response = dict()
+
+        # Signatures
         value = ""
         for ruleset in self.rulesets.all():
             for signature in ruleset.signatures.all():
@@ -746,10 +749,28 @@ class Suricata(Probe):
         f = open(tmpdir + "temp.rules", 'w')
         f.write(value)
         f.close()
+        try:
+            response = execute_copy(self.server, src=tmpdir + 'temp.rules',
+                                    dest=self.configuration.conf_rules_directory.rstrip('/') + '/deployed.rules', become=True)
+        except Exception as e:
+            logger.error(e.__str__())
+            deploy = False
+
+        # Blacklists MD5
+        value = ""
+        for md5 in Md5Suricata.get_all():
+            value += md5.value + os.linesep
+        f = open(tmpdir + "md5-blacklist", 'w')
+        f.write(value)
+        f.close()
+        try:
+            response = execute_copy(self.server, src=tmpdir + 'md5-blacklist',
+                                    dest=self.configuration.conf_rules_directory.rstrip('/') + '/md5-blacklist', become=True)
+        except Exception as e:
+            logger.error(e.__str__())
+            deploy = False
 
         # Scripts
-        deploy = True
-        response = dict()
         for ruleset in self.rulesets.all():
             for script in ruleset.scripts.all():
                 if script.enabled:
@@ -763,12 +784,7 @@ class Suricata(Probe):
                         logger.error(e)
                         deploy = False
                     logger.debug("output : " + str(response))
-        try:
-            response = execute_copy(self.server, src=tmpdir + 'temp.rules',
-                                    dest=self.configuration.conf_rules_directory.rstrip('/') + '/deployed.rules', become=True)
-        except Exception as e:
-            logger.error(e.__str__())
-            deploy = False
+
         logger.debug("output : " + str(response))
 
         for file in glob.glob(tmpdir + '*.lua'):
@@ -824,13 +840,22 @@ def increment_sid():
         return last_sid.sid + 1
 
 
+class Md5Suricata(models.Model):
+    value = models.CharField(max_length=600, unique=True, null=False, blank=False)
+    signature = models.ForeignKey(SignatureSuricata, editable=False)
+
+    @classmethod
+    def get_all(cls):
+        return cls.objects.all()
+
+
 class BlackListSuricata(models.Model):
     """
     Stores an instance of a pattern in blacklist.
     """
     TYPE_CHOICES = (
         ('IP', 'IP'),
-        # ('MD5', 'MD5'),
+        ('MD5', 'MD5'),
         ('HOST', 'HOST'),
     )
     type = models.CharField(max_length=255, choices=TYPE_CHOICES)
@@ -851,16 +876,7 @@ class BlackListSuricata(models.Model):
             return None
         return object
 
-    def create_rule(self):
-        rule_ip_template = "alert ip $HOME_NET any -> {{ value }} any (msg:\"{{ comment }}\"; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
-        # rule_md5_template = "alert ip $HOME_NET any -> any any (msg:\"{{ comment }}\"; filemd5:{{ value }}; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
-        rule_host_template = "alert http $HOME_NET any -> any any (msg:\"{{ comment }}\"; content:\"{{ value }}\"; http_host; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
-        if self.type == "IP":
-            t = Template(rule_ip_template)
-        elif self.type == "HOST":
-            t = Template(rule_host_template)
-        else:
-            raise Exception("Blacklist type unknown")
+    def create_signature(self, t):
         if not self.comment:
             self.comment = self.type + " " + self.value + " in BlackList"
         rule_created = t.render(value=self.value,
@@ -878,6 +894,25 @@ class BlackListSuricata(models.Model):
                                       created_date=timezone.now(),
                                       )
         signature.save()
+        return signature
+
+    def create_blacklist(self):
+        rule_ip_template = "alert ip $HOME_NET any -> {{ value }} any (msg:\"{{ comment }}\"; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
+        rule_md5_template = "alert ip $HOME_NET any -> any any (msg:\"{{ comment }}\"; filemd5:md5-blacklist; classtype:string-detect; sid:{{ sid }}; rev:1;)\n"
+        rule_host_template = "alert http $HOME_NET any -> any any (msg:\"{{ comment }}\"; content:\"{{ value }}\"; http_host; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
+        if self.type == "IP":
+            signature = self.create_signature(Template(rule_ip_template))
+        elif self.type == "HOST":
+            signature = self.create_signature(Template(rule_host_template))
+        elif self.type == "MD5":
+            # savoir si signature blacklist existe deja:
+            signature = SignatureSuricata.objects.filter(rule_full__icontains="filemd5:md5-blacklist").first()
+            if not signature:
+                signature = self.create_signature(Template(rule_md5_template))
+            md5_suricata = Md5Suricata(value=self.value, signature=signature)
+            md5_suricata.save()
+        else:
+            raise Exception("Blacklist type unknown")
         for ruleset in self.rulesets.all():
             ruleset.signatures.add(signature)
             ruleset.save()

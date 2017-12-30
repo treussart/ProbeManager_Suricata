@@ -1,5 +1,5 @@
 from django.contrib import admin
-from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, SourceSuricata, BlackListSuricata
+from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, SourceSuricata, BlackListSuricata, Md5Suricata
 from suricata.utils import create_conf, convert_conf
 from home.tasks import upload_url_http
 from home.utils import create_deploy_rules_task, create_upload_task, add_1_hour, create_check_task
@@ -360,7 +360,7 @@ class BlackListSuricataAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.save()
         obj.rulesets = form.cleaned_data['rulesets']
-        obj.create_rule()
+        obj.create_blacklist()
         # super().save_model(request, obj, form, change)
 
     def get_actions(self, request):
@@ -371,9 +371,13 @@ class BlackListSuricataAdmin(admin.ModelAdmin):
 
     def delete_blacklist(self, request, obj):
         for blacklist in obj:
-            if SignatureSuricata.get_by_sid(blacklist.sid):
-                signature = SignatureSuricata.get_by_sid(blacklist.sid)
-                signature.delete()
+            if blacklist.type == "MD5":
+                md5_suricata = Md5Suricata.objects.get(value=blacklist.value)
+                md5_suricata.delete()
+            else:
+                if SignatureSuricata.get_by_sid(blacklist.sid):
+                    signature = SignatureSuricata.get_by_sid(blacklist.sid)
+                    signature.delete()
         super().delete_model(request, obj)
 
     list_display = ('__str__',)

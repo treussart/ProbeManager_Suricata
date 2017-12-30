@@ -26,6 +26,7 @@ if [[ $OSTYPE == *"darwin"* ]]; then
             brew install suricata
         fi
         config="/usr/local/etc/suricata/suricata.yaml"
+        rules="/usr/local/etc/suricata/rules"
     fi
 fi
 # Debian
@@ -34,6 +35,7 @@ if [ -f /etc/debian_version ]; then
         apt install suricata
     fi
     config="/etc/suricata/suricata.yaml"
+    rules="/etc/suricata/rules"
 fi
 if [ $arg == 'prod' ]; then
     touch /var/log/suricata/suricata.log
@@ -41,7 +43,9 @@ if [ $arg == 'prod' ]; then
     chmod a+r  /var/log/suricata/suricata.log
     echo "SURICATA_BINARY = '$( which suricata )'" > "$dest"probemanager/suricata/settings.py
     echo "SURICATA_CONFIG = '$config'" >> "$dest"probemanager/suricata/settings.py
+    echo "SURICATA_RULES = '$rules'" >> "$dest"probemanager/suricata/settings.py
 else
     echo "SURICATA_BINARY = '$( which suricata )'" > probemanager/suricata/settings.py
     echo "SURICATA_CONFIG = '$config'" >> probemanager/suricata/settings.py
+    echo "SURICATA_RULES = '$rules'" >> probemanager/suricata/settings.py
 fi

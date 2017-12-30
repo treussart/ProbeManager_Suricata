@@ -684,6 +684,12 @@ class Suricata(Probe):
         return True
 
     def test_rules(self):
+        # Set blacklists file
+        value = ""
+        for md5 in Md5Suricata.get_all():
+            value += md5.value + os.linesep
+        with open(settings.SURICATA_RULES + '/md5-blacklist', 'w') as f:
+            f.write(value)
         test = True
         errors = list()
         for ruleset in self.rulesets.all():

@@ -372,8 +372,9 @@ class BlackListSuricataAdmin(admin.ModelAdmin):
     def delete_blacklist(self, request, obj):
         for blacklist in obj:
             if blacklist.type == "MD5":
-                md5_suricata = Md5Suricata.objects.get(value=blacklist.value)
-                md5_suricata.delete()
+                if Md5Suricata.get_by_value(blacklist.value):
+                    md5_suricata = Md5Suricata.get_by_value(blacklist.value)
+                    md5_suricata.delete()
             else:
                 if SignatureSuricata.get_by_sid(blacklist.sid):
                     signature = SignatureSuricata.get_by_sid(blacklist.sid)

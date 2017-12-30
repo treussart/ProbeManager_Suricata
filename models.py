@@ -848,6 +848,15 @@ class Md5Suricata(models.Model):
     def get_all(cls):
         return cls.objects.all()
 
+    @classmethod
+    def get_by_value(cls, value):
+        try:
+            object = cls.objects.get(value=value)
+        except cls.DoesNotExist as e:
+            logger.debug('Tries to access an object that does not exist : ' + str(e))
+            return None
+        return object
+
 
 class BlackListSuricata(models.Model):
     """

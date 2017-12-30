@@ -831,7 +831,7 @@ class BlackListSuricata(models.Model):
     TYPE_CHOICES = (
         ('IP', 'IP'),
         ('MD5', 'MD5'),
-        ('URL', 'URL'),
+        ('HOST', 'HOST'),
     )
     type = models.CharField(max_length=255, choices=TYPE_CHOICES)
     value = models.CharField(max_length=600, unique=True, null=False, blank=False)
@@ -854,13 +854,13 @@ class BlackListSuricata(models.Model):
     def create_rule(self):
         rule_ip_template = "alert ip $HOME_NET any -> {{ value }} any (msg:\"{{ comment }}\"; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
         rule_md5_template = "alert ip $HOME_NET any -> any any (msg:\"{{ comment }}\"; filemd5:{{ value }}; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
-        rule_url_template = "alert http $HOME_NET any -> any any (msg:\"{{ comment }}\"; http_uri:{{ value }}; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
+        rule_host_template = "alert http $HOME_NET any -> any any (msg:\"{{ comment }}\"; content:\"{{ value }}\"; http_host; classtype:string-detect; target:src_ip; sid:{{ sid }}; rev:1;)\n"
         if self.type == "IP":
             t = Template(rule_ip_template)
         elif self.type == "MD5":
             t = Template(rule_md5_template)
-        elif self.type == "URL":
-            t = Template(rule_url_template)
+        elif self.type == "HOST":
+            t = Template(rule_host_template)
         else:
             raise Exception("Blacklist type unknown")
         if not self.comment:

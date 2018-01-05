@@ -665,9 +665,9 @@ class Suricata(Probe):
             response = execute(self.server, tasks, become=True)
         except Exception as e:
             logger.error(e)
-            return False
+            return {'status': False, 'errors': e.__str__()}
         logger.debug("output : " + str(response))
-        return True
+        return {'status': True}
 
     def reload(self):
         if self.server.os.name == 'debian':
@@ -679,9 +679,9 @@ class Suricata(Probe):
             response = execute(self.server, tasks, become=True)
         except Exception as e:
             logger.error(e.__str__())
-            return False
+            return {'status': False, 'errors': e.__str__()}
         logger.debug("output : " + str(response))
-        return True
+        return {'status': True}
 
     def test_rules(self):
         # Set blacklists file
@@ -728,23 +728,24 @@ class Suricata(Probe):
             if self.secure_deployment:
                 if not response_rules['status']:
                     if self.secure_deployment:
-                        return {"message": "Error during the rules test for probe " + str(self.name) + ' : ' + str(response_rules['errors'])}
+                        return {"status": False, "message": "Error during the rules test for probe " + str(self.name) + ' : ' + str(response_rules['errors'])}
                     else:
                         send_notification('Error', 'Error during the rules test for probe ' + str(self.name) + ' : ' + str(response_rules['errors']))
                 elif not response_pcaps['status']:
                     if self.secure_deployment:
-                        return {"message": "Error during the pcap test for probe " + str(self.name) + ' : ' + str(response_pcaps['errors'])}
+                        return {"status": False, "message": "Error during the pcap test for probe " + str(self.name) + ' : ' + str(response_pcaps['errors'])}
                     else:
                         send_notification('Error', 'Error during the pcap test for probe ' + str(self.name) + ' : ' + str(response_pcaps['errors']))
         except Exception as e:
             logger.error(e.__str__())
-            return {"message": "Error for probe " + str(self.name) + " during the tests", "exception": e.__str__()}
+            return {"status": False, "message": "Error for probe " + str(self.name) + " during the tests", "exception": e.__str__()}
 
         tmpdir = settings.BASE_DIR + "/tmp/" + self.name + "/"
         if not os.path.exists(tmpdir):
             os.makedirs(tmpdir)
         deploy = True
         response = dict()
+        errors = list()
 
         # Signatures
         value = ""
@@ -761,6 +762,7 @@ class Suricata(Probe):
         except Exception as e:
             logger.error(e.__str__())
             deploy = False
+            errors.append(e.__str__())
 
         # Blacklists MD5
         value = ""
@@ -775,6 +777,7 @@ class Suricata(Probe):
         except Exception as e:
             logger.error(e.__str__())
             deploy = False
+            errors.append(e.__str__())
 
         # Scripts
         for ruleset in self.rulesets.all():
@@ -789,6 +792,7 @@ class Suricata(Probe):
                     except Exception as e:
                         logger.error(e)
                         deploy = False
+                        errors.append(e.__str__())
                     logger.debug("output : " + str(response))
 
         # clean
@@ -801,7 +805,9 @@ class Suricata(Probe):
         if deploy:
             self.rules_updated_date = timezone.now()
             self.save()
-        return deploy
+            return {"status": deploy}
+        else:
+            return {'status': deploy, 'errors': errors}
 
     def deploy_conf(self):
         tmpdir = settings.BASE_DIR + "/tmp/" + self.name + "/"
@@ -812,6 +818,7 @@ class Suricata(Probe):
         f.write(value)
         f.close()
         deploy = True
+        errors = list()
         response = dict()
         try:
             response = execute_copy(self.server, src=os.path.abspath(tmpdir + 'temp.conf'),
@@ -819,11 +826,15 @@ class Suricata(Probe):
         except Exception as e:
             logger.error(e)
             deploy = False
+            errors.append(e.__str__())
         logger.debug("output : " + str(response))
 
         if os.path.isfile(tmpdir + 'temp.conf'):
             os.remove(tmpdir + "temp.conf")
-        return deploy
+        if deploy:
+            return {'status': deploy}
+        else:
+            return {'status': deploy, 'errors': errors}
 
     @classmethod
     def get_all(cls):

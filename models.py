@@ -1,24 +1,25 @@
-from django.db import models
-from home.ssh import execute, execute_copy
-from home.models import Probe, ProbeConfiguration
-from rules.models import RuleSet, Rule, ClassType, Source
-import logging
-import re
-from suricata.exceptions import RuleNotFoundParam
-from django.utils import timezone
-import urllib.request
-import ssl
-import os
 import glob
-import tarfile
+import logging
+import os
+import re
+import ssl
 import subprocess
-from django.conf import settings
-from home.utils import update_progress
-import select2.fields
-from django.db.models import Q
-from jinja2 import Template
-from home.notifications import send_notification
+import tarfile
+import urllib.request
 
+import select2.fields
+from django.conf import settings
+from django.db import models
+from django.db.models import Q
+from django.utils import timezone
+from jinja2 import Template
+
+from home.models import Probe, ProbeConfiguration
+from home.notifications import send_notification
+from home.ssh import execute, execute_copy
+from home.utils import update_progress
+from rules.models import RuleSet, Rule, ClassType, Source
+from suricata.exceptions import RuleNotFoundParam
 
 logger = logging.getLogger('suricata')
 
@@ -75,7 +76,6 @@ class ConfSuricata(ProbeConfiguration):
     """
     with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml") as f:
         CONF_FULL_DEFAULT = f.read()
-    f.close()
     conf_rules_directory = models.CharField(max_length=400, default="/etc/suricata/rules")
     conf_script_directory = models.CharField(max_length=400, default='/etc/suricata/lua')
     conf_file = models.CharField(max_length=400, default="/etc/suricata/suricata.yaml")
@@ -106,19 +106,32 @@ class ConfSuricata(ProbeConfiguration):
     conf_stats = models.ForeignKey(ValidationType, related_name="conf_stats", default=1)
     conf_afpacket_interface = models.CharField(max_length=100, default='eth0')
     conf_outputs_fast = models.ForeignKey(ValidationType, related_name="conf_outputs_fast", default=1)
-    conf_outputs_evelog = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog", default=0,)
-    conf_outputs_evelog_alert_http = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_http", default=0)
-    conf_outputs_evelog_alert_tls = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_tls", default=0)
-    conf_outputs_evelog_alert_ssh = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_ssh", default=0)
-    conf_outputs_evelog_alert_smtp = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_smtp", default=0)
-    conf_outputs_evelog_alert_dnp3 = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_dnp3", default=0)
-    conf_outputs_evelog_alert_taggedpackets = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_taggedpackets", default=0)
+    conf_outputs_evelog = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog", default=0, )
+    conf_outputs_evelog_alert_http = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_http",
+                                                       default=0)
+    conf_outputs_evelog_alert_tls = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_tls",
+                                                      default=0)
+    conf_outputs_evelog_alert_ssh = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_ssh",
+                                                      default=0)
+    conf_outputs_evelog_alert_smtp = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_smtp",
+                                                       default=0)
+    conf_outputs_evelog_alert_dnp3 = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_dnp3",
+                                                       default=0)
+    conf_outputs_evelog_alert_taggedpackets = models.ForeignKey(ValidationType,
+                                                                related_name="conf_outputs_evelog_alert_taggedpackets",
+                                                                default=0)
     conf_outputs_evelog_xff = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_xff", default=1)
-    conf_outputs_evelog_dns_query = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_dns_query", default=0)
-    conf_outputs_evelog_dns_answer = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_dns_answer", default=0)
-    conf_outputs_evelog_http_extended = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_http_extended", default=0)
-    conf_outputs_evelog_tls_extended = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_tls_extended", default=0)
-    conf_outputs_evelog_files_forcemagic = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_files_forcemagic", default=1)
+    conf_outputs_evelog_dns_query = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_dns_query",
+                                                      default=0)
+    conf_outputs_evelog_dns_answer = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_dns_answer",
+                                                       default=0)
+    conf_outputs_evelog_http_extended = models.ForeignKey(ValidationType,
+                                                          related_name="conf_outputs_evelog_http_extended", default=0)
+    conf_outputs_evelog_tls_extended = models.ForeignKey(ValidationType,
+                                                         related_name="conf_outputs_evelog_tls_extended", default=0)
+    conf_outputs_evelog_files_forcemagic = models.ForeignKey(ValidationType,
+                                                             related_name="conf_outputs_evelog_files_forcemagic",
+                                                             default=1)
     conf_outputs_unified2alert = models.ForeignKey(ValidationType, related_name="conf_outputs_unified2alert", default=1)
     conf_lua = models.ForeignKey(ValidationType, related_name="conf_lua", default=1)
 
@@ -179,7 +192,6 @@ logging:
                ]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (outdata, errdata) = process.communicate()
-        f.close()
         os.remove(conf_file)
         # if success ok
         if process.returncode == 0:
@@ -190,9 +202,12 @@ logging:
 
 class SignatureSuricata(Rule):
     """
-    Stores a signature Suricata compatible. (pattern matching), see http://suricata.readthedocs.io/en/latest/rules/index.html
+    Stores a signature Suricata compatible. (pattern matching),
+    see http://suricata.readthedocs.io/en/latest/rules/index.html
     """
-    sid = models.IntegerField(unique=True, db_index=True, help_text="<a target='_blank' href='http://doc.emergingthreats.net/bin/view/Main/SidAllocation'>help</a>")
+    sid = models.IntegerField(unique=True, db_index=True,
+                              help_text="<a target='_blank' " +
+                                        "href='http://doc.emergingthreats.net/bin/view/Main/SidAllocation'>help</a>")
     classtype = models.ForeignKey(ClassType)
     msg = models.CharField(max_length=1000)
     pcap_success = models.FileField(name='pcap_success', upload_to='tmp/pcap/', blank=True)
@@ -311,7 +326,6 @@ class SignatureSuricata(Rule):
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (outdata, errdata) = process.communicate()
         logger.debug(outdata)
-        f.close()
         os.remove(rule_file)
         # if success ok
         if process.returncode == 0:
@@ -327,7 +341,6 @@ class SignatureSuricata(Rule):
         conf_file = tmpdir + "suricata.yaml"
         with open(rule_file, 'w') as f:
             f.write(self.rule_full)
-        f.close()
         with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml") as f:
             CONF_FULL_DEFAULT = f.read()
         config = CONF_FULL_DEFAULT
@@ -345,7 +358,6 @@ logging:
 """
         with open(conf_file, 'w') as f:
             f.write(config)
-        f.close()
         # test pcap success
         cmd = [settings.SURICATA_BINARY,
                '-l', tmpdir,
@@ -380,7 +392,8 @@ logging:
 
 class ScriptSuricata(Rule):
     """
-    Stores a script Suricata compatible. see : http://suricata.readthedocs.io/en/latest/rules/rule-lua-scripting.html
+    Stores a script Suricata compatible.
+    see : http://suricata.readthedocs.io/en/latest/rules/rule-lua-scripting.html
     """
     name = models.CharField(max_length=100, unique=True, db_index=True)
 
@@ -459,6 +472,7 @@ class RuleSetSuricata(RuleSet):
                                              sort_field='sid',
                                              js_options={'quiet_millis': 200}
                                              )
+
     # signatures = models.ManyToManyField(SignatureSuricata, blank=True)
     # scripts = models.ManyToManyField(ScriptSuricata, blank=True)
 
@@ -655,7 +669,8 @@ class Suricata(Probe):
 
     def install(self):
         if self.server.os.name == 'debian':
-            command1 = "echo 'deb http://http.debian.net/debian stretch-backports main' >> /etc/apt/sources.list.d/stretch-backports.list"
+            command1 = "echo 'deb http://http.debian.net/debian stretch-backports main' >> " \
+                       "/etc/apt/sources.list.d/stretch-backports.list"
             command2 = "apt update"
             command3 = "apt -t stretch-backports install " + self.__class__.__name__.lower()
         else:
@@ -728,17 +743,26 @@ class Suricata(Probe):
             if self.secure_deployment:
                 if not response_rules['status']:
                     if self.secure_deployment:
-                        return {"status": False, "message": "Error during the rules test for probe " + str(self.name) + ' : ' + str(response_rules['errors'])}
+                        return {"status": False,
+                                "message": "Error during the rules test for probe " + str(self.name) + ' : ' + str(
+                                    response_rules['errors'])}
                     else:
-                        send_notification('Error', 'Error during the rules test for probe ' + str(self.name) + ' : ' + str(response_rules['errors']))
+                        send_notification('Error',
+                                          'Error during the rules test for probe ' + str(self.name) + ' : ' + str(
+                                              response_rules['errors']))
                 elif not response_pcaps['status']:
                     if self.secure_deployment:
-                        return {"status": False, "message": "Error during the pcap test for probe " + str(self.name) + ' : ' + str(response_pcaps['errors'])}
+                        return {"status": False,
+                                "message": "Error during the pcap test for probe " + str(self.name) + ' : ' + str(
+                                    response_pcaps['errors'])}
                     else:
-                        send_notification('Error', 'Error during the pcap test for probe ' + str(self.name) + ' : ' + str(response_pcaps['errors']))
+                        send_notification('Error',
+                                          'Error during the pcap test for probe ' + str(self.name) + ' : ' + str(
+                                              response_pcaps['errors']))
         except Exception as e:
             logger.error(e.__str__())
-            return {"status": False, "message": "Error for probe " + str(self.name) + " during the tests", "exception": e.__str__()}
+            return {"status": False, "message": "Error for probe " + str(self.name) + " during the tests",
+                    "exception": e.__str__()}
 
         tmpdir = settings.BASE_DIR + "/tmp/" + self.name + "/"
         if not os.path.exists(tmpdir):
@@ -758,7 +782,8 @@ class Suricata(Probe):
         f.close()
         try:
             response = execute_copy(self.server, src=tmpdir + 'temp.rules',
-                                    dest=self.configuration.conf_rules_directory.rstrip('/') + '/deployed.rules', become=True)
+                                    dest=self.configuration.conf_rules_directory.rstrip('/') + '/deployed.rules',
+                                    become=True)
         except Exception as e:
             logger.error(e.__str__())
             deploy = False
@@ -773,7 +798,8 @@ class Suricata(Probe):
         f.close()
         try:
             response = execute_copy(self.server, src=tmpdir + 'md5-blacklist',
-                                    dest=self.configuration.conf_rules_directory.rstrip('/') + '/md5-blacklist', become=True)
+                                    dest=self.configuration.conf_rules_directory.rstrip('/') + '/md5-blacklist',
+                                    become=True)
         except Exception as e:
             logger.error(e.__str__())
             deploy = False
@@ -788,7 +814,8 @@ class Suricata(Probe):
                     f.close()
                     try:
                         response = execute_copy(self.server, src=tmpdir + script.name,
-                                                dest=self.configuration.conf_script_directory.rstrip('/') + '/' + script.name, become=True)
+                                                dest=self.configuration.conf_script_directory.rstrip(
+                                                    '/') + '/' + script.name, become=True)
                     except Exception as e:
                         logger.error(e)
                         deploy = False
@@ -933,9 +960,13 @@ class BlackListSuricata(models.Model):
         return signature
 
     def create_blacklist(self):
-        rule_ip_template = "alert ip $HOME_NET any -> {{ value }} any (msg:\"{{ comment }}\"; classtype:misc-attack; target:src_ip; sid:{{ sid }}; rev:1;)\n"
-        rule_md5_template = "alert ip $HOME_NET any -> any any (msg:\"MD5 in blacklist\"; filemd5:md5-blacklist; classtype:misc-attack; sid:{{ sid }}; rev:1;)\n"
-        rule_host_template = "alert http $HOME_NET any -> any any (msg:\"{{ comment }}\"; content:\"{{ value }}\"; http_host; classtype:misc-attack; target:src_ip; sid:{{ sid }}; rev:1;)\n"
+        rule_ip_template = "alert ip $HOME_NET any -> {{ value }} any (msg:\"{{ comment }}\"; " \
+                           "classtype:misc-attack; target:src_ip; sid:{{ sid }}; rev:1;)\n"
+        rule_md5_template = "alert ip $HOME_NET any -> any any (msg:\"MD5 in blacklist\"; " \
+                            "filemd5:md5-blacklist; classtype:misc-attack; sid:{{ sid }}; rev:1;)\n"
+        rule_host_template = "alert http $HOME_NET any -> any any (msg:\"{{ comment }}\"; " \
+                             "content:\"{{ value }}\"; http_host; classtype:misc-attack; target:src_ip; " \
+                             "sid:{{ sid }}; rev:1;)\n"
         if self.type == "IP":
             signature = self.create_signature(Template(rule_ip_template))
             signature.save()

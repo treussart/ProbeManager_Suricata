@@ -1,14 +1,17 @@
 """ python manage.py test suricata.tests.test_models """
-from django.test import TestCase
-from suricata.models import AppLayerType, ConfSuricata, Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, SourceSuricata
-from rules.models import ClassType
 from django.db.utils import IntegrityError
+from django.test import TestCase
 from django.utils import timezone
+
 from home.utils import decrypt
+from rules.models import ClassType
+from suricata.models import AppLayerType, ConfSuricata, Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, \
+    SourceSuricata
 
 
 class SourceSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset', 'test-suricata-source']
+    fixtures = ['init', 'crontab', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+                'test-suricata-source']
 
     @classmethod
     def setUpTestData(cls):
@@ -165,7 +168,8 @@ class SignatureSuricataTest(TestCase):
         self.assertEqual(SignatureSuricata.get_by_sid(20402000).msg, "ET DROP Dshield Block Listed Source group 1")
 
         self.assertEqual(signature_suricatas[0].msg, "ET DROP Dshield Block Listed Source group 1")
-        self.assertEqual(str(signature_suricata), str(signature_suricata.sid) + " : " + "ET DROP Dshield Block Listed Source group 1")
+        self.assertEqual(str(signature_suricata),
+                         str(signature_suricata.sid) + " : " + "ET DROP Dshield Block Listed Source group 1")
         signature_suricata = SignatureSuricata.get_by_id(99)
         self.assertEqual(signature_suricata, None)
         with self.assertRaises(AttributeError):

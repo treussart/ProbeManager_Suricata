@@ -1,12 +1,16 @@
 """ python manage.py test suricata.tests.test_tasks """
 from django.test import TestCase
-from suricata.models import Suricata, SourceSuricata
+
 from home.tasks import upload_url_http, reload_probe, deploy_rules
+from suricata.models import Suricata, SourceSuricata
+
+
 # from unittest import skip
 
 
 class TasksSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset', 'test-suricata-source', 'test-suricata-conf', 'test-suricata-probe']
+    fixtures = ['init', 'crontab', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+                'test-suricata-source', 'test-suricata-conf', 'test-suricata-probe']
 
     @classmethod
     def setUpTestData(cls):

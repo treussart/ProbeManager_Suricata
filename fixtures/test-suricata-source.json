@@ -1,95 +1,95 @@
 [
-{
+  {
     "model": "rules.source",
     "pk": 1,
     "fields": {
-        "method": 0,
-        "data_type": 1,
-        "uri": "https://sslbl.abuse.ch/blacklist/sslblacklist.rules",
-        "scheduled_rules_deployment_enabled": true,
-        "scheduled_rules_deployment_crontab": 1,
-        "scheduled_deploy": true,
-        "file": "",
-        "type": "SourceSuricata"
+      "method": 0,
+      "data_type": 1,
+      "uri": "https://sslbl.abuse.ch/blacklist/sslblacklist.rules",
+      "scheduled_rules_deployment_enabled": true,
+      "scheduled_rules_deployment_crontab": 1,
+      "scheduled_deploy": true,
+      "file": "",
+      "type": "SourceSuricata"
     }
-},
-{
+  },
+  {
     "model": "suricata.sourcesuricata",
     "pk": 1,
     "fields": {
-        "rulesets": [
-            1
-        ]
+      "rulesets": [
+        1
+      ]
     }
-},
-{
+  },
+  {
     "model": "django_celery_beat.periodictasks",
     "pk": 1,
     "fields": {
-        "last_update": "2017-09-23T21:33:21.848Z"
+      "last_update": "2017-09-23T21:33:21.848Z"
     }
-},
-{
+  },
+  {
     "model": "django_celery_beat.periodictask",
     "pk": 1,
     "fields": {
-        "name": "suricata1_deploy_rules_*/30 * * * * (m/h/d/dM/MY)",
-        "task": "home.tasks.deploy_rules",
-        "interval": null,
-        "crontab": 1,
-        "args": "[\"suricata1\"]",
-        "kwargs": "{}",
-        "queue": null,
-        "exchange": null,
-        "routing_key": null,
-        "expires": null,
-        "enabled": true,
-        "last_run_at": null,
-        "total_run_count": 0,
-        "date_changed": "2017-09-23T21:28:43.864Z",
-        "description": ""
+      "name": "suricata1_deploy_rules_*/30 * * * * (m/h/d/dM/MY)",
+      "task": "home.tasks.deploy_rules",
+      "interval": null,
+      "crontab": 1,
+      "args": "[\"suricata1\"]",
+      "kwargs": "{}",
+      "queue": null,
+      "exchange": null,
+      "routing_key": null,
+      "expires": null,
+      "enabled": true,
+      "last_run_at": null,
+      "total_run_count": 0,
+      "date_changed": "2017-09-23T21:28:43.864Z",
+      "description": ""
     }
-},
-{
+  },
+  {
     "model": "django_celery_beat.periodictask",
     "pk": 2,
     "fields": {
-        "name": "https://sslbl.abuse.ch/blacklist/sslblacklist.rules_upload_task",
-        "task": "home.tasks.upload_url_http",
-        "interval": null,
-        "crontab": 1,
-        "args": "[\"https://sslbl.abuse.ch/blacklist/sslblacklist.rules\"]",
-        "kwargs": "{}",
-        "queue": null,
-        "exchange": null,
-        "routing_key": null,
-        "expires": null,
-        "enabled": true,
-        "last_run_at": null,
-        "total_run_count": 0,
-        "date_changed": "2017-09-23T21:33:21.833Z",
-        "description": ""
+      "name": "https://sslbl.abuse.ch/blacklist/sslblacklist.rules_upload_task",
+      "task": "home.tasks.upload_url_http",
+      "interval": null,
+      "crontab": 1,
+      "args": "[\"https://sslbl.abuse.ch/blacklist/sslblacklist.rules\"]",
+      "kwargs": "{}",
+      "queue": null,
+      "exchange": null,
+      "routing_key": null,
+      "expires": null,
+      "enabled": true,
+      "last_run_at": null,
+      "total_run_count": 0,
+      "date_changed": "2017-09-23T21:33:21.833Z",
+      "description": ""
     }
-},
-{
+  },
+  {
     "model": "django_celery_beat.periodictask",
     "pk": 3,
     "fields": {
-        "name": "suricata1_source_deploy_rules_*/40 * * * * (m/h/d/dM/MY)",
-        "task": "home.tasks.deploy_rules",
-        "interval": null,
-        "crontab": 1,
-        "args": "[\"suricata1\"]",
-        "kwargs": "{}",
-        "queue": null,
-        "exchange": null,
-        "routing_key": null,
-        "expires": null,
-        "enabled": true,
-        "last_run_at": null,
-        "total_run_count": 0,
-        "date_changed": "2017-09-23T21:33:21.850Z",
-        "description": ""
+      "name": "suricata1_source_deploy_rules_*/40 * * * * (m/h/d/dM/MY)",
+      "task": "home.tasks.deploy_rules",
+      "interval": null,
+      "crontab": 1,
+      "args": "[\"suricata1\"]",
+      "kwargs": "{}",
+      "queue": null,
+      "exchange": null,
+      "routing_key": null,
+      "expires": null,
+      "enabled": true,
+      "last_run_at": null,
+      "total_run_count": 0,
+      "date_changed": "2017-09-23T21:33:21.850Z",
+      "description": ""
     }
-}
+  }
 ]

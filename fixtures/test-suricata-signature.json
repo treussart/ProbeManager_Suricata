@@ -1,44 +1,44 @@
 [
-{
+  {
     "model": "rules.rule",
     "pk": 1,
     "fields": {
-        "rev": 4549,
-        "reference": "http://www.exemple.com",
-        "rule_full": "alert ip [77.72.82.0/24,91.211.0.0/24,5.188.10.0/24,37.139.50.0/24,5.188.203.0/24,5.101.40.0/24,45.55.21.0/24,80.82.77.0/24,93.174.93.0/24,155.94.89.0/24,196.52.43.0/24,168.1.128.0/24,158.85.81.0/24,141.212.122.0/24,71.6.146.0/24,163.172.227.0/24,85.93.20.0/24,195.88.209.0/24,91.230.47.0/24,191.96.249.0/24] any -> $HOME_NET any (msg:\"ET DROP Dshield Block Listed Source group 1\"; reference:url,feeds.dshield.org/block.txt; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; flowbits:set,ET.Evil; flowbits:set,ET.DshieldIP; sid:2402000; rev:4549;)",
-        "enabled": true,
-        "created_date": "2017-09-23T21:18:36.414Z",
-        "updated_date": "2017-09-23T21:18:36.414Z"
+      "rev": 4549,
+      "reference": "http://www.exemple.com",
+      "rule_full": "alert ip [77.72.82.0/24,91.211.0.0/24,5.188.10.0/24,37.139.50.0/24,5.188.203.0/24,5.101.40.0/24,45.55.21.0/24,80.82.77.0/24,93.174.93.0/24,155.94.89.0/24,196.52.43.0/24,168.1.128.0/24,158.85.81.0/24,141.212.122.0/24,71.6.146.0/24,163.172.227.0/24,85.93.20.0/24,195.88.209.0/24,91.230.47.0/24,191.96.249.0/24] any -> $HOME_NET any (msg:\"ET DROP Dshield Block Listed Source group 1\"; reference:url,feeds.dshield.org/block.txt; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; flowbits:set,ET.Evil; flowbits:set,ET.DshieldIP; sid:2402000; rev:4549;)",
+      "enabled": true,
+      "created_date": "2017-09-23T21:18:36.414Z",
+      "updated_date": "2017-09-23T21:18:36.414Z"
     }
-},
-{
+  },
+  {
     "model": "rules.rule",
     "pk": 2,
     "fields": {
-        "rev": 4729,
-        "reference": "www.shadowserver.org",
-        "rule_full": "alert tcp $HOME_NET any -> [83.68.16.30,91.214.111.26,91.243.115.100,149.56.153.98,154.35.64.82] 80 (msg:\"ET CNC Shadowserver DNS Reported CnC Server Port 80 Group 1\"; flow:to_server,established; flags:S; reference:url,doc.emergingthreats.net/bin/view/Main/BotCC; reference:url,www.shadowserver.org; threshold: type limit, track by_src, seconds 360, count 1; classtype:trojan-activity; flowbits:set,ET.Evil; flowbits:set,ET.BotccIP; sid:2405001; rev:4729;)",
-        "enabled": true,
-        "created_date": "2017-09-23T21:19:58.020Z",
-        "updated_date": "2017-09-23T21:19:58.020Z"
+      "rev": 4729,
+      "reference": "www.shadowserver.org",
+      "rule_full": "alert tcp $HOME_NET any -> [83.68.16.30,91.214.111.26,91.243.115.100,149.56.153.98,154.35.64.82] 80 (msg:\"ET CNC Shadowserver DNS Reported CnC Server Port 80 Group 1\"; flow:to_server,established; flags:S; reference:url,doc.emergingthreats.net/bin/view/Main/BotCC; reference:url,www.shadowserver.org; threshold: type limit, track by_src, seconds 360, count 1; classtype:trojan-activity; flowbits:set,ET.Evil; flowbits:set,ET.BotccIP; sid:2405001; rev:4729;)",
+      "enabled": true,
+      "created_date": "2017-09-23T21:19:58.020Z",
+      "updated_date": "2017-09-23T21:19:58.020Z"
     }
-},
-{
+  },
+  {
     "model": "suricata.signaturesuricata",
     "pk": 1,
     "fields": {
-        "sid": 20402000,
-        "classtype": 29,
-        "msg": "ET DROP Dshield Block Listed Source group 1"
+      "sid": 20402000,
+      "classtype": 29,
+      "msg": "ET DROP Dshield Block Listed Source group 1"
     }
-},
-{
+  },
+  {
     "model": "suricata.signaturesuricata",
     "pk": 2,
     "fields": {
-        "sid": 2405001,
-        "classtype": 20,
-        "msg": "ET CNC Shadowserver Reported CnC Server Port 80 Group 1"
+      "sid": 2405001,
+      "classtype": 20,
+      "msg": "ET CNC Shadowserver Reported CnC Server Port 80 Group 1"
     }
-}
+  }
 ]

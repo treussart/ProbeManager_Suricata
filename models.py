@@ -103,48 +103,64 @@ class ConfSuricata(ProbeConfiguration):
     conf_DNP3_PORTS = models.CharField(max_length=100, default="20000")
     conf_MODBUS_PORTS = models.CharField(max_length=100, default="502")
 
-    conf_stats = models.ForeignKey(ValidationType, related_name="conf_stats", default=1)
+    conf_stats = models.ForeignKey(ValidationType, related_name="conf_stats", default=1, on_delete=models.CASCADE)
     conf_afpacket_interface = models.CharField(max_length=100, default='eth0')
-    conf_outputs_fast = models.ForeignKey(ValidationType, related_name="conf_outputs_fast", default=1)
-    conf_outputs_evelog = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog", default=0, )
+    conf_outputs_fast = models.ForeignKey(ValidationType, related_name="conf_outputs_fast", default=1,
+                                          on_delete=models.CASCADE)
+    conf_outputs_evelog = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog", default=0,
+                                            on_delete=models.CASCADE )
     conf_outputs_evelog_alert_http = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_http",
-                                                       default=0)
+                                                       default=0, on_delete=models.CASCADE)
     conf_outputs_evelog_alert_tls = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_tls",
-                                                      default=0)
+                                                      default=0, on_delete=models.CASCADE)
     conf_outputs_evelog_alert_ssh = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_ssh",
-                                                      default=0)
+                                                      default=0, on_delete=models.CASCADE)
     conf_outputs_evelog_alert_smtp = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_smtp",
-                                                       default=0)
+                                                       default=0, on_delete=models.CASCADE)
     conf_outputs_evelog_alert_dnp3 = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_dnp3",
-                                                       default=0)
+                                                       default=0, on_delete=models.CASCADE)
     conf_outputs_evelog_alert_taggedpackets = models.ForeignKey(ValidationType,
                                                                 related_name="conf_outputs_evelog_alert_taggedpackets",
-                                                                default=0)
-    conf_outputs_evelog_xff = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_xff", default=1)
+                                                                default=0, on_delete=models.CASCADE)
+    conf_outputs_evelog_xff = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_xff", default=1,
+                                                on_delete=models.CASCADE)
     conf_outputs_evelog_dns_query = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_dns_query",
-                                                      default=0)
+                                                      default=0, on_delete=models.CASCADE)
     conf_outputs_evelog_dns_answer = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_dns_answer",
-                                                       default=0)
+                                                       default=0, on_delete=models.CASCADE)
     conf_outputs_evelog_http_extended = models.ForeignKey(ValidationType,
-                                                          related_name="conf_outputs_evelog_http_extended", default=0)
+                                                          related_name="conf_outputs_evelog_http_extended", default=0,
+                                                          on_delete=models.CASCADE)
     conf_outputs_evelog_tls_extended = models.ForeignKey(ValidationType,
-                                                         related_name="conf_outputs_evelog_tls_extended", default=0)
+                                                         related_name="conf_outputs_evelog_tls_extended", default=0,
+                                                         on_delete=models.CASCADE)
     conf_outputs_evelog_files_forcemagic = models.ForeignKey(ValidationType,
                                                              related_name="conf_outputs_evelog_files_forcemagic",
-                                                             default=1)
-    conf_outputs_unified2alert = models.ForeignKey(ValidationType, related_name="conf_outputs_unified2alert", default=1)
-    conf_lua = models.ForeignKey(ValidationType, related_name="conf_lua", default=1)
+                                                             default=1, on_delete=models.CASCADE)
+    conf_outputs_unified2alert = models.ForeignKey(ValidationType, related_name="conf_outputs_unified2alert", default=1,
+                                                   on_delete=models.CASCADE)
+    conf_lua = models.ForeignKey(ValidationType, related_name="conf_lua", default=1, on_delete=models.CASCADE)
 
-    conf_applayer_tls = models.ForeignKey(AppLayerType, related_name="conf_applayer_tls", default=0)
-    conf_applayer_dcerpc = models.ForeignKey(AppLayerType, related_name="conf_applayer_dcerpc", default=0)
-    conf_applayer_ftp = models.ForeignKey(AppLayerType, related_name="conf_applayer_ftp", default=0)
-    conf_applayer_ssh = models.ForeignKey(AppLayerType, related_name="conf_applayer_ssh", default=0)
-    conf_applayer_smtp = models.ForeignKey(AppLayerType, related_name="conf_applayer_smtp", default=0)
-    conf_applayer_imap = models.ForeignKey(AppLayerType, related_name="conf_applayer_imap", default=2)
-    conf_applayer_msn = models.ForeignKey(AppLayerType, related_name="conf_applayer_msn", default=2)
-    conf_applayer_smb = models.ForeignKey(AppLayerType, related_name="conf_applayer_smb", default=0)
-    conf_applayer_dns = models.ForeignKey(AppLayerType, related_name="conf_applayer_dns", default=0)
-    conf_applayer_http = models.ForeignKey(AppLayerType, related_name="conf_applayer_http", default=0)
+    conf_applayer_tls = models.ForeignKey(AppLayerType, related_name="conf_applayer_tls", default=0,
+                                          on_delete=models.CASCADE)
+    conf_applayer_dcerpc = models.ForeignKey(AppLayerType, related_name="conf_applayer_dcerpc", default=0,
+                                             on_delete=models.CASCADE)
+    conf_applayer_ftp = models.ForeignKey(AppLayerType, related_name="conf_applayer_ftp", default=0,
+                                          on_delete=models.CASCADE)
+    conf_applayer_ssh = models.ForeignKey(AppLayerType, related_name="conf_applayer_ssh", default=0,
+                                          on_delete=models.CASCADE)
+    conf_applayer_smtp = models.ForeignKey(AppLayerType, related_name="conf_applayer_smtp", default=0,
+                                           on_delete=models.CASCADE)
+    conf_applayer_imap = models.ForeignKey(AppLayerType, related_name="conf_applayer_imap", default=2,
+                                           on_delete=models.CASCADE)
+    conf_applayer_msn = models.ForeignKey(AppLayerType, related_name="conf_applayer_msn", default=2,
+                                          on_delete=models.CASCADE)
+    conf_applayer_smb = models.ForeignKey(AppLayerType, related_name="conf_applayer_smb", default=0,
+                                          on_delete=models.CASCADE)
+    conf_applayer_dns = models.ForeignKey(AppLayerType, related_name="conf_applayer_dns", default=0,
+                                          on_delete=models.CASCADE)
+    conf_applayer_http = models.ForeignKey(AppLayerType, related_name="conf_applayer_http", default=0,
+                                           on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -208,7 +224,7 @@ class SignatureSuricata(Rule):
     sid = models.IntegerField(unique=True, db_index=True,
                               help_text="<a target='_blank' " +
                                         "href='http://doc.emergingthreats.net/bin/view/Main/SidAllocation'>help</a>")
-    classtype = models.ForeignKey(ClassType)
+    classtype = models.ForeignKey(ClassType, on_delete=models.CASCADE)
     msg = models.CharField(max_length=1000)
     pcap_success = models.FileField(name='pcap_success', upload_to='tmp/pcap/', blank=True)
 
@@ -342,8 +358,8 @@ class SignatureSuricata(Rule):
         with open(rule_file, 'w') as f:
             f.write(self.rule_full)
         with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml") as f:
-            CONF_FULL_DEFAULT = f.read()
-        config = CONF_FULL_DEFAULT
+            conf_full_default = f.read()
+        config = conf_full_default
         config += """
 
 logging:
@@ -658,7 +674,7 @@ class Suricata(Probe):
     Stores an instance of Suricata IDS software.
     """
     rulesets = models.ManyToManyField(RuleSetSuricata, blank=True)
-    configuration = models.ForeignKey(ConfSuricata)
+    configuration = models.ForeignKey(ConfSuricata, on_delete=models.CASCADE)
 
     def __init__(self, *args, **kwargs):
         super(Probe, self).__init__(*args, **kwargs)
@@ -680,7 +696,7 @@ class Suricata(Probe):
             response = execute(self.server, tasks, become=True)
         except Exception as e:
             logger.error(e)
-            return {'status': False, 'errors': e.__str__()}
+            return {'status': False, 'errors': str(e)}
         logger.debug("output : " + str(response))
         return {'status': True}
 
@@ -693,8 +709,8 @@ class Suricata(Probe):
         try:
             response = execute(self.server, tasks, become=True)
         except Exception as e:
-            logger.error(e.__str__())
-            return {'status': False, 'errors': e.__str__()}
+            logger.error(str(e))
+            return {'status': False, 'errors': str(e)}
         logger.debug("output : " + str(response))
         return {'status': True}
 
@@ -760,9 +776,9 @@ class Suricata(Probe):
                                           'Error during the pcap test for probe ' + str(self.name) + ' : ' + str(
                                               response_pcaps['errors']))
         except Exception as e:
-            logger.error(e.__str__())
+            logger.error(str(e))
             return {"status": False, "message": "Error for probe " + str(self.name) + " during the tests",
-                    "exception": e.__str__()}
+                    "exception": str(e)}
 
         tmpdir = settings.BASE_DIR + "/tmp/" + self.name + "/"
         if not os.path.exists(tmpdir):
@@ -785,9 +801,9 @@ class Suricata(Probe):
                                     dest=self.configuration.conf_rules_directory.rstrip('/') + '/deployed.rules',
                                     become=True)
         except Exception as e:
-            logger.error(e.__str__())
+            logger.error(str(e))
             deploy = False
-            errors.append(e.__str__())
+            errors.append(str(e))
 
         # Blacklists MD5
         value = ""
@@ -801,9 +817,9 @@ class Suricata(Probe):
                                     dest=self.configuration.conf_rules_directory.rstrip('/') + '/md5-blacklist',
                                     become=True)
         except Exception as e:
-            logger.error(e.__str__())
+            logger.error(str(e))
             deploy = False
-            errors.append(e.__str__())
+            errors.append(str(e))
 
         # Scripts
         for ruleset in self.rulesets.all():
@@ -819,7 +835,7 @@ class Suricata(Probe):
                     except Exception as e:
                         logger.error(e)
                         deploy = False
-                        errors.append(e.__str__())
+                        errors.append(str(e))
                     logger.debug("output : " + str(response))
 
         # clean
@@ -853,7 +869,7 @@ class Suricata(Probe):
         except Exception as e:
             logger.error(e)
             deploy = False
-            errors.append(e.__str__())
+            errors.append(str(e))
         logger.debug("output : " + str(response))
 
         if os.path.isfile(tmpdir + 'temp.conf'):
@@ -887,7 +903,7 @@ def increment_sid():
 
 class Md5Suricata(models.Model):
     value = models.CharField(max_length=600, unique=True, null=False, blank=False)
-    signature = models.ForeignKey(SignatureSuricata, editable=False)
+    signature = models.ForeignKey(SignatureSuricata, editable=False, on_delete=models.CASCADE)
 
     @classmethod
     def get_all(cls):

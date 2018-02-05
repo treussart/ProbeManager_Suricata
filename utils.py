@@ -1,4 +1,5 @@
 import yaml
+
 from probemanager.settings import BASE_DIR
 
 
@@ -15,8 +16,8 @@ def convert_conf(configuration):
 
 def create_conf(configuration):
     with open(BASE_DIR + "/suricata/default-Suricata-conf.yaml") as f:
-        CONF_FULL_DEFAULT = f.read()
-    conf = yaml.load(CONF_FULL_DEFAULT)
+        conf_full_default = f.read()
+    conf = yaml.load(conf_full_default)
     conf['vars']['address-groups']['HOME_NET'] = configuration.conf_HOME_NET
     conf['vars']['address-groups']['EXTERNAL_NET'] = configuration.conf_EXTERNAL_NET
     conf['vars']['address-groups']['HTTP_SERVERS'] = configuration.conf_HTTP_SERVERS
@@ -47,13 +48,15 @@ def create_conf(configuration):
     conf['outputs'][1]['eve-log']['types'][0]['alert']['ssh'] = str(configuration.conf_outputs_evelog_alert_ssh)
     conf['outputs'][1]['eve-log']['types'][0]['alert']['smtp'] = str(configuration.conf_outputs_evelog_alert_smtp)
     conf['outputs'][1]['eve-log']['types'][0]['alert']['dnp3'] = str(configuration.conf_outputs_evelog_alert_dnp3)
-    conf['outputs'][1]['eve-log']['types'][0]['alert']['tagged-packets'] = str(configuration.conf_outputs_evelog_alert_taggedpackets)
+    conf['outputs'][1]['eve-log']['types'][0]['alert']['tagged-packets'] = str(
+        configuration.conf_outputs_evelog_alert_taggedpackets)
     conf['outputs'][1]['eve-log']['types'][0]['alert']['xff']['enabled'] = str(configuration.conf_outputs_evelog_xff)
     conf['outputs'][1]['eve-log']['types'][1]['http']['extended'] = str(configuration.conf_outputs_evelog_http_extended)
     conf['outputs'][1]['eve-log']['types'][2]['dns']['query'] = str(configuration.conf_outputs_evelog_dns_query)
     conf['outputs'][1]['eve-log']['types'][2]['dns']['answer'] = str(configuration.conf_outputs_evelog_dns_answer)
     conf['outputs'][1]['eve-log']['types'][3]['tls']['extended'] = str(configuration.conf_outputs_evelog_tls_extended)
-    conf['outputs'][1]['eve-log']['types'][4]['files']['force-magic'] = str(configuration.conf_outputs_evelog_files_forcemagic)
+    conf['outputs'][1]['eve-log']['types'][4]['files']['force-magic'] = str(
+        configuration.conf_outputs_evelog_files_forcemagic)
     conf['outputs'][2]['unified2-alert']['enabled'] = str(configuration.conf_outputs_unified2alert)
     conf['outputs'][17]['lua']['enabled'] = str(configuration.conf_lua)
 

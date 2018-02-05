@@ -1,22 +1,24 @@
+import glob
+import logging
+import os
+import time
+import traceback
+
+from django import forms
+from django.conf import settings
 from django.contrib import admin
-from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, SourceSuricata, BlackListSuricata, Md5Suricata
-from suricata.utils import create_conf, convert_conf
+from django.contrib import messages
+from django.contrib.admin.helpers import ActionForm
+from django.http import HttpResponseRedirect
+from django_celery_beat.models import PeriodicTask, CrontabSchedule
+
 from home.tasks import upload_url_http
 from home.utils import create_deploy_rules_task, create_upload_task, add_1_hour, create_check_task
-import logging
-import traceback
-from django.conf import settings
-from django.contrib import messages
-from django_celery_beat.models import PeriodicTask, CrontabSchedule
-from django.contrib.admin.helpers import ActionForm
-from django import forms
-import time
-import os
-import glob
-from django.http import HttpResponseRedirect
 from home.utils import update_progress
 from suricata.forms import SuricataChangeForm
-
+from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, \
+    SourceSuricata, BlackListSuricata, Md5Suricata
+from suricata.utils import create_conf, convert_conf
 
 logger = logging.getLogger(__name__)
 
@@ -41,13 +43,13 @@ class RuleSetSuricataAdmin(admin.ModelAdmin):
 
 
 class SuricataAdmin(admin.ModelAdmin):
-
     class Media:
         js = (
             'suricata/js/mask-crontab.js',
         )
 
     """A ModelAdmin that uses a different form class when adding an object."""
+
     def get_form(self, request, obj=None, **kwargs):
         if obj is None:
             return super(SuricataAdmin, self).get_form(request, obj, **kwargs)
@@ -62,7 +64,8 @@ class SuricataAdmin(admin.ModelAdmin):
 
     def delete_model(self, request, obj):
         try:
-            periodic_task = PeriodicTask.objects.get(name=obj.name + "_deploy_rules_" + obj.scheduled_rules_deployment_crontab.__str__())
+            periodic_task = PeriodicTask.objects.get(
+                name=obj.name + "_deploy_rules_" + str(obj.scheduled_rules_deployment_crontab))
             periodic_task.delete()
             logger.debug(str(periodic_task) + " deleted")
         except PeriodicTask.DoesNotExist:
@@ -79,7 +82,7 @@ class SuricataAdmin(admin.ModelAdmin):
         for probe in obj:
             try:
                 periodic_task = PeriodicTask.objects.get(
-                    name=probe.name + "_deploy_rules_" + probe.scheduled_rules_deployment_crontab.__str__())
+                    name=probe.name + "_deploy_rules_" + str(probe.scheduled_rules_deployment_crontab))
                 periodic_task.delete()
                 logger.debug(str(periodic_task) + " deleted")
             except PeriodicTask.DoesNotExist:
@@ -157,7 +160,7 @@ class ScriptSuricataAdmin(admin.ModelAdmin):
     make_enabled.short_description = "Mark rule as enabled"
     make_disabled.short_description = "Mark rule as disabled"
 
-    search_fields = ('rule_full', )
+    search_fields = ('rule_full',)
     list_filter = ('enabled', 'created_date', 'updated_date', 'rulesetsuricata__name')
     list_display = ('id', 'name', 'enabled')
     actions = [make_enabled, make_disabled]
@@ -186,7 +189,8 @@ class SignatureSuricataAdmin(admin.ModelAdmin):
     remove_ruleset.short_description = 'Remove ruleset'
 
     class UpdateActionForm(ActionForm):
-        ruleset = forms.ModelChoiceField(queryset=RuleSetSuricata.get_all(), empty_label="Select a ruleset", required=False)
+        ruleset = forms.ModelChoiceField(queryset=RuleSetSuricata.get_all(), empty_label="Select a ruleset",
+                                         required=False)
 
     def make_enabled(self, request, queryset):
         rows_updated = queryset.update(enabled=True)
@@ -225,7 +229,7 @@ class SignatureSuricataAdmin(admin.ModelAdmin):
         else:
             messages.add_message(request, messages.ERROR, "Test signatures failed ! " + str(errors))
 
-    search_fields = ('rule_full', )
+    search_fields = ('rule_full',)
     list_filter = ('enabled', 'created_date', 'updated_date', 'rulesetsuricata__name')
     list_display = ('sid', 'msg', 'enabled')
     action_form = UpdateActionForm
@@ -265,7 +269,8 @@ class SourceSuricataAdmin(admin.ModelAdmin):
             try:
                 for ruleset in source.rulesets.all():
                     for probe in ruleset.suricata_set.all():
-                        periodic_task = PeriodicTask.objects.get(name__contains=probe.name + "_" + source.uri + "_deploy_rules_")
+                        periodic_task = PeriodicTask.objects.get(
+                            name__contains=probe.name + "_" + source.uri + "_deploy_rules_")
                         periodic_task.delete()
                         logger.debug(str(periodic_task) + " deleted")
             except PeriodicTask.DoesNotExist:
@@ -308,16 +313,17 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                 try:
                                     for probe in ruleset.suricata_set.all():
                                         schedule = add_1_hour(obj.scheduled_rules_deployment_crontab)
-                                        schedule, _ = CrontabSchedule.objects.get_or_create(minute=schedule.minute,
-                                                                                            hour=schedule.hour,
-                                                                                            day_of_week=schedule.day_of_week,
-                                                                                            day_of_month=schedule.day_of_month,
-                                                                                            month_of_year=schedule.month_of_year,
-                                                                                            )
+                                        schedule, _ = CrontabSchedule.objects.\
+                                            get_or_create(minute=schedule.minute,
+                                                          hour=schedule.hour,
+                                                          day_of_week=schedule.day_of_week,
+                                                          day_of_month=schedule.day_of_month,
+                                                          month_of_year=schedule.month_of_year,
+                                                          )
                                         schedule.save()
                                         create_deploy_rules_task(probe, schedule, obj)
                                 except Exception as e:
-                                    logger.error(e.__str__())
+                                    logger.error(str(e))
                 upload_url_http.delay(obj.uri, rulesets_id)
                 messages.add_message(request, messages.SUCCESS, "Upload source in progress. View Jobs")
             # Upload file
@@ -332,7 +338,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                 logger.error('Upload method unknown : ' + obj.method.name)
                 messages.add_message(request, messages.ERROR, 'Upload method unknown : ' + obj.method.name)
         except Exception as e:
-            logger.error(e.__str__())
+            logger.error(str(e))
             logger.error(traceback.print_exc())
             messages.add_message(request, messages.ERROR, str(e))
         finally:
@@ -351,7 +357,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
             'suricata/js/progress-bar.js',
         )
         css = {
-            'all': ('suricata/css/progress-bar.css', ),
+            'all': ('suricata/css/progress-bar.css',),
         }
 
 

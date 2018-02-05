@@ -1,65 +1,65 @@
 [
-{
+  {
     "model": "rules.ruleset",
     "pk": 1,
     "fields": {
-        "name": "ruleset1",
-        "description": "test",
-        "created_date": "2017-09-23T21:21:56.399Z",
-        "updated_date": null
+      "name": "ruleset1",
+      "description": "test",
+      "created_date": "2017-09-23T21:21:56.399Z",
+      "updated_date": null
     }
-},
-{
+  },
+  {
     "model": "rules.ruleset",
     "pk": 2,
     "fields": {
-        "name": "ruleset2",
-        "description": "test2",
-        "created_date": "2017-09-23T21:22:13.599Z",
-        "updated_date": null
+      "name": "ruleset2",
+      "description": "test2",
+      "created_date": "2017-09-23T21:22:13.599Z",
+      "updated_date": null
     }
-},
-{
+  },
+  {
     "model": "rules.ruleset",
     "pk": 3,
     "fields": {
-        "name": "ruleset3",
-        "description": "test3",
-        "created_date": "2017-09-23T21:22:33.894Z",
-        "updated_date": "2017-09-23T22:22:33.894Z"
+      "name": "ruleset3",
+      "description": "test3",
+      "created_date": "2017-09-23T21:22:33.894Z",
+      "updated_date": "2017-09-23T22:22:33.894Z"
     }
-},
-{
+  },
+  {
     "model": "suricata.rulesetsuricata",
     "pk": 1,
     "fields": {
-        "signatures": [
-            1,
-            2
-        ],
-        "scripts": [
-            3
-        ]
+      "signatures": [
+        1,
+        2
+      ],
+      "scripts": [
+        3
+      ]
     }
-},
-{
+  },
+  {
     "model": "suricata.rulesetsuricata",
     "pk": 2,
     "fields": {
-        "signatures": [
-            1
-        ],
-        "scripts": []
+      "signatures": [
+        1
+      ],
+      "scripts": []
     }
-},
-{
+  },
+  {
     "model": "suricata.rulesetsuricata",
     "pk": 3,
     "fields": {
-        "signatures": [],
-        "scripts": [
-            3
-        ]
+      "signatures": [],
+      "scripts": [
+        3
+      ]
     }
-}
+  }
 ]

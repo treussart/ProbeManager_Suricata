@@ -1,17 +1,21 @@
 """ python manage.py test suricata.tests.test_views """
-from suricata.models import Suricata
-from django.test import Client, TestCase
-from django.contrib.auth.models import User
-from suricata.models import SignatureSuricata
-from django.utils import timezone
-from rules.models import ClassType, DataTypeUpload, MethodUpload
-from django_celery_beat.models import CrontabSchedule, PeriodicTask
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.test import Client, TestCase
+from django.utils import timezone
+from django_celery_beat.models import CrontabSchedule, PeriodicTask
+
+from rules.models import ClassType, DataTypeUpload, MethodUpload
+from suricata.models import SignatureSuricata
+from suricata.models import Suricata
+
+
 # from unittest import skip
 
 
 class ViewsSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset', 'test-suricata-conf', 'test-suricata-probe']
+    fixtures = ['init', 'crontab', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+                'test-suricata-conf', 'test-suricata-probe']
 
     def setUp(self):
         self.client = Client()
@@ -41,7 +45,8 @@ class ViewsSuricataTest(TestCase):
 
 
 class ViewsSuricataSourceAdminTest(TestCase):
-    fixtures = ['init', 'crontab', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset', 'test-suricata-conf', 'test-suricata-probe']
+    fixtures = ['init', 'crontab', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+                'test-suricata-conf', 'test-suricata-probe']
 
     def setUp(self):
         self.client = Client()
@@ -79,7 +84,8 @@ class ViewsSuricataSourceAdminTest(TestCase):
         self.assertIn('File uploaded successfully', str(response.content))
         self.assertEqual(ClassType.get_by_name('suspicious-login').name, 'suspicious-login')
         self.assertEqual(SignatureSuricata.get_by_sid(2102088).msg, 'GPL RPC ypupdated arbitrary command attempt UDP')
-        self.assertEqual(SignatureSuricata.get_by_sid(2008860).msg, 'ET TELNET External Telnet Attempt To Cisco Device With No Telnet Password Set (Automatically Dissalowed Until Password Set)')
+        self.assertEqual(SignatureSuricata.get_by_sid(2008860).msg,
+                         'ET TELNET External Telnet Attempt To Cisco Device With No Telnet Password Set (Automatically Dissalowed Until Password Set)')
 
     def test_source_signature_http_one_file(self):
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
@@ -92,8 +98,10 @@ class ViewsSuricataSourceAdminTest(TestCase):
                                      }, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('File uploaded successfully', str(response.content))
-        self.assertEqual(SignatureSuricata.get_by_sid(902332052).msg, 'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
-        self.assertEqual(SignatureSuricata.get_by_sid(902332065).msg, 'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
+        self.assertEqual(SignatureSuricata.get_by_sid(902332052).msg,
+                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
+        self.assertEqual(SignatureSuricata.get_by_sid(902332065).msg,
+                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
 
     def test_source_signature_http_one_file_deploy(self):
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
@@ -107,8 +115,10 @@ class ViewsSuricataSourceAdminTest(TestCase):
                                      }, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('File uploaded successfully', str(response.content))
-        self.assertEqual(SignatureSuricata.get_by_sid(902332052).msg, 'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
-        self.assertEqual(SignatureSuricata.get_by_sid(902332065).msg, 'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
+        self.assertEqual(SignatureSuricata.get_by_sid(902332052).msg,
+                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
+        self.assertEqual(SignatureSuricata.get_by_sid(902332065).msg,
+                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
 
     def test_source_signature_http_one_file_deploy_with_probe(self):
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
@@ -122,10 +132,14 @@ class ViewsSuricataSourceAdminTest(TestCase):
                                      }, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('File uploaded successfully', str(response.content))
-        self.assertEqual(SignatureSuricata.get_by_sid(902332052).msg, 'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
-        self.assertEqual(SignatureSuricata.get_by_sid(902332065).msg, 'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
-        self.assertEqual(PeriodicTask.objects.get(id=1).name, "https://sslbl.abuse.ch/blacklist/sslblacklist.rules_upload_task")
-        self.assertEqual(PeriodicTask.objects.get(id=2).name, "suricata1_source_deploy_rules_*/40 * * * * (m/h/d/dM/MY)")
+        self.assertEqual(SignatureSuricata.get_by_sid(902332052).msg,
+                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
+        self.assertEqual(SignatureSuricata.get_by_sid(902332065).msg,
+                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
+        self.assertEqual(PeriodicTask.objects.get(id=1).name,
+                         "https://sslbl.abuse.ch/blacklist/sslblacklist.rules_upload_task")
+        self.assertEqual(PeriodicTask.objects.get(id=2).name,
+                         "suricata1_source_deploy_rules_*/40 * * * * (m/h/d/dM/MY)")
 
     def test_source_signature_file_one_file(self):
         with open(settings.BASE_DIR + '/suricata/tests/data/sslblacklist.rules') as fp:
@@ -138,8 +152,10 @@ class ViewsSuricataSourceAdminTest(TestCase):
             }, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('File uploaded successfully', str(response.content))
-        self.assertEqual(SignatureSuricata.get_by_sid(902332052).msg, 'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
-        self.assertEqual(SignatureSuricata.get_by_sid(902332065).msg, 'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
+        self.assertEqual(SignatureSuricata.get_by_sid(902332052).msg,
+                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
+        self.assertEqual(SignatureSuricata.get_by_sid(902332065).msg,
+                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
 
     def test_source_signature_file_one_file_error(self):
         with open(settings.BASE_DIR + '/suricata/tests/data/error.rules') as fp:
@@ -153,7 +169,8 @@ class ViewsSuricataSourceAdminTest(TestCase):
             }, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('File uploaded successfully', str(response.content))
-        self.assertEqual(SignatureSuricata.get_by_sid(2400000).msg, 'ET DROP Spamhaus DROP Listed Traffic Inbound group 1')
+        self.assertEqual(SignatureSuricata.get_by_sid(2400000).msg,
+                         'ET DROP Spamhaus DROP Listed Traffic Inbound group 1')
 
     def test_source_signature_file_multiple_files(self):
         with open(settings.BASE_DIR + '/suricata/tests/data/emerging.rules.tar.gz', 'rb') as fp:
@@ -167,4 +184,5 @@ class ViewsSuricataSourceAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('File uploaded successfully', str(response.content))
         self.assertEqual(SignatureSuricata.get_by_sid(2102088).msg, 'GPL RPC ypupdated arbitrary command attempt UDP')
-        self.assertEqual(SignatureSuricata.get_by_sid(2008860).msg, 'ET TELNET External Telnet Attempt To Cisco Device With No Telnet Password Set (Automatically Dissalowed Until Password Set)')
+        self.assertEqual(SignatureSuricata.get_by_sid(2008860).msg,
+                         'ET TELNET External Telnet Attempt To Cisco Device With No Telnet Password Set (Automatically Dissalowed Until Password Set)')

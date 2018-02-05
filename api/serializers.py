@@ -1,5 +1,7 @@
-from suricata.models import ConfSuricata, Suricata, SignatureSuricata, ScriptSuricata, SourceSuricata, RuleSetSuricata, AppLayerType
 from rest_framework import serializers
+
+from suricata.models import ConfSuricata, Suricata, SignatureSuricata, ScriptSuricata, SourceSuricata, \
+    RuleSetSuricata, AppLayerType
 
 
 class ConfSuricataSerializer(serializers.ModelSerializer):

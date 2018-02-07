@@ -142,7 +142,7 @@ class ViewsSuricataSourceAdminTest(TestCase):
                          "suricata1_source_deploy_rules_*/40 * * * * (m/h/d/dM/MY)")
 
     def test_source_signature_file_one_file(self):
-        with open(settings.BASE_DIR + '/suricata/tests/data/sslblacklist.rules') as fp:
+        with open(settings.BASE_DIR + '/suricata/tests/data/sslblacklist.rules', encoding='utf_8') as fp:
             response = self.client.post('/admin/suricata/sourcesuricata/add/', {
                 'method': MethodUpload.get_by_name("Upload file").id,
                 'file': fp,
@@ -158,7 +158,7 @@ class ViewsSuricataSourceAdminTest(TestCase):
                          'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
 
     def test_source_signature_file_one_file_error(self):
-        with open(settings.BASE_DIR + '/suricata/tests/data/error.rules') as fp:
+        with open(settings.BASE_DIR + '/suricata/tests/data/error.rules', encoding='utf_8') as fp:
             response = self.client.post('/admin/suricata/sourcesuricata/add/', {
                 'method': MethodUpload.get_by_name("Upload file").id,
                 'file': fp,
@@ -173,7 +173,7 @@ class ViewsSuricataSourceAdminTest(TestCase):
                          'ET DROP Spamhaus DROP Listed Traffic Inbound group 1')
 
     def test_source_signature_file_multiple_files(self):
-        with open(settings.BASE_DIR + '/suricata/tests/data/emerging.rules.tar.gz', 'rb') as fp:
+        with open(settings.BASE_DIR + '/suricata/tests/data/emerging.rules.tar.gz', 'rb', encoding='utf_8') as fp:
             response = self.client.post('/admin/suricata/sourcesuricata/add/', {
                 'method': MethodUpload.get_by_name("Upload file").id,
                 'file': fp,

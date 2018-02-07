@@ -15,7 +15,7 @@ def convert_conf(configuration):
 
 
 def create_conf(configuration):
-    with open(BASE_DIR + "/suricata/default-Suricata-conf.yaml") as f:
+    with open(BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
         conf_full_default = f.read()
     conf = yaml.load(conf_full_default)
     conf['vars']['address-groups']['HOME_NET'] = configuration.conf_HOME_NET

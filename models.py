@@ -74,7 +74,7 @@ class ConfSuricata(ProbeConfiguration):
     """
     Configuration for Suricata IDS, Allows you to reuse the configuration.
     """
-    with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml") as f:
+    with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
         CONF_FULL_DEFAULT = f.read()
     conf_rules_directory = models.CharField(max_length=400, default="/etc/suricata/rules")
     conf_script_directory = models.CharField(max_length=400, default='/etc/suricata/lua')
@@ -108,7 +108,7 @@ class ConfSuricata(ProbeConfiguration):
     conf_outputs_fast = models.ForeignKey(ValidationType, related_name="conf_outputs_fast", default=1,
                                           on_delete=models.CASCADE)
     conf_outputs_evelog = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog", default=0,
-                                            on_delete=models.CASCADE )
+                                            on_delete=models.CASCADE)
     conf_outputs_evelog_alert_http = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_http",
                                                        default=0, on_delete=models.CASCADE)
     conf_outputs_evelog_alert_tls = models.ForeignKey(ValidationType, related_name="conf_outputs_evelog_alert_tls",
@@ -197,7 +197,7 @@ logging:
       filename: /var/log/suricata/suricata.log
       level: info
 """
-        with open(conf_file, 'w') as f:
+        with open(conf_file, 'w', encoding='utf_8') as f:
             f.write(config)
         cmd = [settings.SURICATA_BINARY, '-T',
                '-l', tmpdir,
@@ -332,7 +332,7 @@ class SignatureSuricata(Rule):
         if not os.path.exists(tmpdir):
             os.makedirs(tmpdir)
         rule_file = tmpdir + str(self.sid) + ".rules"
-        with open(rule_file, 'w') as f:
+        with open(rule_file, 'w', encoding='utf_8') as f:
             f.write(self.rule_full)
         cmd = [settings.SURICATA_BINARY, '-T',
                '-l', tmpdir,
@@ -355,9 +355,9 @@ class SignatureSuricata(Rule):
             os.makedirs(tmpdir)
         rule_file = tmpdir + "rule.rules"
         conf_file = tmpdir + "suricata.yaml"
-        with open(rule_file, 'w') as f:
+        with open(rule_file, 'w', encoding='utf_8') as f:
             f.write(self.rule_full)
-        with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml") as f:
+        with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
             conf_full_default = f.read()
         config = conf_full_default
         config += """
@@ -372,7 +372,7 @@ logging:
       filename: /var/log/suricata/suricata.log
       level: info
 """
-        with open(conf_file, 'w') as f:
+        with open(conf_file, 'w', encoding='utf_8') as f:
             f.write(config)
         # test pcap success
         cmd = [settings.SURICATA_BINARY,
@@ -389,7 +389,7 @@ logging:
         # test if alert is generated :
         test = False
         if os.path.isfile(tmpdir + "fast.log"):
-            with open(tmpdir + "fast.log", "r") as f:
+            with open(tmpdir + "fast.log", "r", encoding='utf_8') as f:
                 if self.msg in f.read():
                     test = True
 
@@ -542,10 +542,10 @@ class SourceSuricata(Source):
         count_created = 0
         count_updated = 0
         tmpdir = self.get_tmpdir()
-        f = open(tmpdir + "temp.tar.gz", 'wb')
+        f = open(tmpdir + "temp.tar.gz", 'wb', encoding='utf_8')
         f.write(file_dowloaded)
         f.close()
-        tar = tarfile.open(tmpdir + "temp.tar.gz")
+        tar = tarfile.open(tmpdir + "temp.tar.gz", encoding='utf_8')
         update_progress(10)
         progress_value = 10
         total_value = len(tar.getmembers())
@@ -590,10 +590,10 @@ class SourceSuricata(Source):
         # Upload file - one file not compressed
         elif self.data_type.name == "one file not compressed":
             logger.debug('one file not compressed')
-            f = open(tmpdir + "temp.rules", 'wb')
+            f = open(tmpdir + "temp.rules", 'wb', encoding='utf_8')
             f.write(self.file.read())
             f.close()
-            f = open(tmpdir + "temp.rules", 'r')
+            f = open(tmpdir + "temp.rules", 'r', encoding='utf_8')
             if os.path.splitext(request.FILES['file'].name)[1] == '.rules':
                 for line in f.readlines():
                     rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
@@ -638,10 +638,10 @@ class SourceSuricata(Source):
         elif self.data_type.name == "one file not compressed":
             logger.debug("one file not compressed")
             if response.info()['Content-type'] == 'text/plain':
-                f = open(tmpdir + "temp.rules", 'wb')
+                f = open(tmpdir + "temp.rules", 'wb', encoding='utf_8')
                 f.write(file_dowloaded)
                 f.close()
-                f = open(tmpdir + "temp.rules", 'r')
+                f = open(tmpdir + "temp.rules", 'r', encoding='utf_8')
                 if os.path.splitext(self.uri)[1] == '.rules':
                     for line in f.readlines():
                         rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
@@ -719,7 +719,7 @@ class Suricata(Probe):
         value = ""
         for md5 in Md5Suricata.get_all():
             value += md5.value + os.linesep
-        with open(settings.SURICATA_RULES + '/md5-blacklist', 'w') as f:
+        with open(settings.SURICATA_RULES + '/md5-blacklist', 'w', encoding='utf_8') as f:
             f.write(value)
         test = True
         errors = list()
@@ -793,7 +793,7 @@ class Suricata(Probe):
             for signature in ruleset.signatures.all():
                 if signature.enabled:
                     value += signature.rule_full + os.linesep
-        f = open(tmpdir + "temp.rules", 'w')
+        f = open(tmpdir + "temp.rules", 'w', encoding='utf_8')
         f.write(value)
         f.close()
         try:
@@ -809,7 +809,7 @@ class Suricata(Probe):
         value = ""
         for md5 in Md5Suricata.get_all():
             value += md5.value + os.linesep
-        f = open(tmpdir + "md5-blacklist", 'w')
+        f = open(tmpdir + "md5-blacklist", 'w', encoding='utf_8')
         f.write(value)
         f.close()
         try:
@@ -825,7 +825,7 @@ class Suricata(Probe):
         for ruleset in self.rulesets.all():
             for script in ruleset.scripts.all():
                 if script.enabled:
-                    f = open(tmpdir + script.name, 'w')
+                    f = open(tmpdir + script.name, 'w', encoding='utf_8')
                     f.write(script.rule_full)
                     f.close()
                     try:
@@ -857,7 +857,7 @@ class Suricata(Probe):
         if not os.path.exists(tmpdir):
             os.makedirs(tmpdir)
         value = self.configuration.conf_advanced_text
-        f = open(tmpdir + "temp.conf", 'w')
+        f = open(tmpdir + "temp.conf", 'w', encoding='utf_8')
         f.write(value)
         f.close()
         deploy = True

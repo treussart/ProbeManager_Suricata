@@ -239,8 +239,8 @@ class SignatureSuricata(Rule):
     def get_by_id(cls, id):
         try:
             object = cls.objects.get(id=id)
-        except cls.DoesNotExist as e:
-            logger.debug('Tries to access an object that does not exist : ' + str(e))
+        except cls.DoesNotExist:
+            logger.warning('Tries to access an object that does not exist', exc_info=True)
             return None
         return object
 

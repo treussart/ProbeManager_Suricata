@@ -32,7 +32,7 @@ fi
 # Debian
 if [ -f /etc/debian_version ]; then
     if ! type suricata ; then
-        apt install suricata
+        apt install -y suricata
     fi
     config="/etc/suricata/suricata.yaml"
     rules="/etc/suricata/rules"

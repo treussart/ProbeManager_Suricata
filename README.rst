@@ -30,23 +30,3 @@ TODO
 ====
 
  * increase tests
-
-
-Source
-~~~~~~
-
-Models
-======
-
-.. automodule:: suricata.models
-:members:
-
-Views
-=====
-
-.. automodule:: suricata.views
-:members:
-        :undoc-members:
-        :special-members:
-        :inherited-members:
-        :show-inheritance:

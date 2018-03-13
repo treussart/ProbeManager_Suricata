@@ -12,9 +12,9 @@ from django.contrib.admin.helpers import ActionForm
 from django.http import HttpResponseRedirect
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
 
-from home.tasks import upload_url_http
-from home.utils import create_deploy_rules_task, create_upload_task, add_1_hour, create_check_task
-from home.utils import update_progress
+from core.tasks import upload_url_http
+from core.utils import create_deploy_rules_task, create_upload_task, add_1_hour, create_check_task
+from core.utils import update_progress
 from suricata.forms import SuricataChangeForm
 from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, \
     SourceSuricata, BlackListSuricata, Md5Suricata

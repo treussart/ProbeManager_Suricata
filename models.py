@@ -14,11 +14,11 @@ from django.db.models import Q
 from django.utils import timezone
 from jinja2 import Template
 
-from home.models import Probe, ProbeConfiguration
-from home.modelsmixins import CommonMixin
-from home.notifications import send_notification
-from home.ssh import execute, execute_copy
-from home.utils import update_progress
+from core.models import Probe, ProbeConfiguration
+from core.modelsmixins import CommonMixin
+from core.notifications import send_notification
+from core.ssh import execute, execute_copy
+from core.utils import update_progress
 from rules.models import RuleSet, Rule, ClassType, Source
 from .exceptions import RuleNotFoundParam
 

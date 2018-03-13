@@ -1,7 +1,7 @@
 """ python manage.py test suricata.tests.test_tasks """
 from django.test import TestCase
 
-from home.tasks import upload_url_http, reload_probe, deploy_rules
+from core.tasks import upload_url_http, reload_probe, deploy_rules
 from suricata.models import Suricata, SourceSuricata
 
 

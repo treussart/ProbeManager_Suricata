@@ -1,6 +1,16 @@
 import yaml
+import json
+from django_celery_beat.models import PeriodicTask
 
 from probemanager.settings import BASE_DIR
+
+
+def create_upload_task(source):
+    PeriodicTask.objects.create(crontab=source.scheduled_rules_deployment_crontab,
+                                name=str(source.uri) + "_upload_task",
+                                task='suricata.tasks.upload_url_http',
+                                args=json.dumps([source.uri, ])
+                                )
 
 
 def convert_conf(configuration):

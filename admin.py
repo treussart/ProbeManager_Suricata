@@ -13,9 +13,10 @@ from django.http import HttpResponseRedirect
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
 from django.utils.safestring import mark_safe
 
-from core.tasks import upload_url_http
-from core.utils import create_deploy_rules_task, create_upload_task, add_1_hour, create_check_task
+from suricata.tasks import upload_url_http
+from core.utils import create_deploy_rules_task,  add_1_hour, create_check_task
 from core.utils import update_progress
+from suricata.utils import create_upload_task
 from suricata.forms import SuricataChangeForm
 from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, \
     SourceSuricata, BlackListSuricata, Md5Suricata

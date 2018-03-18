@@ -33,10 +33,10 @@ class TasksSuricataTest(TestCase):
         response = upload_url_http(source.uri)
         if 'exception' in response:
             print(response['exception'])
-        self.assertIn('Source https://sslbl.abuse.ch/blacklist/sslblacklist.rules uploaded successfully : ', response['message'])
+        self.assertEqual('Source https://sslbl.abuse.ch/blacklist/sslblacklist.rules uploaded successfully by HTTP', response['message'])
 
         source = SourceSuricata.get_by_id(2)
         response = upload_url_http(source.uri)
         if 'exception' in response:
             print(response['exception'])
-        self.assertIn('Source https://rules.emergingthreats.net/open/suricata-3.3.1/emerging.rules.tar.gz uploaded successfully by HTTP', response['message'])
+        self.assertEqual('Source https://rules.emergingthreats.net/open/suricata-3.3.1/emerging.rules.tar.gz uploaded successfully by HTTP', response['message'])

@@ -3,10 +3,9 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.utils import timezone
-from django_celery_beat.models import CrontabSchedule, PeriodicTask
+from django_celery_beat.models import CrontabSchedule
 
-from rules.models import ClassType, DataTypeUpload, MethodUpload
-from suricata.models import SignatureSuricata
+from rules.models import DataTypeUpload, MethodUpload
 from suricata.models import Suricata
 
 

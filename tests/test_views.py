@@ -1,21 +1,17 @@
-""" python manage.py test suricata.tests.test_views """
+""" venv/bin/python probemanager/manage.py test suricata.tests.test_views --settings=probemanager.settings.dev """
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.utils import timezone
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
-from rules.models import ClassType, DataTypeUpload, MethodUpload
-from suricata.models import SignatureSuricata
-from suricata.models import Suricata
-
-
-# from unittest import skip
+from rules.models import DataTypeUpload, MethodUpload
+from suricata.models import Suricata, SourceSuricata
 
 
 class ViewsSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
-                'test-suricata-conf', 'test-suricata-probe']
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+                'test-suricata-conf', 'test-suricata-suricata']
 
     def setUp(self):
         self.client = Client()
@@ -26,9 +22,22 @@ class ViewsSuricataTest(TestCase):
     def tearDown(self):
         self.client.logout()
 
+    def test_home(self):
+        """
+        Home Page who list instances of Suricata
+        """
+        response = self.client.get('/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('<title>Home</title>', str(response.content))
+        self.assertEqual('core/index.html', response.templates[0].name)
+        self.assertIn('core', response.resolver_match.app_names)
+        self.assertIn('function index', str(response.resolver_match.func))
+        with self.assertTemplateUsed('suricata/home.html'):
+            self.client.get('/', follow=True)
+
     def test_index(self):
         """
-        Suricata page
+         Index Page for an instance of Suricata
         """
         suricata = Suricata.get_by_id(1)
         response = self.client.get('/suricata/' + str(suricata.id))
@@ -36,7 +45,7 @@ class ViewsSuricataTest(TestCase):
         self.assertIn('<title>Suricata</title>', str(response.content))
         self.assertEqual('suricata/index.html', response.templates[0].name)
         self.assertIn('suricata', response.resolver_match.app_names)
-        self.assertIn('function index', str(response.resolver_match.func))
+        self.assertIn('function probe_index', str(response.resolver_match.func))
         self.assertEqual(str(response.context['user']), 'testuser')
         with self.assertTemplateUsed('suricata/index.html'):
             self.client.get('/suricata/' + str(suricata.id))
@@ -45,8 +54,8 @@ class ViewsSuricataTest(TestCase):
 
 
 class ViewsSuricataSourceAdminTest(TestCase):
-    fixtures = ['init', 'crontab', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
-                'test-suricata-conf', 'test-suricata-probe']
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+                'test-suricata-source', 'test-suricata-conf', 'test-suricata-suricata']
 
     def setUp(self):
         self.client = Client()
@@ -81,13 +90,13 @@ class ViewsSuricataSourceAdminTest(TestCase):
                                      'data_type': DataTypeUpload.get_by_name("multiple files in compressed file").id
                                      }, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('File uploaded successfully', str(response.content))
-        self.assertEqual(ClassType.get_by_name('suspicious-login').name, 'suspicious-login')
-        self.assertEqual(SignatureSuricata.get_by_sid(2102088).msg, 'GPL RPC ypupdated arbitrary command attempt UDP')
-        self.assertEqual(SignatureSuricata.get_by_sid(2008860).msg,
-                         'ET TELNET External Telnet Attempt To Cisco Device With No Telnet Password Set (Automatically Dissalowed Until Password Set)')
+        self.assertIn('Upload source in progress.', str(response.content))
 
     def test_source_signature_http_one_file(self):
+        for source in SourceSuricata.objects.all():
+            source.delete()
+        for p in PeriodicTask.objects.all():
+            p.delete()
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
                                     {'method': MethodUpload.get_by_name("URL HTTP").id,
                                      'uri': 'https://sslbl.abuse.ch/blacklist/sslblacklist.rules',
@@ -97,13 +106,13 @@ class ViewsSuricataSourceAdminTest(TestCase):
                                      'data_type': DataTypeUpload.get_by_name("one file not compressed").id
                                      }, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('File uploaded successfully', str(response.content))
-        self.assertEqual(SignatureSuricata.get_by_sid(902332052).msg,
-                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
-        self.assertEqual(SignatureSuricata.get_by_sid(902332065).msg,
-                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
+        self.assertIn('Upload source in progress.', str(response.content))
 
     def test_source_signature_http_one_file_deploy(self):
+        for source in SourceSuricata.objects.all():
+            source.delete()
+        for p in PeriodicTask.objects.all():
+            p.delete()
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
                                     {'method': MethodUpload.get_by_name("URL HTTP").id,
                                      'uri': 'https://sslbl.abuse.ch/blacklist/sslblacklist.rules',
@@ -114,13 +123,13 @@ class ViewsSuricataSourceAdminTest(TestCase):
                                      'data_type': DataTypeUpload.get_by_name("one file not compressed").id
                                      }, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('File uploaded successfully', str(response.content))
-        self.assertEqual(SignatureSuricata.get_by_sid(902332052).msg,
-                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
-        self.assertEqual(SignatureSuricata.get_by_sid(902332065).msg,
-                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
+        self.assertIn('Upload source in progress.', str(response.content))
 
     def test_source_signature_http_one_file_deploy_with_probe(self):
+        for source in SourceSuricata.objects.all():
+            source.delete()
+        for p in PeriodicTask.objects.all():
+            p.delete()
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
                                     {'method': MethodUpload.get_by_name("URL HTTP").id,
                                      'uri': 'https://sslbl.abuse.ch/blacklist/sslblacklist.rules',
@@ -131,15 +140,7 @@ class ViewsSuricataSourceAdminTest(TestCase):
                                      'data_type': DataTypeUpload.get_by_name("one file not compressed").id
                                      }, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('File uploaded successfully', str(response.content))
-        self.assertEqual(SignatureSuricata.get_by_sid(902332052).msg,
-                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
-        self.assertEqual(SignatureSuricata.get_by_sid(902332065).msg,
-                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
-        self.assertEqual(PeriodicTask.objects.get(id=1).name,
-                         "https://sslbl.abuse.ch/blacklist/sslblacklist.rules_upload_task")
-        self.assertEqual(PeriodicTask.objects.get(id=2).name,
-                         "suricata1_source_deploy_rules_*/40 * * * * (m/h/d/dM/MY)")
+        self.assertIn('Upload source in progress.', str(response.content))
 
     def test_source_signature_file_one_file(self):
         with open(settings.BASE_DIR + '/suricata/tests/data/sslblacklist.rules', encoding='utf_8') as fp:
@@ -151,11 +152,7 @@ class ViewsSuricataSourceAdminTest(TestCase):
                 'data_type': DataTypeUpload.get_by_name("one file not compressed").id
             }, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('File uploaded successfully', str(response.content))
-        self.assertEqual(SignatureSuricata.get_by_sid(902332052).msg,
-                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
-        self.assertEqual(SignatureSuricata.get_by_sid(902332065).msg,
-                         'SSL Fingerprint Blacklist: Malicious SSL certificate detected (Quakbot C&C)')
+        self.assertIn('File uploaded successfully :', str(response.content))
 
     def test_source_signature_file_one_file_error(self):
         with open(settings.BASE_DIR + '/suricata/tests/data/error.rules', encoding='utf_8') as fp:
@@ -168,12 +165,10 @@ class ViewsSuricataSourceAdminTest(TestCase):
                 'rulesets': '1',
             }, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('File uploaded successfully', str(response.content))
-        self.assertEqual(SignatureSuricata.get_by_sid(2400000).msg,
-                         'ET DROP Spamhaus DROP Listed Traffic Inbound group 1')
+        self.assertIn('File uploaded successfully :', str(response.content))
 
     def test_source_signature_file_multiple_files(self):
-        with open(settings.BASE_DIR + '/suricata/tests/data/emerging.rules.tar.gz', 'rb', encoding='utf_8') as fp:
+        with open(settings.BASE_DIR + '/suricata/tests/data/emerging.rules.tar.gz', 'rb') as fp:
             response = self.client.post('/admin/suricata/sourcesuricata/add/', {
                 'method': MethodUpload.get_by_name("Upload file").id,
                 'file': fp,
@@ -181,8 +176,4 @@ class ViewsSuricataSourceAdminTest(TestCase):
                 'scheduled_deploy': 'False',
                 'data_type': DataTypeUpload.get_by_name("multiple files in compressed file").id
             }, follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('File uploaded successfully', str(response.content))
-        self.assertEqual(SignatureSuricata.get_by_sid(2102088).msg, 'GPL RPC ypupdated arbitrary command attempt UDP')
-        self.assertEqual(SignatureSuricata.get_by_sid(2008860).msg,
-                         'ET TELNET External Telnet Attempt To Cisco Device With No Telnet Password Set (Automatically Dissalowed Until Password Set)')
+        self.assertIn('File uploaded successfully :', str(response.content))

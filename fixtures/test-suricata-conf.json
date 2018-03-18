@@ -1,13 +1,13 @@
 [
   {
-    "model": "home.probeconfiguration",
+    "model": "core.probeconfiguration",
     "pk": 1,
     "fields": {
       "name": "confSuricata1"
     }
   },
   {
-    "model": "home.probeconfiguration",
+    "model": "core.probeconfiguration",
     "pk": 2,
     "fields": {
       "name": "confSuricata2"

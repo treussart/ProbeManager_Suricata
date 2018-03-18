@@ -14,17 +14,19 @@ from django.db.models import Q
 from django.utils import timezone
 from jinja2 import Template
 
-from home.models import Probe, ProbeConfiguration
-from home.notifications import send_notification
-from home.ssh import execute, execute_copy
-from home.utils import update_progress
+from core.models import Probe, ProbeConfiguration
+from core.modelsmixins import CommonMixin
+from core.notifications import send_notification
+from core.ssh import execute, execute_copy
+from core.utils import update_progress
 from rules.models import RuleSet, Rule, ClassType, Source
-from suricata.exceptions import RuleNotFoundParam
+from .exceptions import RuleNotFoundParam
+
 
 logger = logging.getLogger('suricata')
 
 
-class ValidationType(models.Model):
+class ValidationType(CommonMixin, models.Model):
     """
     Set of validation value (yes, no).
     """
@@ -33,21 +35,8 @@ class ValidationType(models.Model):
     def __str__(self):
         return self.name
 
-    @classmethod
-    def get_all(cls):
-        return cls.objects.all()
 
-    @classmethod
-    def get_by_id(cls, id):
-        try:
-            object = cls.objects.get(id=id)
-        except cls.DoesNotExist as e:
-            logger.debug('Tries to access an object that does not exist : ' + str(e))
-            return None
-        return object
-
-
-class AppLayerType(models.Model):
+class AppLayerType(CommonMixin, models.Model):
     """
     Used for the choices for the detection of application protocol. (yes, no, detection-only)
     """
@@ -55,19 +44,6 @@ class AppLayerType(models.Model):
 
     def __str__(self):
         return self.name
-
-    @classmethod
-    def get_all(cls):
-        return cls.objects.all()
-
-    @classmethod
-    def get_by_id(cls, id):
-        try:
-            object = cls.objects.get(id=id)
-        except cls.DoesNotExist as e:
-            logger.debug('Tries to access an object that does not exist : ' + str(e))
-            return None
-        return object
 
 
 class ConfSuricata(ProbeConfiguration):
@@ -165,19 +141,6 @@ class ConfSuricata(ProbeConfiguration):
     def __str__(self):
         return self.name
 
-    @classmethod
-    def get_all(cls):
-        return cls.objects.all()
-
-    @classmethod
-    def get_by_id(cls, id):
-        try:
-            object = cls.objects.get(id=id)
-        except cls.DoesNotExist as e:
-            logger.debug('Tries to access an object that does not exist : ' + str(e))
-            return None
-        return object
-
     def test(self):
         tmpdir = settings.BASE_DIR + "/tmp/test_conf/"
         if not os.path.exists(tmpdir):
@@ -230,19 +193,6 @@ class SignatureSuricata(Rule):
 
     def __str__(self):
         return str(self.sid) + " : " + str(self.msg)
-
-    @classmethod
-    def get_all(cls):
-        return cls.objects.all()
-
-    @classmethod
-    def get_by_id(cls, id):
-        try:
-            object = cls.objects.get(id=id)
-        except cls.DoesNotExist:
-            logger.warning('Tries to access an object that does not exist', exc_info=True)
-            return None
-        return object
 
     @classmethod
     def get_by_sid(cls, sid):
@@ -417,19 +367,6 @@ class ScriptSuricata(Rule):
         return self.name
 
     @classmethod
-    def get_all(cls):
-        return cls.objects.all()
-
-    @classmethod
-    def get_by_id(cls, id):
-        try:
-            object = cls.objects.get(id=id)
-        except cls.DoesNotExist as e:
-            logger.debug('Tries to access an object that does not exist : ' + str(e))
-            return None
-        return object
-
-    @classmethod
     def get_by_name(cls, name):
         try:
             object = cls.objects.get(name=name)
@@ -495,19 +432,6 @@ class RuleSetSuricata(RuleSet):
     def __str__(self):
         return self.name
 
-    @classmethod
-    def get_all(cls):
-        return cls.objects.all()
-
-    @classmethod
-    def get_by_id(cls, id):
-        try:
-            object = cls.objects.get(id=id)
-        except cls.DoesNotExist as e:
-            logger.debug('Tries to access an object that does not exist : ' + str(e))
-            return None
-        return object
-
 
 class SourceSuricata(Source):
     """
@@ -518,19 +442,6 @@ class SourceSuricata(Source):
     def __init__(self, *args, **kwargs):
         super(Source, self).__init__(*args, **kwargs)
         self.type = self.__class__.__name__
-
-    @classmethod
-    def get_all(cls):
-        return cls.objects.all()
-
-    @classmethod
-    def get_by_id(cls, id):
-        try:
-            object = cls.objects.get(id=id)
-        except cls.DoesNotExist as e:
-            logger.debug('Tries to access an object that does not exist : ' + str(e))
-            return None
-        return object
 
     def get_tmpdir(self):
         tmpdir = settings.BASE_DIR + "/tmp/" + str(self.pk) + "/"
@@ -688,7 +599,8 @@ class Suricata(Probe):
             command1 = "echo 'deb http://http.debian.net/debian stretch-backports main' >> " \
                        "/etc/apt/sources.list.d/stretch-backports.list"
             command2 = "apt update"
-            command3 = "apt -t stretch-backports install " + self.__class__.__name__.lower()
+            command3 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower() + \
+                       " && mkdir /etc/suricata/lua"
         else:
             raise Exception("Not yet implemented")
         tasks = {"add_repo": command1, "update_repo": command2, "install": command3}
@@ -776,7 +688,7 @@ class Suricata(Probe):
                                           'Error during the pcap test for probe ' + str(self.name) + ' : ' + str(
                                               response_pcaps['errors']))
         except Exception as e:
-            logger.error(str(e))
+            logger.exception("Error for probe " + str(self.name) + " during the tests")
             return {"status": False, "message": "Error for probe " + str(self.name) + " during the tests",
                     "exception": str(e)}
 
@@ -840,7 +752,7 @@ class Suricata(Probe):
 
         # clean
         for file in glob.glob(tmpdir + '*.lua'):
-            os.remove(tmpdir + file)
+            os.remove(file)
         if os.path.isfile(tmpdir + 'temp.rules'):
             os.remove(tmpdir + "temp.rules")
         if os.path.isfile(tmpdir + 'md5-blacklist'):
@@ -878,19 +790,6 @@ class Suricata(Probe):
             return {'status': deploy}
         else:
             return {'status': deploy, 'errors': errors}
-
-    @classmethod
-    def get_all(cls):
-        return cls.objects.all()
-
-    @classmethod
-    def get_by_id(cls, id):
-        try:
-            object = cls.objects.get(id=id)
-        except cls.DoesNotExist as e:
-            logger.debug('Tries to access an object that does not exist : ' + str(e))
-            return None
-        return object
 
 
 def increment_sid():

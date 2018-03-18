@@ -11,10 +11,12 @@ from django.contrib import messages
 from django.contrib.admin.helpers import ActionForm
 from django.http import HttpResponseRedirect
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
+from django.utils.safestring import mark_safe
 
-from home.tasks import upload_url_http
-from home.utils import create_deploy_rules_task, create_upload_task, add_1_hour, create_check_task
-from home.utils import update_progress
+from suricata.tasks import upload_url_http
+from core.utils import create_deploy_rules_task,  add_1_hour, create_check_task
+from core.utils import update_progress
+from suricata.utils import create_upload_task
 from suricata.forms import SuricataChangeForm
 from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, \
     SourceSuricata, BlackListSuricata, Md5Suricata
@@ -325,7 +327,8 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                 except Exception as e:
                                     logger.error(str(e))
                 upload_url_http.delay(obj.uri, rulesets_id)
-                messages.add_message(request, messages.SUCCESS, "Upload source in progress. View Jobs")
+                messages.add_message(request, messages.SUCCESS, mark_safe("Upload source in progress. "
+                                                                          "<a href='/admin/core/job/'>View Job</a>"))
             # Upload file
             elif obj.method.name == "Upload file":
                 update_progress(0)

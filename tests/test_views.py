@@ -1,4 +1,4 @@
-""" python manage.py test suricata.tests.test_views """
+""" venv/bin/python probemanager/manage.py test suricata.tests.test_views --settings=probemanager.settings.dev """
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
@@ -14,8 +14,8 @@ from suricata.models import Suricata
 
 
 class ViewsSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
-                'test-suricata-conf', 'test-suricata-probe']
+    fixtures = ['init', 'crontab', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+                'test-suricata-source', 'test-suricata-conf', 'test-suricata-suricata']
 
     def setUp(self):
         self.client = Client()

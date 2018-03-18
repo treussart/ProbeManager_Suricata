@@ -1,4 +1,4 @@
-""" python manage.py test suricata.tests.test_models """
+""" venv/bin/python probemanager/manage.py test suricata.tests.test_models --settings=probemanager.settings.dev """
 from django.db.utils import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
@@ -10,8 +10,8 @@ from suricata.models import AppLayerType, ConfSuricata, Suricata, SignatureSuric
 
 
 class SourceSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
-                'test-suricata-source']
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+                'test-suricata-source', 'test-suricata-conf', 'test-suricata-suricata']
 
     @classmethod
     def setUpTestData(cls):
@@ -57,7 +57,7 @@ class AppLayerTypeTest(TestCase):
 
 
 class ConfSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'test-suricata-conf', 'test-suricata-probe']
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-conf']
 
     @classmethod
     def setUpTestData(cls):
@@ -84,7 +84,7 @@ class ConfSuricataTest(TestCase):
 
 
 class RuleSetSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset']
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset']
 
     @classmethod
     def setUpTestData(cls):
@@ -111,7 +111,7 @@ class RuleSetSuricataTest(TestCase):
 
 
 class ScriptSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'test-suricata-script']
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-script']
 
     @classmethod
     def setUpTestData(cls):
@@ -148,7 +148,7 @@ class ScriptSuricataTest(TestCase):
 
 
 class SignatureSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'test-suricata-signature']
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-signature']
 
     @classmethod
     def setUpTestData(cls):
@@ -189,7 +189,8 @@ class SignatureSuricataTest(TestCase):
 
 
 class SuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'test-suricata-conf', 'test-suricata-probe']
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+                'test-suricata-source', 'test-suricata-conf', 'test-suricata-suricata']
 
     @classmethod
     def setUpTestData(cls):

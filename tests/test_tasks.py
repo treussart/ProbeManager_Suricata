@@ -1,11 +1,9 @@
-""" python manage.py test suricata.tests.test_tasks """
+""" venv/bin/python probemanager/manage.py test suricata.tests.test_tasks --settings=probemanager.settings.dev """
 from django.test import TestCase
 
-from core.tasks import upload_url_http, reload_probe, deploy_rules
+from core.tasks import reload_probe, deploy_rules
+from suricata.tasks import upload_url_http
 from suricata.models import Suricata, SourceSuricata
-
-
-# from unittest import skip
 
 
 class TasksSuricataTest(TestCase):

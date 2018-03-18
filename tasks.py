@@ -1,5 +1,4 @@
 import importlib
-import traceback
 
 from core.models import Job
 from core.notifications import send_notification
@@ -27,8 +26,7 @@ def upload_url_http(source_uri, rulesets_id=None):
         my_class = getattr(importlib.import_module(source.type.lower().split('source')[1] + ".models"), source.type)
         source = my_class.get_by_uri(source_uri)
     except Exception as e:
-        logger.error(str(e))
-        logger.error(traceback.print_exc())
+        logger.exception("Error for source to upload")
         job.update_job(str(e), 'Error')
         return {"message": "Error for source to upload", "exception": str(e)}
     try:
@@ -36,9 +34,8 @@ def upload_url_http(source_uri, rulesets_id=None):
         job.update_job(message, 'Completed')
         logger.info("task - upload_url_http : " + str(source_uri) + " - " + str(message))
     except Exception as e:
-        logger.error(str(e))
-        logger.error(traceback.print_exc())
+        logger.exception("Error for source to upload")
         job.update_job(str(e), 'Error')
         send_notification("Error for source " + str(source.uri), str(e))
         return {"message": "Error for source " + str(source.uri) + " to upload", "exception": str(e)}
-    return {"message": "OK source " + str(source.uri) + " upload by HTTP", "upload_message": message}
+    return {"message": "Source " + str(source.uri) + " uploaded successfully by HTTP", "upload_message": message}

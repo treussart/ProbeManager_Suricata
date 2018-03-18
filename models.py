@@ -453,7 +453,7 @@ class SourceSuricata(Source):
         count_created = 0
         count_updated = 0
         tmpdir = self.get_tmpdir()
-        f = open(tmpdir + "temp.tar.gz", 'wb', encoding='utf_8')
+        f = open(tmpdir + "temp.tar.gz", 'wb')
         f.write(file_dowloaded)
         f.close()
         tar = tarfile.open(tmpdir + "temp.tar.gz", encoding='utf_8')
@@ -501,7 +501,7 @@ class SourceSuricata(Source):
         # Upload file - one file not compressed
         elif self.data_type.name == "one file not compressed":
             logger.debug('one file not compressed')
-            f = open(tmpdir + "temp.rules", 'wb', encoding='utf_8')
+            f = open(tmpdir + "temp.rules", 'wb')
             f.write(self.file.read())
             f.close()
             f = open(tmpdir + "temp.rules", 'r', encoding='utf_8')
@@ -549,7 +549,7 @@ class SourceSuricata(Source):
         elif self.data_type.name == "one file not compressed":
             logger.debug("one file not compressed")
             if response.info()['Content-type'] == 'text/plain':
-                f = open(tmpdir + "temp.rules", 'wb', encoding='utf_8')
+                f = open(tmpdir + "temp.rules", 'wb')
                 f.write(file_dowloaded)
                 f.close()
                 f = open(tmpdir + "temp.rules", 'r', encoding='utf_8')

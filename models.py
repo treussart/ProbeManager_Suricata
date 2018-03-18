@@ -599,7 +599,8 @@ class Suricata(Probe):
             command1 = "echo 'deb http://http.debian.net/debian stretch-backports main' >> " \
                        "/etc/apt/sources.list.d/stretch-backports.list"
             command2 = "apt update"
-            command3 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower()
+            command3 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower() + \
+                       " && mkdir /etc/suricata/lua"
         else:
             raise Exception("Not yet implemented")
         tasks = {"add_repo": command1, "update_repo": command2, "install": command3}
@@ -687,7 +688,7 @@ class Suricata(Probe):
                                           'Error during the pcap test for probe ' + str(self.name) + ' : ' + str(
                                               response_pcaps['errors']))
         except Exception as e:
-            logger.error(str(e))
+            logger.exception("Error for probe " + str(self.name) + " during the tests")
             return {"status": False, "message": "Error for probe " + str(self.name) + " during the tests",
                     "exception": str(e)}
 

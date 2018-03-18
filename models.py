@@ -751,7 +751,7 @@ class Suricata(Probe):
 
         # clean
         for file in glob.glob(tmpdir + '*.lua'):
-            os.remove(tmpdir + file)
+            os.remove(file)
         if os.path.isfile(tmpdir + 'temp.rules'):
             os.remove(tmpdir + "temp.rules")
         if os.path.isfile(tmpdir + 'md5-blacklist'):

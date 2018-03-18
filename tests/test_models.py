@@ -1,9 +1,10 @@
 """ venv/bin/python probemanager/manage.py test suricata.tests.test_models --settings=probemanager.settings.dev """
+import os
+
 from django.db.utils import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 
-from core.utils import decrypt
 from rules.models import ClassType
 from suricata.models import AppLayerType, ConfSuricata, Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, \
     SourceSuricata
@@ -27,14 +28,12 @@ class SourceSuricataTest(TestCase):
         self.assertEqual(source_suricata, None)
         with self.assertRaises(AttributeError):
             source_suricata.method
-        with self.assertLogs('suricata.models', level='DEBUG'):
-            SourceSuricata.get_by_id(99)
         with self.assertRaises(IntegrityError):
             SourceSuricata.objects.create(uri="https://sslbl.abuse.ch/blacklist/sslblacklist.rules")
 
 
 class AppLayerTypeTest(TestCase):
-    fixtures = ['init']
+    fixtures = ['init', 'init-suricata']
 
     @classmethod
     def setUpTestData(cls):
@@ -50,8 +49,6 @@ class AppLayerTypeTest(TestCase):
         self.assertEqual(app_layer_type, None)
         with self.assertRaises(AttributeError):
             app_layer_type.name
-        with self.assertLogs('suricata.models', level='DEBUG'):
-            AppLayerType.get_by_id(99)
         with self.assertRaises(IntegrityError):
             AppLayerType.objects.create(name="no")
 
@@ -77,8 +74,6 @@ class ConfSuricataTest(TestCase):
         self.assertEqual(conf_suricata, None)
         with self.assertRaises(AttributeError):
             conf_suricata.name
-        with self.assertLogs('suricata.models', level='DEBUG'):
-            ConfSuricata.get_by_id(99)
         with self.assertRaises(IntegrityError):
             ConfSuricata.objects.create(name="confSuricata1")
 
@@ -101,8 +96,6 @@ class RuleSetSuricataTest(TestCase):
         self.assertEqual(ruleset_suricata, None)
         with self.assertRaises(AttributeError):
             ruleset_suricata.name
-        with self.assertLogs('suricata.models', level='DEBUG'):
-            RuleSetSuricata.get_by_id(99)
         with self.assertRaises(IntegrityError):
             RuleSetSuricata.objects.create(name="ruleset1",
                                            description="",
@@ -129,14 +122,10 @@ class ScriptSuricataTest(TestCase):
         self.assertEqual(script_suricatas[0].name, "test.lua")
         self.assertEqual(str(script_suricata), "test.lua")
         self.assertEqual(ScriptSuricata.get_by_name("test.lua").rev, 0)
-        with self.assertLogs('suricata.models', level='DEBUG'):
-            ScriptSuricata.get_by_name("test.lu")
         script_suricata = ScriptSuricata.get_by_id(99)
         self.assertEqual(script_suricata, None)
         with self.assertRaises(AttributeError):
             script_suricata.name
-        with self.assertLogs('suricata.models', level='DEBUG'):
-            ScriptSuricata.get_by_id(99)
         with self.assertRaises(IntegrityError):
             ScriptSuricata.objects.create(name="test.lua",
                                           rev=0,
@@ -174,8 +163,6 @@ class SignatureSuricataTest(TestCase):
         self.assertEqual(signature_suricata, None)
         with self.assertRaises(AttributeError):
             signature_suricata.sid
-        with self.assertLogs('suricata.models', level='DEBUG'):
-            SignatureSuricata.get_by_id(99)
         with self.assertRaises(IntegrityError):
             SignatureSuricata.objects.create(sid=20402000,
                                              rev=0,
@@ -199,43 +186,34 @@ class SuricataTest(TestCase):
     def test_suricata(self):
         all_suricata = Suricata.get_all()
         suricata = Suricata.get_by_id(1)
-        self.assertEqual(len(all_suricata), 2)
+        self.assertEqual(len(all_suricata), 1)
         self.assertEqual(suricata.name, "suricata1")
-        self.assertEqual(suricata.become_method, "sudo")
-        self.assertEqual(suricata.become_user, "root")
-        self.assertEqual(decrypt(suricata.become_pass), b'?gyEdOHFbFCGL&z7.1X@')
-        self.assertTrue(suricata.become)
-        self.assertEqual(str(suricata), "suricata1 : test")
+        self.assertEqual(str(suricata), "suricata1  test")
         suricata = Suricata.get_by_id(99)
         self.assertEqual(suricata, None)
         with self.assertRaises(AttributeError):
             suricata.name
-        with self.assertLogs('suricata.models', level='DEBUG'):
-            Suricata.get_by_id(99)
         with self.assertRaises(IntegrityError):
             Suricata.objects.create(name="suricata1")
 
     def test_test(self):
         suricata = Suricata.get_by_id(1)
-        response = suricata.test()
-        self.assertEqual({'result': 0, 'host': suricata.host, 'message': 'server'}, response)
-        response = suricata.test_root()
-        # print(response)
-        self.assertEqual(0, response['result'])
+        response = suricata.server.test()
+        self.assertTrue(response)
+        response = suricata.server.test_root()
+        self.assertTrue(response)
 
     def test_reload(self):
         suricata = Suricata.get_by_id(1)
         response = suricata.reload()
-        self.assertEqual(0, response['result'])
+        self.assertTrue(response['status'])
 
     def test_deploy_conf(self):
         suricata = Suricata.get_by_id(1)
         response = suricata.deploy_conf()
-        # print(response)
-        self.assertEqual(0, response['result'])
+        self.assertTrue(response['status'])
 
     def test_deploy_rules(self):
         suricata = Suricata.get_by_id(1)
         response = suricata.deploy_rules()
-        # print(response)
-        self.assertEqual(0, response['result'])
+        self.assertTrue(response['status'])

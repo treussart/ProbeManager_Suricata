@@ -10,9 +10,6 @@ from suricata.models import SignatureSuricata
 from suricata.models import Suricata
 
 
-# from unittest import skip
-
-
 class ViewsSuricataTest(TestCase):
     fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
                 'test-suricata-source', 'test-suricata-conf', 'test-suricata-suricata']
@@ -26,9 +23,22 @@ class ViewsSuricataTest(TestCase):
     def tearDown(self):
         self.client.logout()
 
+    def test_home(self):
+        """
+        Home Page who list instances of Suricata
+        """
+        response = self.client.get('/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('<title>Home</title>', str(response.content))
+        self.assertEqual('core/index.html', response.templates[0].name)
+        self.assertIn('core', response.resolver_match.app_names)
+        self.assertIn('function index', str(response.resolver_match.func))
+        with self.assertTemplateUsed('suricata/home.html'):
+            self.client.get('/', follow=True)
+
     def test_index(self):
         """
-        Suricata page
+         Index Page for an instance of Suricata
         """
         suricata = Suricata.get_by_id(1)
         response = self.client.get('/suricata/' + str(suricata.id))
@@ -45,7 +55,7 @@ class ViewsSuricataTest(TestCase):
 
 
 class ViewsSuricataSourceAdminTest(TestCase):
-    fixtures = ['init', 'crontab', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
                 'test-suricata-conf', 'test-suricata-probe']
 
     def setUp(self):

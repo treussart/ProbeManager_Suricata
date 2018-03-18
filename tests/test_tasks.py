@@ -9,8 +9,8 @@ from suricata.models import Suricata, SourceSuricata
 
 
 class TasksSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
-                'test-suricata-source', 'test-suricata-conf', 'test-suricata-probe']
+    fixtures = ['init', 'crontab', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+                'test-suricata-source', 'test-suricata-conf', 'test-suricata-suricata']
 
     @classmethod
     def setUpTestData(cls):

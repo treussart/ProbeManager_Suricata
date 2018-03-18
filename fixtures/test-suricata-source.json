@@ -34,7 +34,7 @@
     "pk": 1,
     "fields": {
       "name": "suricata1_deploy_rules_*/30 * * * * (m/h/d/dM/MY)",
-      "task": "home.tasks.deploy_rules",
+      "task": "core.tasks.deploy_rules",
       "interval": null,
       "crontab": 1,
       "args": "[\"suricata1\"]",
@@ -55,7 +55,7 @@
     "pk": 2,
     "fields": {
       "name": "https://sslbl.abuse.ch/blacklist/sslblacklist.rules_upload_task",
-      "task": "home.tasks.upload_url_http",
+      "task": "core.tasks.upload_url_http",
       "interval": null,
       "crontab": 1,
       "args": "[\"https://sslbl.abuse.ch/blacklist/sslblacklist.rules\"]",
@@ -76,7 +76,7 @@
     "pk": 3,
     "fields": {
       "name": "suricata1_source_deploy_rules_*/40 * * * * (m/h/d/dM/MY)",
-      "task": "home.tasks.deploy_rules",
+      "task": "core.tasks.deploy_rules",
       "interval": null,
       "crontab": 1,
       "args": "[\"suricata1\"]",

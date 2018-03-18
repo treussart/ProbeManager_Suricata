@@ -21,7 +21,7 @@ class SourceSuricataTest(TestCase):
     def test_source_suricata(self):
         all_source_suricata = SourceSuricata.get_all()
         source_suricata = SourceSuricata.get_by_id(1)
-        self.assertEqual(len(all_source_suricata), 1)
+        self.assertEqual(len(all_source_suricata), 2)
         self.assertEqual(source_suricata.method.name, "URL HTTP")
         self.assertEqual(str(source_suricata), "https://sslbl.abuse.ch/blacklist/sslblacklist.rules")
         source_suricata = SourceSuricata.get_by_id(99)

@@ -3,15 +3,15 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.utils import timezone
-from django_celery_beat.models import CrontabSchedule
+from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
 from rules.models import DataTypeUpload, MethodUpload
-from suricata.models import Suricata
+from suricata.models import Suricata, SourceSuricata
 
 
 class ViewsSuricataTest(TestCase):
     fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
-                'test-suricata-source', 'test-suricata-conf', 'test-suricata-suricata']
+                'test-suricata-conf', 'test-suricata-suricata']
 
     def setUp(self):
         self.client = Client()
@@ -93,6 +93,10 @@ class ViewsSuricataSourceAdminTest(TestCase):
         self.assertIn('Upload source in progress.', str(response.content))
 
     def test_source_signature_http_one_file(self):
+        for source in SourceSuricata.objects.all():
+            source.delete()
+        for p in PeriodicTask.objects.all():
+            p.delete()
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
                                     {'method': MethodUpload.get_by_name("URL HTTP").id,
                                      'uri': 'https://sslbl.abuse.ch/blacklist/sslblacklist.rules',
@@ -105,6 +109,10 @@ class ViewsSuricataSourceAdminTest(TestCase):
         self.assertIn('Upload source in progress.', str(response.content))
 
     def test_source_signature_http_one_file_deploy(self):
+        for source in SourceSuricata.objects.all():
+            source.delete()
+        for p in PeriodicTask.objects.all():
+            p.delete()
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
                                     {'method': MethodUpload.get_by_name("URL HTTP").id,
                                      'uri': 'https://sslbl.abuse.ch/blacklist/sslblacklist.rules',
@@ -118,6 +126,10 @@ class ViewsSuricataSourceAdminTest(TestCase):
         self.assertIn('Upload source in progress.', str(response.content))
 
     def test_source_signature_http_one_file_deploy_with_probe(self):
+        for source in SourceSuricata.objects.all():
+            source.delete()
+        for p in PeriodicTask.objects.all():
+            p.delete()
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
                                     {'method': MethodUpload.get_by_name("URL HTTP").id,
                                      'uri': 'https://sslbl.abuse.ch/blacklist/sslblacklist.rules',
@@ -140,7 +152,7 @@ class ViewsSuricataSourceAdminTest(TestCase):
                 'data_type': DataTypeUpload.get_by_name("one file not compressed").id
             }, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Upload source in progress.', str(response.content))
+        self.assertIn('File uploaded successfully :', str(response.content))
 
     def test_source_signature_file_one_file_error(self):
         with open(settings.BASE_DIR + '/suricata/tests/data/error.rules', encoding='utf_8') as fp:
@@ -153,7 +165,7 @@ class ViewsSuricataSourceAdminTest(TestCase):
                 'rulesets': '1',
             }, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Upload source in progress.', str(response.content))
+        self.assertIn('File uploaded successfully :', str(response.content))
 
     def test_source_signature_file_multiple_files(self):
         with open(settings.BASE_DIR + '/suricata/tests/data/emerging.rules.tar.gz', 'rb') as fp:
@@ -164,4 +176,4 @@ class ViewsSuricataSourceAdminTest(TestCase):
                 'scheduled_deploy': 'False',
                 'data_type': DataTypeUpload.get_by_name("multiple files in compressed file").id
             }, follow=True)
-        self.assertIn('Upload source in progress.', str(response.content))
+        self.assertIn('File uploaded successfully :', str(response.content))

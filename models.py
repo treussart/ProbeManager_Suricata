@@ -607,7 +607,7 @@ class Suricata(Probe):
         try:
             response = execute(self.server, tasks, become=True)
         except Exception as e:
-            logger.error(e)
+            logger.exception('install failed')
             return {'status': False, 'errors': str(e)}
         logger.debug("output : " + str(response))
         return {'status': True}
@@ -621,7 +621,7 @@ class Suricata(Probe):
         try:
             response = execute(self.server, tasks, become=True)
         except Exception as e:
-            logger.error(str(e))
+            logger.exception('reload failed')
             return {'status': False, 'errors': str(e)}
         logger.debug("output : " + str(response))
         return {'status': True}
@@ -737,7 +737,7 @@ class Suricata(Probe):
                                     dest=self.configuration.conf_rules_directory.rstrip('/') + '/md5-blacklist',
                                     become=True)
         except Exception as e:
-            logger.error(str(e))
+            logger.exception('excecute_copy failed')
             deploy = False
             errors.append(str(e))
 
@@ -753,7 +753,7 @@ class Suricata(Probe):
                                                 dest=self.configuration.conf_script_directory.rstrip(
                                                     '/') + '/' + script.name, become=True)
                     except Exception as e:
-                        logger.error(e)
+                        logger.exception('excecute_copy failed')
                         deploy = False
                         errors.append(str(e))
                     logger.debug("output : " + str(response))
@@ -787,7 +787,7 @@ class Suricata(Probe):
             response = execute_copy(self.server, src=os.path.abspath(tmpdir + 'temp.conf'),
                                     dest=self.configuration.conf_file, become=True)
         except Exception as e:
-            logger.error(e)
+            logger.exception('deploy conf failed')
             deploy = False
             errors.append(str(e))
         logger.debug("output : " + str(response))

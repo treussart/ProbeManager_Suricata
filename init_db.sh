@@ -26,5 +26,5 @@ if [[ "$arg" = 'prod' ]]; then
 elif [[ "$arg" = 'dev' ]]; then
     venv/bin/python probemanager/manage.py loaddata init-suricata.json --settings=probemanager.settings.$arg
 elif [[ "$arg" = 'travis' ]]; then
-    python probemanager/manage.py loaddata init-suricata.json --settings=probemanager.settings.
+    python probemanager/manage.py loaddata init-suricata.json --settings=probemanager.settings.dev
 fi

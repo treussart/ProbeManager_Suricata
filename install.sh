@@ -34,6 +34,7 @@ if [[ $OSTYPE = *"darwin"* ]]; then
 fi
 # Debian
 if [ -f /etc/debian_version ]; then
+    echo "############# test ###############"
     if ! type suricata ; then
         apt install -y suricata
     fi

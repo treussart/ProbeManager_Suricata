@@ -2,10 +2,10 @@
 
 echo '## Install Suricata ##'
 # Get args
-if [ -z $1 ] || [ $1 == 'dev' ]; then
+if [ -z $1 ] || [[ "$1" = 'dev' ]]; then
     arg="dev"
     dest=""
-elif [ $1 == 'prod' ]; then
+elif [[ "$1" = 'prod' ]]; then
     arg=$1
     if [ -z $2 ]; then
         dest='/usr/local/share'
@@ -20,7 +20,7 @@ fi
 
 config=""
 # OSX with brew
-if [[ $OSTYPE == *"darwin"* ]]; then
+if [[ $OSTYPE = *"darwin"* ]]; then
     if brew --version | grep -qw Homebrew ; then
         if ! brew list | grep -qw suricata ; then
             brew install suricata
@@ -37,7 +37,7 @@ if [ -f /etc/debian_version ]; then
     config="/etc/suricata/suricata.yaml"
     rules="/etc/suricata/rules"
 fi
-if [ $arg == 'prod' ]; then
+if [[ "$arg" = 'prod' ]]; then
     touch /var/log/suricata/suricata.log
     chmod a+w  /var/log/suricata/suricata.log
     chmod a+r  /var/log/suricata/suricata.log

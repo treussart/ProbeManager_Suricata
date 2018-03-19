@@ -2,10 +2,10 @@
 
 echo '## Load data Suricata ##'
 # Get args
-if [ -z $1 ] || [ $1 == 'dev' ]; then
+if [ -z $1 ] || [[ "$1" = 'dev' ]]; then
     arg="dev"
     dest=""
-elif [ $1 == 'prod' ]; then
+elif [[ "$1" = 'prod' ]]; then
     arg=$1
     if [ -z $2 ]; then
         dest='/usr/local/share'
@@ -18,7 +18,7 @@ else
 fi
 
 
-if [ $arg == 'prod' ]; then
+if [[ "$arg" = 'prod' ]]; then
     "$dest"venv/bin/python "$dest"probemanager/manage.py loaddata init-suricata.json --settings=probemanager.settings.$arg
 else
     venv/bin/python probemanager/manage.py loaddata init-suricata.json --settings=probemanager.settings.$arg

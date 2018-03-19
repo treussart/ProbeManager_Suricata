@@ -672,29 +672,29 @@ class Suricata(Probe):
                 if not response_rules['status']:
                     if self.secure_deployment:
                         logger.error("Error during the rules test for probe " + str(self.name) + ' : ' +
-                                         str(response_rules['errors']))
+                                     str(response_rules['errors']))
                         return {"status": False,
-                                "message": "Error during the rules test for probe " + str(self.name) + ' : ' + str(
-                                    response_rules['errors'])}
+                                "message": "Error during the rules test for probe " + str(self.name) + ' : ' +
+                                str(response_rules['errors'])}
                     else:
                         logger.error("Error during the rules test for probe " + str(self.name) + ' : ' +
-                                         str(response_rules['errors']))
+                                     str(response_rules['errors']))
                         send_notification('Error',
-                                          'Error during the rules test for probe ' + str(self.name) + ' : ' + str(
-                                              response_rules['errors']))
+                                          'Error during the rules test for probe ' + str(self.name) + ' : ' +
+                                          str(response_rules['errors']))
                 elif not response_pcaps['status']:
                     if self.secure_deployment:
                         logger.error("Error during the rules test for probe " + str(self.name) + ' : ' +
-                                         str(response_pcaps['errors']))
+                                     str(response_pcaps['errors']))
                         return {"status": False,
-                                "message": "Error during the pcap test for probe " + str(self.name) + ' : ' + str(
-                                    response_pcaps['errors'])}
+                                "message": "Error during the pcap test for probe " + str(self.name) + ' : ' +
+                                str(response_pcaps['errors'])}
                     else:
                         logger.error("Error during the rules test for probe " + str(self.name) + ' : ' +
-                                         str(response_pcaps['errors']))
+                                     str(response_pcaps['errors']))
                         send_notification('Error',
-                                          'Error during the pcap test for probe ' + str(self.name) + ' : ' + str(
-                                              response_pcaps['errors']))
+                                          'Error during the pcap test for probe ' + str(self.name) + ' : ' +
+                                          str(response_pcaps['errors']))
         except Exception as e:
             logger.exception("Error for probe " + str(self.name) + " during the tests")
             return {"status": False, "message": "Error for probe " + str(self.name) + " during the tests",

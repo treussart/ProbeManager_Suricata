@@ -5,6 +5,9 @@ echo '## Install Suricata ##'
 if [ -z $1 ] || [[ "$1" = 'dev' ]]; then
     arg="dev"
     dest=""
+elif [[ "$1" = 'travis' ]]; then
+    arg=$1
+    dest=""
 elif [[ "$1" = 'prod' ]]; then
     arg=$1
     if [ -z $2 ]; then

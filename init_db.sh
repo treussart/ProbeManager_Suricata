@@ -5,6 +5,9 @@ echo '## Load data Suricata ##'
 if [ -z $1 ] || [[ "$1" = 'dev' ]]; then
     arg="dev"
     dest=""
+elif [[ "$1" = 'travis' ]]; then
+    arg=$1
+    dest=""
 elif [[ "$1" = 'prod' ]]; then
     arg=$1
     if [ -z $2 ]; then
@@ -20,6 +23,8 @@ fi
 
 if [[ "$arg" = 'prod' ]]; then
     "$dest"venv/bin/python "$dest"probemanager/manage.py loaddata init-suricata.json --settings=probemanager.settings.$arg
-else
+elif [[ "$arg" = 'dev' ]]; then
     venv/bin/python probemanager/manage.py loaddata init-suricata.json --settings=probemanager.settings.$arg
+elif [[ "$arg" = 'travis' ]]; then
+    python probemanager/manage.py loaddata init-suricata.json --settings=probemanager.settings.
 fi

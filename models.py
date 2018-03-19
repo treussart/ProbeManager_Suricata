@@ -671,19 +671,27 @@ class Suricata(Probe):
             if self.secure_deployment:
                 if not response_rules['status']:
                     if self.secure_deployment:
+                        logger.exception("Error during the rules test for probe " + str(self.name) + ' : ' +
+                                         str(response_rules['errors']))
                         return {"status": False,
                                 "message": "Error during the rules test for probe " + str(self.name) + ' : ' + str(
                                     response_rules['errors'])}
                     else:
+                        logger.exception("Error during the rules test for probe " + str(self.name) + ' : ' +
+                                         str(response_rules['errors']))
                         send_notification('Error',
                                           'Error during the rules test for probe ' + str(self.name) + ' : ' + str(
                                               response_rules['errors']))
                 elif not response_pcaps['status']:
                     if self.secure_deployment:
+                        logger.exception("Error during the rules test for probe " + str(self.name) + ' : ' +
+                                         str(response_pcaps['errors']))
                         return {"status": False,
                                 "message": "Error during the pcap test for probe " + str(self.name) + ' : ' + str(
                                     response_pcaps['errors'])}
                     else:
+                        logger.exception("Error during the rules test for probe " + str(self.name) + ' : ' +
+                                         str(response_pcaps['errors']))
                         send_notification('Error',
                                           'Error during the pcap test for probe ' + str(self.name) + ' : ' + str(
                                               response_pcaps['errors']))

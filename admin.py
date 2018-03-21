@@ -325,7 +325,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                         create_deploy_rules_task(probe, schedule, obj)
                                 except Exception as e:
                                     logger.exception(str(e))
-                upload_url_http.delay(obj.uri, rulesets_id)
+                upload_url_http.delay(obj.uri, rulesets_id=rulesets_id)
                 messages.add_message(request, messages.SUCCESS, mark_safe("Upload source in progress. "
                                                                           "<a href='/admin/core/job/'>View Job</a>"))
             # Upload file

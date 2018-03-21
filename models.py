@@ -607,7 +607,7 @@ class Suricata(Probe):
         try:
             response = execute(self.server, tasks, become=True)
         except Exception as e:
-            logger.error(e)
+            logger.exception('install failed')
             return {'status': False, 'errors': str(e)}
         logger.debug("output : " + str(response))
         return {'status': True}
@@ -621,7 +621,7 @@ class Suricata(Probe):
         try:
             response = execute(self.server, tasks, become=True)
         except Exception as e:
-            logger.error(str(e))
+            logger.exception('reload failed')
             return {'status': False, 'errors': str(e)}
         logger.debug("output : " + str(response))
         return {'status': True}
@@ -671,22 +671,30 @@ class Suricata(Probe):
             if self.secure_deployment:
                 if not response_rules['status']:
                     if self.secure_deployment:
+                        logger.error("Error during the rules test for probe " + str(self.name) + ' : ' +
+                                     str(response_rules['errors']))
                         return {"status": False,
-                                "message": "Error during the rules test for probe " + str(self.name) + ' : ' + str(
-                                    response_rules['errors'])}
+                                "message": "Error during the rules test for probe " + str(self.name) + ' : ' +
+                                str(response_rules['errors'])}
                     else:
+                        logger.error("Error during the rules test for probe " + str(self.name) + ' : ' +
+                                     str(response_rules['errors']))
                         send_notification('Error',
-                                          'Error during the rules test for probe ' + str(self.name) + ' : ' + str(
-                                              response_rules['errors']))
+                                          'Error during the rules test for probe ' + str(self.name) + ' : ' +
+                                          str(response_rules['errors']))
                 elif not response_pcaps['status']:
                     if self.secure_deployment:
+                        logger.error("Error during the rules test for probe " + str(self.name) + ' : ' +
+                                     str(response_pcaps['errors']))
                         return {"status": False,
-                                "message": "Error during the pcap test for probe " + str(self.name) + ' : ' + str(
-                                    response_pcaps['errors'])}
+                                "message": "Error during the pcap test for probe " + str(self.name) + ' : ' +
+                                str(response_pcaps['errors'])}
                     else:
+                        logger.error("Error during the rules test for probe " + str(self.name) + ' : ' +
+                                     str(response_pcaps['errors']))
                         send_notification('Error',
-                                          'Error during the pcap test for probe ' + str(self.name) + ' : ' + str(
-                                              response_pcaps['errors']))
+                                          'Error during the pcap test for probe ' + str(self.name) + ' : ' +
+                                          str(response_pcaps['errors']))
         except Exception as e:
             logger.exception("Error for probe " + str(self.name) + " during the tests")
             return {"status": False, "message": "Error for probe " + str(self.name) + " during the tests",
@@ -713,7 +721,7 @@ class Suricata(Probe):
                                     dest=self.configuration.conf_rules_directory.rstrip('/') + '/deployed.rules',
                                     become=True)
         except Exception as e:
-            logger.error(str(e))
+            logger.exception('excecute_copy failed')
             deploy = False
             errors.append(str(e))
 
@@ -729,7 +737,7 @@ class Suricata(Probe):
                                     dest=self.configuration.conf_rules_directory.rstrip('/') + '/md5-blacklist',
                                     become=True)
         except Exception as e:
-            logger.error(str(e))
+            logger.exception('excecute_copy failed')
             deploy = False
             errors.append(str(e))
 
@@ -745,7 +753,7 @@ class Suricata(Probe):
                                                 dest=self.configuration.conf_script_directory.rstrip(
                                                     '/') + '/' + script.name, become=True)
                     except Exception as e:
-                        logger.error(e)
+                        logger.exception('excecute_copy failed')
                         deploy = False
                         errors.append(str(e))
                     logger.debug("output : " + str(response))
@@ -779,7 +787,7 @@ class Suricata(Probe):
             response = execute_copy(self.server, src=os.path.abspath(tmpdir + 'temp.conf'),
                                     dest=self.configuration.conf_file, become=True)
         except Exception as e:
-            logger.error(e)
+            logger.exception('deploy conf failed')
             deploy = False
             errors.append(str(e))
         logger.debug("output : " + str(response))

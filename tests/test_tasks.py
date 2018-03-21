@@ -1,5 +1,6 @@
 """ venv/bin/python probemanager/manage.py test suricata.tests.test_tasks --settings=probemanager.settings.dev """
 from django.test import TestCase
+from django.conf import settings
 
 from core.tasks import reload_probe, deploy_rules
 from suricata.tasks import upload_url_http
@@ -12,31 +13,27 @@ class TasksSuricataTest(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        pass
+        settings.CELERY_TASK_ALWAYS_EAGER = True
 
     def test_deploy_rules(self):
         suricata = Suricata.get_by_id(1)
-        response = deploy_rules(suricata.name)
-        if 'exception' in response:
-            print(response['exception'])
-        self.assertEqual('Probe suricata1 deployed rules successfully', response['message'])
+        response = deploy_rules.delay(suricata.name)
+        self.assertEquals(response.get()['message'], 'Probe suricata1 deployed rules successfully')
+        self.assertTrue(response.successful())
 
     def test_reload_probe(self):
         suricata = Suricata.get_by_id(1)
-        response = reload_probe(suricata.name)
-        if 'exception' in response:
-            print(response['exception'])
-        self.assertEqual('Probe suricata1 reloaded successfully', response['message'])
+        response = reload_probe.delay(suricata.name)
+        self.assertEqual(response.get()['message'], 'Probe suricata1 reloaded successfully')
+        self.assertTrue(response.successful())
 
     def test_upload_url_http(self):
         source = SourceSuricata.get_by_id(1)
-        response = upload_url_http(source.uri)
-        if 'exception' in response:
-            print(response['exception'])
-        self.assertEqual('Source https://sslbl.abuse.ch/blacklist/sslblacklist.rules uploaded successfully by HTTP', response['message'])
+        response = upload_url_http.delay(source.uri)
+        self.assertEqual(response.get()['message'], 'Source https://sslbl.abuse.ch/blacklist/sslblacklist.rules uploaded successfully by HTTP')
+        self.assertTrue(response.successful())
 
         source = SourceSuricata.get_by_id(2)
-        response = upload_url_http(source.uri)
-        if 'exception' in response:
-            print(response['exception'])
-        self.assertEqual('Source https://rules.emergingthreats.net/open/suricata-3.3.1/emerging.rules.tar.gz uploaded successfully by HTTP', response['message'])
+        response = upload_url_http.delay(source.uri)
+        self.assertEqual(response.get()['message'], 'Source https://rules.emergingthreats.net/open/suricata-3.3.1/emerging.rules.tar.gz uploaded successfully by HTTP')
+        self.assertTrue(response.successful())

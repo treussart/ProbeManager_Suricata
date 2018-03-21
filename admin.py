@@ -2,7 +2,6 @@ import glob
 import logging
 import os
 import time
-import traceback
 
 from django import forms
 from django.conf import settings
@@ -325,7 +324,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                         schedule.save()
                                         create_deploy_rules_task(probe, schedule, obj)
                                 except Exception as e:
-                                    logger.error(str(e))
+                                    logger.exception(str(e))
                 upload_url_http.delay(obj.uri, rulesets_id)
                 messages.add_message(request, messages.SUCCESS, mark_safe("Upload source in progress. "
                                                                           "<a href='/admin/core/job/'>View Job</a>"))
@@ -341,8 +340,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                 logger.error('Upload method unknown : ' + obj.method.name)
                 messages.add_message(request, messages.ERROR, 'Upload method unknown : ' + obj.method.name)
         except Exception as e:
-            logger.error(str(e))
-            logger.error(traceback.print_exc())
+            logger.exception(str(e))
             messages.add_message(request, messages.ERROR, str(e))
         finally:
             if os.path.isfile(settings.BASE_DIR + "/" + obj.file.name):

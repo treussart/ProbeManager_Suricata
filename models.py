@@ -597,7 +597,8 @@ class Suricata(Probe):
 
     def install(self):
         if self.server.os.name == 'debian':
-            command1 = "echo 'deb http://http.debian.net/debian stretch-backports main' >> /etc/apt/sources.list.d/stretch-backports.list"
+            command1 = "echo 'deb http://http.debian.net/debian stretch-backports main' | sudo tee -a " \
+                       "/etc/apt/sources.list.d/stretch-backports.list"
             command2 = "apt update"
             command3 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower()
             command4 = "mkdir /etc/suricata/lua"

@@ -601,11 +601,16 @@ class Suricata(Probe):
             command1 = "echo 'deb http://http.debian.net/debian stretch-backports main' >> " \
                        "/etc/apt/sources.list.d/stretch-backports.list"
             command2 = "apt update"
-            command3 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower() + \
-                       " && mkdir /etc/suricata/lua"
+            command3 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower()
+            command4 = "mkdir /etc/suricata/lua"
         else:
             raise Exception("Not yet implemented")
-        tasks = OrderedDict({"0_sudo": command0, "1_add_repo": command1, "2_update_repo": command2, "3_install": command3})
+        tasks = OrderedDict({"0_sudo": command0,
+                             "1_add_repo": command1,
+                             "2_update_repo": command2,
+                             "3_install": command3,
+                             "4_create_dir": command4})
+        logger.warning(tasks)
         try:
             response = execute(self.server, tasks, become=True)
         except Exception as e:

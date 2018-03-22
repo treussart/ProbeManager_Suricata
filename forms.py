@@ -8,6 +8,7 @@ class SuricataChangeForm(ModelForm):
         model = Suricata
         fields = ('name',
                   'description',
+                  'installed',
                   'secure_deployment',
                   'server',
                   'rulesets',

@@ -6,6 +6,7 @@ import ssl
 import subprocess
 import tarfile
 import urllib.request
+from collections import OrderedDict
 
 import select2.fields
 from django.conf import settings
@@ -603,7 +604,7 @@ class Suricata(Probe):
                        " && mkdir /etc/suricata/lua"
         else:
             raise Exception("Not yet implemented")
-        tasks = sorted({"1_add_repo": command1, "2_update_repo": command2, "3_install": command3})
+        tasks = OrderedDict({"1_add_repo": command1, "2_update_repo": command2, "3_install": command3})
         logger.debug(tasks)
         try:
             response = execute(self.server, tasks, become=True)

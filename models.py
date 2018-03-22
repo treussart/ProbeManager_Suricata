@@ -605,11 +605,13 @@ class Suricata(Probe):
             command4 = "mkdir /etc/suricata/lua"
         else:
             raise Exception("Not yet implemented")
-        tasks = OrderedDict({"0_sudo": command0,
+        tasks_unordered = {"0_sudo": command0,
                              "1_add_repo": command1,
                              "2_update_repo": command2,
                              "3_install": command3,
-                             "4_create_dir": command4})
+                             "4_create_dir": command4}
+
+        tasks = OrderedDict(sorted(tasks_unordered.items(), key=lambda t: t[0]))
         logger.warning(tasks)
         try:
             response = execute(self.server, tasks, become=True)

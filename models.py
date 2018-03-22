@@ -6,6 +6,7 @@ import ssl
 import subprocess
 import tarfile
 import urllib.request
+from collections import OrderedDict
 
 import select2.fields
 from django.conf import settings
@@ -596,16 +597,23 @@ class Suricata(Probe):
 
     def install(self):
         if self.server.os.name == 'debian':
-            command1 = "echo 'deb http://http.debian.net/debian stretch-backports main' >> " \
+            command1 = "echo 'deb http://http.debian.net/debian stretch-backports main' | sudo tee -a " \
                        "/etc/apt/sources.list.d/stretch-backports.list"
             command2 = "apt update"
-            command3 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower() + \
-                       " && mkdir /etc/suricata/lua"
+            command3 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower()
+            command4 = "mkdir /etc/suricata/lua"
         else:
             raise Exception("Not yet implemented")
-        tasks = {"add_repo": command1, "update_repo": command2, "install": command3}
+        tasks_unordered = {"1_add_repo": command1,
+                           "2_update_repo": command2,
+                           "3_install": command3,
+                           "4_create_dir": command4}
+
+        tasks = OrderedDict(sorted(tasks_unordered.items(), key=lambda t: t[0]))
         try:
             response = execute(self.server, tasks, become=True)
+            self.installed = True
+            self.save()
         except Exception as e:
             logger.exception('install failed')
             return {'status': False, 'errors': str(e)}

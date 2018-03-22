@@ -603,7 +603,8 @@ class Suricata(Probe):
                        " && mkdir /etc/suricata/lua"
         else:
             raise Exception("Not yet implemented")
-        tasks = {"add_repo": command1, "update_repo": command2, "install": command3}
+        tasks = sorted({"1_add_repo": command1, "2_update_repo": command2, "3_install": command3})
+        logger.debug(tasks)
         try:
             response = execute(self.server, tasks, become=True)
         except Exception as e:

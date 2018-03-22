@@ -612,6 +612,8 @@ class Suricata(Probe):
         tasks = OrderedDict(sorted(tasks_unordered.items(), key=lambda t: t[0]))
         try:
             response = execute(self.server, tasks, become=True)
+            self.installed = True
+            self.save()
         except Exception as e:
             logger.exception('install failed')
             return {'status': False, 'errors': str(e)}

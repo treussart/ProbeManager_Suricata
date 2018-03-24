@@ -44,6 +44,7 @@ if [ -f /etc/debian_version ]; then
             if [ ! -f /etc/suricata ]; then
                 mkdir /etc/suricata
                 mkdir /etc/suricata/rules
+                sudo chown -R travis /etc/suricata
             fi
         fi
     fi

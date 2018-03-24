@@ -43,6 +43,7 @@ if [ -f /etc/debian_version ]; then
             sudo apt install -y suricata
         fi
     fi
+    which suricata
     config="/etc/suricata/suricata.yaml"
     rules="/etc/suricata/rules"
 fi

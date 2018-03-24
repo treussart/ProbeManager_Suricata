@@ -41,6 +41,10 @@ if [ -f /etc/debian_version ]; then
     else
         if ! type suricata ; then
             sudo apt install -y suricata
+            if [ ! -f /etc/suricata ]; then
+                mkdir /etc/suricata
+                mkdir /etc/suricata/rules
+            fi
         fi
     fi
     which suricata

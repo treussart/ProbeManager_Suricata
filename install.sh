@@ -34,19 +34,8 @@ if [[ $OSTYPE = *"darwin"* ]]; then
 fi
 # Debian
 if [ -f /etc/debian_version ]; then
-    if [ "$arg" != 'travis' ]; then
-        if ! type suricata ; then
-            apt install -y suricata
-        fi
-    else
-        if ! type suricata ; then
-            sudo apt install -y suricata
-            if [ ! -f /etc/suricata ]; then
-                mkdir /etc/suricata
-                mkdir /etc/suricata/rules
-                sudo chown -R travis /etc/suricata
-            fi
-        fi
+    if ! type suricata ; then
+        apt install -y suricata
     fi
     which suricata
     config="/etc/suricata/suricata.yaml"

@@ -53,7 +53,7 @@ class ViewsSuricataTest(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class ViewsSuricataSourceAdminTest(TestCase):
+class ViewsSuricataAdminTest(TestCase):
     fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
                 'test-suricata-source', 'test-suricata-conf', 'test-suricata-suricata']
 
@@ -177,3 +177,47 @@ class ViewsSuricataSourceAdminTest(TestCase):
                 'data_type': DataTypeUpload.get_by_name("multiple files in compressed file").id
             }, follow=True)
         self.assertIn('File uploaded successfully :', str(response.content))
+
+    def test_index(self):
+        # index
+        response = self.client.get('/admin/suricata/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('<title>Suricata administration', str(response.content))
+
+    def test_rule_set(self):
+        response = self.client.get('/admin/suricata/rulesetsuricata/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        response = self.client.post('/admin/suricata/rulesetsuricata/', {'action': 'test_signatures',
+                                                                         '_selected_action': '1'},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Test signatures OK', str(response.content))
+
+    def test_suricata(self):
+        response = self.client.get('/admin/suricata/suricata/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        response = self.client.post('/admin/suricata/suricata/', {'action': 'test_signatures',
+                                                                         '_selected_action': '1'},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Test signatures OK', str(response.content))
+        response = self.client.get('/admin/suricata/suricata/add/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(Suricata.get_all()), 1)
+        response = self.client.post('/admin/suricata/suricata/add/', {'name': 'test',
+                                                                      'secure_deployment': True,
+                                                                      'scheduled_rules_deployment_enabled': True,
+                                                                      'scheduled_rules_deployment_crontab': 4,
+                                                                      'scheduled_check_enabled': True,
+                                                                      'scheduled_check_crontab': 3,
+                                                                      'server': 1,
+                                                                      'rulesets': '1',
+                                                                      'configuration': 1,
+                                                                      'installed': True}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(' was added successfully', str(response.content))
+        self.assertEqual(len(Suricata.get_all()), 2)
+        response = self.client.post('/admin/suricata/suricata/', {'action': 'delete_suricata', '_selected_action': '2'},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(Suricata.get_all()), 1)

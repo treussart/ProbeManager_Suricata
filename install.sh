@@ -2,26 +2,11 @@
 
 echo '## Install Suricata ##'
 # Get args
-if [ -z $1 ] || [[ "$1" = 'dev' ]]; then
-    arg="dev"
-    dest=""
-elif [[ "$1" = 'travis' ]]; then
-    arg=$1
-    dest=""
-elif [[ "$1" = 'prod' ]]; then
-    arg=$1
-    if [ -z $2 ]; then
-        dest='/usr/local/share'
-    else
-        dest=$2
-    fi
-else
-    echo 'Bad argument'
-    exit 1
-fi
-
+arg=$1
+destfull=$2
 
 config=""
+rules=""
 # OSX with brew
 if [[ $OSTYPE = *"darwin"* ]]; then
     if brew --version | grep -qw Homebrew ; then
@@ -34,27 +19,26 @@ if [[ $OSTYPE = *"darwin"* ]]; then
 fi
 # Debian
 if [ -f /etc/debian_version ]; then
-    if [ "$arg" != 'travis' ]; then
-        if ! type suricata ; then
-            apt install -y suricata
-        fi
-    else
-        if ! type suricata ; then
-            sudo apt install -y suricata
-        fi
+    if ! type suricata ; then
+        sudo apt install -y suricata
     fi
+    which suricata
     config="/etc/suricata/suricata.yaml"
     rules="/etc/suricata/rules"
 fi
 if [[ "$arg" = 'prod' ]]; then
-    touch /var/log/suricata/suricata.log
-    chmod a+w  /var/log/suricata/suricata.log
-    chmod a+r  /var/log/suricata/suricata.log
-    echo "SURICATA_BINARY = '$( which suricata )'" > "$dest"probemanager/suricata/settings.py
-    echo "SURICATA_CONFIG = '$config'" >> "$dest"probemanager/suricata/settings.py
-    echo "SURICATA_RULES = '$rules'" >> "$dest"probemanager/suricata/settings.py
-else
-    echo "SURICATA_BINARY = '$( which suricata )'" > probemanager/suricata/settings.py
-    echo "SURICATA_CONFIG = '$config'" >> probemanager/suricata/settings.py
-    echo "SURICATA_RULES = '$rules'" >> probemanager/suricata/settings.py
+    sudo touch /var/log/suricata/suricata.log
+    sudo chmod a+rw  /var/log/suricata/suricata.log
+    sudo chown -R $(whoami) /etc/suricata
+    sudo chown $(whoami) $( which suricata )
+    sudo ls -l /etc/suricata
+    if [ ! -f /etc/suricata/rules ]; then
+        mkdir /etc/suricata/rules
+    fi
+    if [ -f /etc/suricata/suricata-debian.yaml ]; then
+        mv /etc/suricata/suricata-debian.yaml /etc/suricata/suricata.yaml
+    fi
 fi
+echo "SURICATA_BINARY = '$( which suricata )'" > "$destfull"probemanager/suricata/settings.py
+echo "SURICATA_CONFIG = '$config'" >> "$destfull"probemanager/suricata/settings.py
+echo "SURICATA_RULES = '$rules'" >> "$destfull"probemanager/suricata/settings.py

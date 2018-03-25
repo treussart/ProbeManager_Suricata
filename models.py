@@ -639,6 +639,8 @@ class Suricata(Probe):
         value = ""
         for md5 in Md5Suricata.get_all():
             value += md5.value + os.linesep
+        if not os.path.exists(settings.SURICATA_RULES):
+            os.mkdir(settings.SURICATA_RULES)
         with open(settings.SURICATA_RULES + '/md5-blacklist', 'w', encoding='utf_8') as f:
             f.write(value)
         test = True

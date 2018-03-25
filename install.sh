@@ -32,6 +32,12 @@ if [[ "$arg" = 'prod' ]]; then
     sudo chown -R $(whoami) /etc/suricata
     sudo chown $(whoami) $( which suricata )
     sudo ls -l /etc/suricata
+    if [ ! -f /etc/suricata/rules ]; then
+        mkdir /etc/suricata/rules
+    fi
+    if [ -f /etc/suricata/suricata-debian.yaml ]; then
+        mv /etc/suricata/suricata-debian.yaml /etc/suricata/suricata.yaml
+    fi
 fi
 echo "SURICATA_BINARY = '$( which suricata )'" > "$destfull"probemanager/suricata/settings.py
 echo "SURICATA_CONFIG = '$config'" >> "$destfull"probemanager/suricata/settings.py

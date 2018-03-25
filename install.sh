@@ -29,7 +29,7 @@ fi
 if [[ "$arg" = 'prod' ]]; then
     sudo touch /var/log/suricata/suricata.log
     sudo chmod a+rw  /var/log/suricata/suricata.log
-    sudo chmod a+rw /etc/suricata/rules
+    sudo chown -R $(whoami) /etc/suricata
 fi
 echo "SURICATA_BINARY = '$( which suricata )'" > "$destfull"probemanager/suricata/settings.py
 echo "SURICATA_CONFIG = '$config'" >> "$destfull"probemanager/suricata/settings.py

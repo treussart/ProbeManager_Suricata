@@ -7,7 +7,7 @@ from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
 from rules.models import DataTypeUpload, MethodUpload
 from suricata.models import Suricata, SourceSuricata, SignatureSuricata, RuleSetSuricata
-from unittest import  skip
+
 
 class ViewsSuricataTest(TestCase):
     fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
@@ -80,7 +80,6 @@ class ViewsSuricataAdminTest(TestCase):
         with self.assertTemplateUsed('admin/change_form.html'):
             self.client.get('/admin/suricata/sourcesuricata/add/')
 
-    @skip
     def test_source_signature_http_multiple_files(self):
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
                                     {'method': MethodUpload.get_by_name("URL HTTP").id,
@@ -93,7 +92,6 @@ class ViewsSuricataAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('Upload source in progress.', str(response.content))
 
-    @skip
     def test_source_signature_http_one_file(self):
         for source in SourceSuricata.objects.all():
             source.delete()
@@ -110,7 +108,6 @@ class ViewsSuricataAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('Upload source in progress.', str(response.content))
 
-    @skip
     def test_source_signature_http_one_file_deploy(self):
         for source in SourceSuricata.objects.all():
             source.delete()
@@ -128,7 +125,6 @@ class ViewsSuricataAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('Upload source in progress.', str(response.content))
 
-    @skip
     def test_source_signature_http_one_file_deploy_with_probe(self):
         for source in SourceSuricata.objects.all():
             source.delete()
@@ -146,7 +142,6 @@ class ViewsSuricataAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('Upload source in progress.', str(response.content))
 
-    @skip
     def test_source_signature_file_one_file(self):
         with open(settings.BASE_DIR + '/suricata/tests/data/sslblacklist.rules', encoding='utf_8') as fp:
             response = self.client.post('/admin/suricata/sourcesuricata/add/', {
@@ -159,7 +154,6 @@ class ViewsSuricataAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('File uploaded successfully :', str(response.content))
 
-    @skip
     def test_source_signature_file_one_file_error(self):
         with open(settings.BASE_DIR + '/suricata/tests/data/error.rules', encoding='utf_8') as fp:
             response = self.client.post('/admin/suricata/sourcesuricata/add/', {
@@ -173,7 +167,6 @@ class ViewsSuricataAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('File uploaded successfully :', str(response.content))
 
-    @skip
     def test_source_signature_file_multiple_files(self):
         with open(settings.BASE_DIR + '/suricata/tests/data/emerging.rules.tar.gz', 'rb') as fp:
             response = self.client.post('/admin/suricata/sourcesuricata/add/', {

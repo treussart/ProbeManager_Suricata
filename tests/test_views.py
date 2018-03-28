@@ -6,12 +6,12 @@ from django.utils import timezone
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
 from rules.models import DataTypeUpload, MethodUpload
-from suricata.models import Suricata, SourceSuricata, SignatureSuricata, RuleSetSuricata
+from suricata.models import Suricata, SourceSuricata, SignatureSuricata, ConfSuricata, ScriptSuricata
 
 
 class ViewsSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
-                'test-suricata-conf', 'test-suricata-suricata']
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature',
+                'test-suricata-script', 'test-suricata-ruleset', 'test-suricata-conf', 'test-suricata-suricata']
 
     def setUp(self):
         self.client = Client()
@@ -54,8 +54,9 @@ class ViewsSuricataTest(TestCase):
 
 
 class ViewsSuricataAdminTest(TestCase):
-    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
-                'test-suricata-source', 'test-suricata-conf', 'test-suricata-suricata']
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature',
+                'test-suricata-script', 'test-suricata-ruleset', 'test-suricata-source', 'test-suricata-conf',
+                'test-suricata-suricata']
 
     def setUp(self):
         self.client = Client()
@@ -83,7 +84,8 @@ class ViewsSuricataAdminTest(TestCase):
     def test_source_signature_http_multiple_files(self):
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
                                     {'method': MethodUpload.get_by_name("URL HTTP").id,
-                                     'uri': 'https://rules.emergingthreats.net/open/suricata-2.0.1/emerging.rules.tar.gz',
+                                     'uri': 'https://rules.emergingthreats.net/open/suricata-2.0.1/'
+                                            'emerging.rules.tar.gz',
                                      'scheduled_rules_deployment_enabled': 'True',
                                      'scheduled_rules_deployment_crontab': CrontabSchedule.objects.get(id=1).id,
                                      'scheduled_deploy': 'False',
@@ -203,7 +205,8 @@ class ViewsSuricataAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         response = self.client.post('/admin/suricata/rulesetsuricata/add/', {'name': 'test_signatures',
                                                                              'description': 'test fail',
-                                                                             'signatures': str(SignatureSuricata.get_by_sid(666).id)
+                                                                             'signatures': str(SignatureSuricata.
+                                                                                               get_by_sid(666).id)
                                                                              },
                                     follow=True)
         self.assertEqual(response.status_code, 200)
@@ -268,10 +271,118 @@ class ViewsSuricataAdminTest(TestCase):
                                                                       'installed': True}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(' was added successfully', str(response.content))
-        response = self.client.get('/admin/suricata/suricata/' + str(Suricata.get_by_name('test').id) + '/delete/', follow=True)
+        response = self.client.get('/admin/suricata/suricata/' + str(Suricata.get_by_name('test').id) + '/delete/',
+                                   follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Are you sure ', str(response.content))
-        response = self.client.post('/admin/suricata/suricata/' + str(Suricata.get_by_name('test').id) + '/delete/', {'post': 'yes'}, follow=True)
+        response = self.client.post('/admin/suricata/suricata/' + str(Suricata.get_by_name('test').id) + '/delete/',
+                                    {'post': 'yes'}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn("Suricata instance test deleted", str(response.content))
         self.assertEqual(len(Suricata.get_all()), 1)
+
+    def test_conf(self):
+        response = self.client.get('/admin/suricata/confsuricata/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(ConfSuricata.get_all()), 2)
+
+        with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
+            CONF_FULL_DEFAULT = f.read()
+        response = self.client.post('/admin/suricata/confsuricata/add/', {'name': 'conftest',
+                                                                          'conf_rules_directory': '/etc/suricata/rules',
+                                                                          'conf_script_directory': '/etc/suricata/lua',
+                                                                          'conf_file': '/etc/suricata/suricata.yaml',
+                                                                          'conf_advanced': True,
+                                                                          'conf_advanced_text': CONF_FULL_DEFAULT,
+                                                                          'conf_HOME_NET' :"[192.168.0.0/24]",
+                                                                          'conf_EXTERNAL_NET' :"!$HOME_NET",
+                                                                          'conf_HTTP_SERVERS' :"$HOME_NET",
+                                                                          'conf_SMTP_SERVERS' :"$HOME_NET",
+                                                                          'conf_SQL_SERVERS' :"$HOME_NET",
+                                                                          'conf_DNS_SERVERS' :"$HOME_NET",
+                                                                          'conf_TELNET_SERVERS' :"$HOME_NET",
+                                                                          'conf_AIM_SERVERS' :"$EXTERNAL_NET",
+                                                                          'conf_DNP3_SERVER' :"$HOME_NET",
+                                                                          'conf_DNP3_CLIENT' :"$HOME_NET",
+                                                                          'conf_MODBUS_CLIENT' :"$HOME_NET",
+                                                                          'conf_MODBUS_SERVER' :"$HOME_NET",
+                                                                          'conf_ENIP_CLIENT' :"$HOME_NET",
+                                                                          'conf_ENIP_SERVER' :"$HOME_NET",
+                                                                          'conf_HTTP_PORTS' :"80",
+                                                                          'conf_SHELLCODE_PORTS' :"!80",
+                                                                          'conf_ORACLE_PORTS' :"1521",
+                                                                          'conf_SSH_PORTS' :"22",
+                                                                          'conf_DNP3_PORTS' :"20000",
+                                                                          'conf_MODBUS_PORTS' :"502",
+                                                                          'conf_stats': 1,
+                                                                          'conf_afpacket_interface':'eth0',
+                                                                          'conf_outputs_fast': 1,
+                                                                          'conf_outputs_evelog': 0,
+                                                                          'conf_outputs_evelog_alert_http': 0,
+                                                                          'conf_outputs_evelog_alert_tls': 0,
+                                                                          'conf_outputs_evelog_alert_ssh': 0,
+                                                                          'conf_outputs_evelog_alert_smtp': 0,
+                                                                          'conf_outputs_evelog_alert_dnp3': 0,
+                                                                          'conf_outputs_evelog_alert_taggedpackets': 0,
+                                                                          'conf_outputs_evelog_xff': 0,
+                                                                          'conf_outputs_evelog_dns_query': 0,
+                                                                          'conf_outputs_evelog_dns_answer': 0,
+                                                                          'conf_outputs_evelog_http_extended': 0,
+                                                                          'conf_outputs_evelog_tls_extended': 0,
+                                                                          'conf_outputs_evelog_files_forcemagic': 1,
+                                                                          'conf_outputs_unified2alert': 1,
+                                                                          'conf_lua': 1,
+                                                                          'conf_applayer_tls': 0,
+                                                                          'conf_applayer_dcerpc': 0,
+                                                                          'conf_applayer_ftp': 0,
+                                                                          'conf_applayer_ssh': 0,
+                                                                          'conf_applayer_smtp': 0,
+                                                                          'conf_applayer_imap': 2,
+                                                                          'conf_applayer_msn': 2,
+                                                                          'conf_applayer_smb': 0,
+                                                                          'conf_applayer_dns': 0,
+                                                                          'conf_applayer_http': 0
+                                                                          }, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(' was added successfully', str(response.content))
+        self.assertIn('Test conf OK', str(response.content))
+        self.assertEqual(len(ConfSuricata.get_all()), 3)
+        response = self.client.post('/admin/suricata/confsuricata/', {'action': 'test_configurations',
+                                                                      '_selected_action': '2'},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Test configurations OK", str(response.content))
+
+    def test_script(self):
+        self.assertEqual(len(ScriptSuricata.get_all()), 1)
+        response = self.client.get('/admin/suricata/scriptsuricata/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        response = self.client.post('/admin/suricata/scriptsuricata/', {'action': 'make_enabled',
+                                                                      '_selected_action': str(ScriptSuricata.
+                                                                                              get_all()[0].id)},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("successfully marked as enabled", str(response.content))
+        response = self.client.post('/admin/suricata/scriptsuricata/', {'action': 'make_disabled',
+                                                                      '_selected_action': str(ScriptSuricata.
+                                                                                              get_all()[0].id)},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("successfully marked as disabled", str(response.content))
+
+    def test_signature(self):
+        self.assertEqual(len(SignatureSuricata.get_all()), 2)
+        response = self.client.get('/admin/suricata/signaturesuricata/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        response = self.client.post('/admin/suricata/signaturesuricata/', {'action': 'make_enabled',
+                                                                      '_selected_action': str(SignatureSuricata.
+                                                                                              get_all()[0].id)},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("successfully marked as enabled", str(response.content))
+        response = self.client.post('/admin/suricata/signaturesuricata/', {'action': 'make_disabled',
+                                                                      '_selected_action': str(SignatureSuricata.
+                                                                                              get_all()[0].id)},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("successfully marked as disabled", str(response.content))

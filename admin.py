@@ -57,7 +57,7 @@ class SuricataAdmin(admin.ModelAdmin):
                 name=probe.name + "_deploy_rules_" + str(probe.scheduled_rules_deployment_crontab))
             periodic_task.delete()
             logger.debug(str(periodic_task) + " deleted")
-        except PeriodicTask.DoesNotExist:
+        except PeriodicTask.DoesNotExist:  # pragma: no cover
             pass
         messages.add_message(request, messages.SUCCESS, "Suricata instance " + probe.name + " deleted")
         super().delete_model(request, obj)

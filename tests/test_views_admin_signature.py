@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.utils import timezone
 
-from suricata.models import SignatureSuricata
+from suricata.models import SignatureSuricata, RuleSetSuricata
 
 
 class ViewsSignatureAdminTest(TestCase):
@@ -41,7 +41,6 @@ class ViewsSignatureAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("successfully marked as enabled", str(response.content))
         self.assertTrue(SignatureSuricata.get_by_sid(20402000).enabled)
-
         response = self.client.post('/admin/suricata/signaturesuricata/',
                                     {'action': 'make_disabled',
                                      '_selected_action': [SignatureSuricata.get_by_sid(20402000).id,
@@ -49,6 +48,8 @@ class ViewsSignatureAdminTest(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn("2 rules were successfully marked as disabled", str(response.content))
+        self.assertFalse(SignatureSuricata.get_by_sid(20402000).enabled)
+        self.assertFalse(SignatureSuricata.get_by_sid(2405001).enabled)
         response = self.client.post('/admin/suricata/signaturesuricata/',
                                     {'action': 'make_enabled',
                                      '_selected_action': [SignatureSuricata.get_by_sid(20402000).id,
@@ -56,7 +57,8 @@ class ViewsSignatureAdminTest(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn("2 rules were successfully marked as enabled", str(response.content))
-
+        self.assertTrue(SignatureSuricata.get_by_sid(20402000).enabled)
+        self.assertTrue(SignatureSuricata.get_by_sid(2405001).enabled)
         response = self.client.post('/admin/suricata/signaturesuricata/add/', {'rev': '0',
                                                                                'rule_full': '1',
                                                                                'sid': '666',
@@ -66,6 +68,34 @@ class ViewsSignatureAdminTest(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(SignatureSuricata.get_all()), 3)
+        response = self.client.post('/admin/suricata/signaturesuricata/',
+                                    {'action': 'test_signatures',
+                                     '_selected_action': SignatureSuricata.get_by_sid(2405001).id},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Test signatures OK', str(response.content))
+        response = self.client.post('/admin/suricata/signaturesuricata/',
+                                    {'action': 'test_signatures',
+                                     '_selected_action': SignatureSuricata.get_by_sid(666).id},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Test signatures failed !', str(response.content))
+
+        response = self.client.post('/admin/suricata/signaturesuricata/',
+                                    {'action': 'add_ruleset',
+                                     '_selected_action': SignatureSuricata.get_by_sid(666).id,
+                                     'ruleset': RuleSetSuricata.get_by_name('ruleset1').id},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(SignatureSuricata.get_by_sid(666), RuleSetSuricata.get_by_name('ruleset1').signatures.all())
+        response = self.client.post('/admin/suricata/signaturesuricata/',
+                                    {'action': 'remove_ruleset',
+                                     '_selected_action': SignatureSuricata.get_by_sid(666).id,
+                                     'ruleset': RuleSetSuricata.get_by_name('ruleset1').id},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(SignatureSuricata.get_by_sid(666), RuleSetSuricata.get_by_name('ruleset1').signatures.all())
+
         response = self.client.post('/admin/suricata/signaturesuricata/', {'action': 'delete_selected',
                                                                            '_selected_action': '4'},
                                     follow=True)

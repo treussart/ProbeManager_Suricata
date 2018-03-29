@@ -276,6 +276,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                 pass
             source.delete()
             logger.debug(str(source) + " deleted")
+            messages.add_message(request, messages.SUCCESS, str(source) + " deleted")
 
     actions = [delete_source]
     list_display = ('__str__',)
@@ -321,7 +322,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                                           )
                                         schedule.save()
                                         create_deploy_rules_task(probe, schedule, obj)
-                                except Exception as e:
+                                except Exception as e:  # pragma: no cover
                                     logger.exception(str(e))
                 upload_url_http.delay(obj.uri, rulesets_id=rulesets_id)
                 messages.add_message(request, messages.SUCCESS, mark_safe("Upload source in progress. "
@@ -364,7 +365,7 @@ class BlackListSuricataAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.save()
-        obj.rulesets = form.cleaned_data['rulesets']
+        # obj.rulesets = form.cleaned_data['rulesets']
         obj.create_blacklist()
         # super().save_model(request, obj, form, change)
 

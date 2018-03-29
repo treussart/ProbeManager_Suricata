@@ -1,4 +1,5 @@
 """ venv/bin/python probemanager/manage.py test suricata.tests.test_views_admin_signature --settings=probemanager.settings.dev """
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.utils import timezone
@@ -67,6 +68,7 @@ class ViewsSignatureAdminTest(TestCase):
                                                                                },
                                     follow=True)
         self.assertEqual(response.status_code, 200)
+        self.assertIn('Test signature failed !', str(response.content))
         self.assertEqual(len(SignatureSuricata.get_all()), 3)
         response = self.client.post('/admin/suricata/signaturesuricata/',
                                     {'action': 'test_signatures',
@@ -108,3 +110,15 @@ class ViewsSignatureAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('Successfully deleted 1 ', str(response.content))
         self.assertEqual(len(SignatureSuricata.get_all()), 2)
+        with open(settings.BASE_DIR + '/suricata/tests/data/test.pcap', 'rb') as f:
+            response = self.client.post('/admin/suricata/signaturesuricata/add/', {'rev': '0',
+                                                                                   'rule_full': 'alert ip [192.168.0.66,104.199.65.12] any -> $HOME_NET any (msg:"Test Pcap match"; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; sid:300; rev:1;)',
+                                                                                   'sid': '667',
+                                                                                   'classtype': '2',
+                                                                                   'msg': 'test ok',
+                                                                                   'pcap_success': f,
+                                                                                   },
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Test signature OK', str(response.content))
+        self.assertEqual(len(SignatureSuricata.get_all()), 3)

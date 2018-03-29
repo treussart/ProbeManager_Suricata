@@ -602,12 +602,14 @@ class Suricata(Probe):
             command2 = "apt update"
             command3 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower()
             command4 = "mkdir /etc/suricata/lua"
+            command5 = "sudo chown -R $(whoami) /etc/suricata"
         else:
             raise Exception("Not yet implemented")
         tasks_unordered = {"1_add_repo": command1,
                            "2_update_repo": command2,
                            "3_install": command3,
-                           "4_create_dir": command4}
+                           "4_create_dir": command4,
+                           "5_change_rights": command5}
 
         tasks = OrderedDict(sorted(tasks_unordered.items(), key=lambda t: t[0]))
         try:
@@ -836,7 +838,7 @@ class Md5Suricata(models.Model):
         return object
 
 
-class BlackListSuricata(models.Model):
+class BlackListSuricata(CommonMixin, models.Model):
     """
     Stores an instance of a pattern in blacklist.
     """

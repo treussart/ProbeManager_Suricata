@@ -136,4 +136,11 @@ class ViewsSourceAdminTest(TestCase):
             }, follow=True)
         self.assertIn('File uploaded successfully :', str(response.content))
 
-
+    def test_source_delete(self):
+        self.assertEqual(len(SourceSuricata.get_all()), 2)
+        response = self.client.post('/admin/suricata/sourcesuricata/', {'action': 'delete_source',
+                                                                        '_selected_action': '2'},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Https://rules.emergingthreats.net/open/suricata-3.3.1/emerging.rules.tar.gz deleted', str(response.content))
+        self.assertEqual(len(SourceSuricata.get_all()), 1)

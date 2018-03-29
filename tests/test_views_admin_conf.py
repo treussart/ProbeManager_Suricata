@@ -211,3 +211,8 @@ class ViewsConfAdminTest(TestCase):
         self.assertIn(' was added successfully', str(response.content))
         self.assertIn('Test configuration failed !', str(response.content))
         self.assertEqual(len(ConfSuricata.get_all()), 5)
+        response = self.client.post('/admin/suricata/confsuricata/', {'action': 'test_configurations',
+                                                                      '_selected_action': '5'},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Test configurations failed !", str(response.content))

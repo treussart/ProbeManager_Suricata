@@ -25,18 +25,40 @@ class ViewsSignatureAdminTest(TestCase):
         self.assertEqual(len(SignatureSuricata.get_all()), 2)
         response = self.client.get('/admin/suricata/signaturesuricata/', follow=True)
         self.assertEqual(response.status_code, 200)
-        response = self.client.post('/admin/suricata/signaturesuricata/', {'action': 'make_enabled',
-                                                                           '_selected_action': str(SignatureSuricata.
-                                                                                                   get_all()[0].id)},
-                                    follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("successfully marked as enabled", str(response.content))
+        self.assertTrue(SignatureSuricata.get_by_sid(20402000).enabled)
+        self.assertTrue(SignatureSuricata.get_by_sid(2405001).enabled)
         response = self.client.post('/admin/suricata/signaturesuricata/', {'action': 'make_disabled',
-                                                                           '_selected_action': str(SignatureSuricata.
-                                                                                                   get_all()[0].id)},
+                                                                           '_selected_action':  str(SignatureSuricata.
+                                                                                                   get_by_sid(20402000).id)},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn("successfully marked as disabled", str(response.content))
+        self.assertFalse(SignatureSuricata.get_by_sid(20402000).enabled)
+        response = self.client.post('/admin/suricata/signaturesuricata/', {'action': 'make_enabled',
+                                                                           '_selected_action': str(SignatureSuricata.
+                                                                                                   get_by_sid(20402000).id)},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("successfully marked as enabled", str(response.content))
+        self.assertTrue(SignatureSuricata.get_by_sid(20402000).enabled)
+
+        response = self.client.post('/admin/suricata/signaturesuricata/', {'action': 'make_disabled',
+                                                                           '_selected_action': [SignatureSuricata.
+                                                                                                   get_by_sid(20402000).id,
+                                                                                                SignatureSuricata.
+                                                                                                   get_by_sid(2405001).id]},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("2 rules were successfully marked as disabled", str(response.content))
+        response = self.client.post('/admin/suricata/signaturesuricata/', {'action': 'make_enabled',
+                                                                           '_selected_action': [SignatureSuricata.
+                                                                                                   get_by_sid(20402000).id,
+                                                                                                SignatureSuricata.
+                                                                                                   get_by_sid(2405001).id]},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("2 rules were successfully marked as enabled", str(response.content))
+
         response = self.client.post('/admin/suricata/signaturesuricata/add/', {'rev': '0',
                                                                                'rule_full': '1',
                                                                                'sid': '666',

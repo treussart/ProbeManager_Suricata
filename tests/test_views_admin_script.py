@@ -39,9 +39,9 @@ class ViewsScriptAdminTest(TestCase):
         self.assertIn("1 rule was successfully marked as disabled", str(response.content))
 
         response = self.client.post('/admin/suricata/scriptsuricata/add/', {'rev': '0',
-                                                                               'rule_full': '1',
-                                                                               'name': 'fail script test',
-                                                                               },
+                                                                            'rule_full': '1',
+                                                                            'name': 'fail script test',
+                                                                            },
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         response = self.client.post('/admin/suricata/scriptsuricata/', {'action': 'make_enabled',
@@ -56,13 +56,13 @@ class ViewsScriptAdminTest(TestCase):
         self.assertIn("2 rules were successfully marked as disabled", str(response.content))
         self.assertEqual(len(ScriptSuricata.get_all()), 2)
         response = self.client.post('/admin/suricata/scriptsuricata/', {'action': 'delete_selected',
-                                                                         '_selected_action': '4'},
+                                                                        '_selected_action': '4'},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Are you sure you want to delete the selected ', str(response.content))
         response = self.client.post('/admin/suricata/scriptsuricata/', {'action': 'delete_selected',
-                                                                         '_selected_action': '4',
-                                                                         'post': 'yes'},
+                                                                        '_selected_action': '4',
+                                                                        'post': 'yes'},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Successfully deleted 1 ', str(response.content))

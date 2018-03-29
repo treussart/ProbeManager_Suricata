@@ -365,9 +365,7 @@ class BlackListSuricataAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.save()
-        # obj.rulesets = form.cleaned_data['rulesets']
         obj.create_blacklist()
-        # super().save_model(request, obj, form, change)
 
     def get_actions(self, request):
         actions = super(BlackListSuricataAdmin, self).get_actions(request)
@@ -386,6 +384,7 @@ class BlackListSuricataAdmin(admin.ModelAdmin):
                     signature = SignatureSuricata.get_by_sid(blacklist.sid)
                     signature.delete()
         super().delete_model(request, obj)
+        messages.add_message(request, messages.SUCCESS, "Blacklists deleted")
 
     list_display = ('__str__',)
     list_display_links = None

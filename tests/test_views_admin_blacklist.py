@@ -33,8 +33,39 @@ class ViewsBlacklistAdminTest(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(BlackListSuricata.get_all()), 1)
-        response = self.client.post('/admin/suricata/blacklistsuricata/', {'action': 'delete_blacklist',
-                                                                           '_selected_action': '1'},
+        response = self.client.post('/admin/suricata/blacklistsuricata/',
+                                    {'action': 'delete_blacklist',
+                                     '_selected_action': BlackListSuricata.get_by_value('192.168.0.1').id},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(BlackListSuricata.get_all()), 0)
+        response = self.client.post('/admin/suricata/blacklistsuricata/add/', {'type': 'HOST',
+                                                                               'value': 'test.com',
+                                                                               'comment': 'test',
+                                                                               'rulesets': [1, ]
+                                                                               },
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(BlackListSuricata.get_all()), 1)
+        response = self.client.post('/admin/suricata/blacklistsuricata/',
+                                    {'action': 'delete_blacklist',
+                                     '_selected_action': BlackListSuricata.get_by_value('test.com').id},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(BlackListSuricata.get_all()), 0)
+        response = self.client.post('/admin/suricata/blacklistsuricata/add/',
+                                    {'type': 'MD5',
+                                     'value': 'e41c0631f6f2c138a417b59bcb880fce',
+                                     'comment': 'test',
+                                     'rulesets': [1, ]
+                                     },
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(BlackListSuricata.get_all()), 1)
+        response = self.client.post('/admin/suricata/blacklistsuricata/',
+                                    {'action': 'delete_blacklist',
+                                     '_selected_action': BlackListSuricata.
+                                     get_by_value('e41c0631f6f2c138a417b59bcb880fce').id},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(BlackListSuricata.get_all()), 0)

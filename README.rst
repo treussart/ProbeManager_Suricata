@@ -13,6 +13,14 @@ Module for Suricata IDS
 .. |Licence| image:: https://img.shields.io/github/license/matleses/ProbeManager_Suricata.svg
 .. |Version| image:: https://img.shields.io/github/tag/matleses/ProbeManager_Suricata.svg
 
+
+
+Compatible version
+==================
+
+ * Suricata version 4.0.4 RELEASE
+
+
 Features
 ========
 

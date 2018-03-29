@@ -49,8 +49,20 @@ class SuricataAdmin(admin.ModelAdmin):
             'suricata/js/mask-crontab.js',
         )
 
-    """A ModelAdmin that uses a different form class when adding an object."""
+    def delete(self, request, obj, probe=None):
+        if probe is None:
+            probe = obj
+        try:
+            periodic_task = PeriodicTask.objects.get(
+                name=probe.name + "_deploy_rules_" + str(probe.scheduled_rules_deployment_crontab))
+            periodic_task.delete()
+            logger.debug(str(periodic_task) + " deleted")
+        except PeriodicTask.DoesNotExist:  # pragma: no cover
+            pass
+        messages.add_message(request, messages.SUCCESS, "Suricata instance " + probe.name + " deleted")
+        super().delete_model(request, obj)
 
+    """A ModelAdmin that uses a different form class when adding an object."""
     def get_form(self, request, obj=None, **kwargs):
         if obj is None:
             return super(SuricataAdmin, self).get_form(request, obj, **kwargs)
@@ -64,31 +76,17 @@ class SuricataAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
     def delete_model(self, request, obj):
-        try:
-            periodic_task = PeriodicTask.objects.get(
-                name=obj.name + "_deploy_rules_" + str(obj.scheduled_rules_deployment_crontab))
-            periodic_task.delete()
-            logger.debug(str(periodic_task) + " deleted")
-        except PeriodicTask.DoesNotExist:
-            pass
-        super().delete_model(request, obj)
+        self.delete(request, obj)
+
+    def delete_suricata(self, request, obj):
+        for probe in obj:
+            self.delete(request, obj, probe=probe)
 
     def get_actions(self, request):
         actions = super(SuricataAdmin, self).get_actions(request)
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
-
-    def delete_suricata(self, request, obj):
-        for probe in obj:
-            try:
-                periodic_task = PeriodicTask.objects.get(
-                    name=probe.name + "_deploy_rules_" + str(probe.scheduled_rules_deployment_crontab))
-                periodic_task.delete()
-                logger.debug(str(periodic_task) + " deleted")
-            except PeriodicTask.DoesNotExist:
-                pass
-            super().delete_model(request, obj)
 
     def test_signatures(self, request, obj):
         test = True
@@ -119,9 +117,9 @@ class ConfSuricataAdmin(admin.ModelAdmin):
             obj = convert_conf(obj)
         response = obj.test()
         if response['status']:
-            messages.add_message(request, messages.SUCCESS, "Test conf OK")
+            messages.add_message(request, messages.SUCCESS, "Test configuration OK")
         else:
-            messages.add_message(request, messages.ERROR, "Test conf failed ! " + str(response['errors']))
+            messages.add_message(request, messages.ERROR, "Test configuration failed ! " + str(response['errors']))
         super().save_model(request, obj, form, change)
 
     def test_configurations(self, request, obj):

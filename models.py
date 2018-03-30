@@ -144,7 +144,7 @@ class ConfSuricata(ProbeConfiguration):
 
     def test(self):
         tmpdir = settings.BASE_DIR + "/tmp/test_conf/"
-        if not os.path.exists(tmpdir):
+        if not os.path.exists(tmpdir):  # pragma: no cover
             os.makedirs(tmpdir)
         rule_file = settings.BASE_DIR + "/suricata/tests/data/test.rules"
         conf_file = tmpdir + self.name + ".yaml"
@@ -280,7 +280,7 @@ class SignatureSuricata(Rule):
 
     def test(self):
         tmpdir = settings.BASE_DIR + "/tmp/test_sig/"
-        if not os.path.exists(tmpdir):
+        if not os.path.exists(tmpdir):  # pragma: no cover
             os.makedirs(tmpdir)
         rule_file = tmpdir + str(self.sid) + ".rules"
         with open(rule_file, 'w', encoding='utf_8') as f:
@@ -302,7 +302,7 @@ class SignatureSuricata(Rule):
 
     def test_pcap(self):
         tmpdir = settings.BASE_DIR + "/tmp/test_pcap/" + str(self.sid) + "/"
-        if not os.path.exists(tmpdir):
+        if not os.path.exists(tmpdir):  # pragma: no cover
             os.makedirs(tmpdir)
         rule_file = tmpdir + "rule.rules"
         conf_file = tmpdir + "suricata.yaml"

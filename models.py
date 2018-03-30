@@ -356,6 +356,23 @@ logging:
         errdata += b"Alert not generated"
         return {'status': False, 'errors': errdata}
 
+    def test_all(self):
+        test = True
+        errors = list()
+        response = self.test()
+        if not response['status']:
+            test = False
+            errors.append(str(self) + " : " + str(response['errors']))
+        if self.pcap_success:
+            response_pcap = self.test_pcap()
+            if not response_pcap['status']:
+                test = False
+                errors.append(str(self) + " : " + str(response_pcap['errors']))
+        if test:
+            return {'status': True}
+        else:
+            return {'status': False, 'errors': errors}
+
 
 class ScriptSuricata(Rule):
     """

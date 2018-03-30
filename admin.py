@@ -214,12 +214,7 @@ class SignatureSuricataAdmin(admin.ModelAdmin):
         test = True
         errors = list()
         for signature in obj:
-            response = signature.test()
-            if signature.pcap_success:
-                response_pcap = signature.test_pcap()
-                if not response_pcap['status']:
-                    test = False
-                    errors.append(str(signature) + " : " + str(response_pcap['errors']))
+            response = signature.test_all()
             if not response['status']:
                 test = False
                 errors.append(str(signature) + " : " + str(response['errors']))
@@ -236,7 +231,7 @@ class SignatureSuricataAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
-        response = obj.test()
+        response = obj.test_all()
         if response['status']:
             messages.add_message(request, messages.SUCCESS, "Test signature OK")
         else:

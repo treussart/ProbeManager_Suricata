@@ -111,14 +111,20 @@ class ViewsSignatureAdminTest(TestCase):
         self.assertIn('Successfully deleted 1 ', str(response.content))
         self.assertEqual(len(SignatureSuricata.get_all()), 2)
         with open(settings.BASE_DIR + '/suricata/tests/data/test.pcap', 'rb') as f:
-            response = self.client.post('/admin/suricata/signaturesuricata/add/', {'rev': '0',
-                                                                                   'rule_full': 'alert ip [192.168.0.66,104.199.65.12] any -> $HOME_NET any (msg:"Test Pcap match"; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; sid:300; rev:1;)',
+            response = self.client.post('/admin/suricata/signaturesuricata/add/', {'rev': '1',
+                                                                                   'rule_full': 'alert ip 192.168.0.66 any -> 104.199.65.12 any (msg:"Test Pcap match"; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; sid:667; rev:1;)',
                                                                                    'sid': '667',
-                                                                                   'classtype': '2',
-                                                                                   'msg': 'test ok',
+                                                                                   'classtype': '29',
+                                                                                   'msg': 'Test Pcap match',
                                                                                    'pcap_success': f,
                                                                                    },
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Test signature OK', str(response.content))
         self.assertEqual(len(SignatureSuricata.get_all()), 3)
+        response = self.client.post('/admin/suricata/signaturesuricata/',
+                                    {'action': 'test_signatures',
+                                     '_selected_action': SignatureSuricata.get_by_sid(667).id},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Test signatures OK', str(response.content))

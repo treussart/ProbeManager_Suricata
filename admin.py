@@ -333,13 +333,13 @@ class SourceSuricataAdmin(admin.ModelAdmin):
             else:
                 logger.error('Upload method unknown : ' + obj.method.name)
                 messages.add_message(request, messages.ERROR, 'Upload method unknown : ' + obj.method.name)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             logger.exception(str(e))
             messages.add_message(request, messages.ERROR, str(e))
         finally:
             if os.path.isfile(settings.BASE_DIR + "/" + obj.file.name):
                 os.remove(settings.BASE_DIR + "/" + obj.file.name)
-            else:
+            else:  # pragma: no cover
                 for file in glob.glob(settings.BASE_DIR + "/tmp/upload/*"):
                     os.remove(file)
             if os.path.isfile(settings.BASE_DIR + "/tmp/" + 'progress.json'):

@@ -138,9 +138,28 @@ class ViewsSourceAdminTest(TestCase):
 
     def test_source_delete(self):
         self.assertEqual(len(SourceSuricata.get_all()), 2)
+        for source in SourceSuricata.get_all():
+            response = self.client.post('/admin/suricata/sourcesuricata/', {'action': 'delete_source',
+                                                                            '_selected_action': source.id},
+                                        follow=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn('deleted', str(response.content))
+        self.assertEqual(len(SourceSuricata.get_all()), 0)
+        response = self.client.post('/admin/suricata/sourcesuricata/add/',
+                                    {'method': MethodUpload.get_by_name("URL HTTP").id,
+                                     'uri': 'https://sslbl.abuse.ch/blacklist/sslblacklist.rules',
+                                     'scheduled_rules_deployment_enabled': 'True',
+                                     'scheduled_rules_deployment_crontab': CrontabSchedule.objects.get(id=1).id,
+                                     'scheduled_deploy': 'True',
+                                     'rulesets': '1',
+                                     'data_type': DataTypeUpload.get_by_name("one file not compressed").id
+                                     }, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Upload source in progress.', str(response.content))
+        self.assertEqual(len(SourceSuricata.get_all()), 1)
         response = self.client.post('/admin/suricata/sourcesuricata/', {'action': 'delete_source',
-                                                                        '_selected_action': '2'},
+                                                                        '_selected_action': '3'},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Https://rules.emergingthreats.net/open/suricata-3.3.1/emerging.rules.tar.gz deleted', str(response.content))
-        self.assertEqual(len(SourceSuricata.get_all()), 1)
+        self.assertIn('Https://sslbl.abuse.ch/blacklist/sslblacklist.rules deleted', str(response.content))
+        self.assertEqual(len(SourceSuricata.get_all()), 0)

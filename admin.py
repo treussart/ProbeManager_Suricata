@@ -330,7 +330,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                 message = obj.upload_file(request, rulesets)
                 logger.debug("Upload file: " + str(message))
                 messages.add_message(request, messages.SUCCESS, message)
-            else:
+            else:  # pragma: no cover
                 logger.error('Upload method unknown : ' + obj.method.name)
                 messages.add_message(request, messages.ERROR, 'Upload method unknown : ' + obj.method.name)
         except Exception as e:  # pragma: no cover
@@ -339,9 +339,6 @@ class SourceSuricataAdmin(admin.ModelAdmin):
         finally:
             if os.path.isfile(settings.BASE_DIR + "/" + obj.file.name):
                 os.remove(settings.BASE_DIR + "/" + obj.file.name)
-            else:  # pragma: no cover
-                for file in glob.glob(settings.BASE_DIR + "/tmp/upload/*"):
-                    os.remove(file)
             if os.path.isfile(settings.BASE_DIR + "/tmp/" + 'progress.json'):
                 os.remove(settings.BASE_DIR + "/tmp/" + 'progress.json')
 

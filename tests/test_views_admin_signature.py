@@ -128,3 +128,15 @@ class ViewsSignatureAdminTest(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Test signatures OK', str(response.content))
+        with open(settings.BASE_DIR + '/suricata/tests/data/test.pcap', 'rb') as f:
+            response = self.client.post('/admin/suricata/signaturesuricata/add/', {'rev': '1',
+                                                                                   'rule_full': 'alert ip 192.168.10.66 any -> 104.199.5.12 any (msg:"Test Pcap match"; threshold: type limit, track by_src, seconds 3600, count 1; classtype:misc-attack; sid:667; rev:1;)',
+                                                                                   'sid': '668',
+                                                                                   'classtype': '29',
+                                                                                   'msg': 'Test Pcap match',
+                                                                                   'pcap_success': f,
+                                                                                   },
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Test signature failed !', str(response.content))
+        self.assertEqual(len(SignatureSuricata.get_all()), 4)

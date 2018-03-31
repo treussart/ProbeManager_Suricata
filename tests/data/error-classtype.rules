@@ -1,0 +1,1 @@
+alert ip 5.134.128.0 any -> $HOME_NET any (msg:"ET DROP Spamhaus DROP Listed Traffic Inbound group 1"; reference:url,www.spamhaus.org/drop/drop.lasso; threshold: type limit, track by_src, seconds 3600, count 1; classtype:oups; flowbits:set,ET.Evil; sid:2400000; flowbits:set,ET.DROPIP; rev:2616;)

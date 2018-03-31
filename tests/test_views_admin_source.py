@@ -6,7 +6,7 @@ from django.utils import timezone
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
 from rules.models import DataTypeUpload, MethodUpload
-from suricata.models import SourceSuricata
+from suricata.models import SourceSuricata, SignatureSuricata
 
 
 class ViewsSourceAdminTest(TestCase):
@@ -157,9 +157,37 @@ class ViewsSourceAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('Upload source in progress.', str(response.content))
         self.assertEqual(len(SourceSuricata.get_all()), 1)
-        response = self.client.post('/admin/suricata/sourcesuricata/', {'action': 'delete_source',
-                                                                        '_selected_action': '3'},
+        response = self.client.post('/admin/suricata/sourcesuricata/',
+                                    {'action': 'delete_source',
+                                     '_selected_action': SourceSuricata.get_all()[0].id},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Https://sslbl.abuse.ch/blacklist/sslblacklist.rules deleted', str(response.content))
         self.assertEqual(len(SourceSuricata.get_all()), 0)
+
+    def test_raise_not_found_param(self):
+        self.assertEqual(len(SignatureSuricata.get_all()), 2)
+        with open(settings.BASE_DIR + '/suricata/tests/data/error-sid.rules', encoding='utf_8') as fp:
+            response = self.client.post('/admin/suricata/sourcesuricata/add/', {
+                'method': MethodUpload.get_by_name("Upload file").id,
+                'file': fp,
+                'scheduled_rules_deployment_enabled': 'False',
+                'scheduled_deploy': 'False',
+                'data_type': DataTypeUpload.get_by_name("one file not compressed").id,
+                'rulesets': '1',
+            }, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('File uploaded successfully :', str(response.content))
+        self.assertEqual(len(SignatureSuricata.get_all()), 2)
+        with open(settings.BASE_DIR + '/suricata/tests/data/error-classtype.rules', encoding='utf_8') as fp:
+            response = self.client.post('/admin/suricata/sourcesuricata/add/', {
+                'method': MethodUpload.get_by_name("Upload file").id,
+                'file': fp,
+                'scheduled_rules_deployment_enabled': 'False',
+                'scheduled_deploy': 'False',
+                'data_type': DataTypeUpload.get_by_name("one file not compressed").id,
+                'rulesets': '1',
+            }, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('SignatureSuricata has no classtype.', str(response.content))
+        self.assertEqual(len(SignatureSuricata.get_all()), 2)

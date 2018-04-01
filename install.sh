@@ -27,7 +27,7 @@ elif [ -f /etc/debian_version ]; then
             sudo apt -y install libpcre3 libpcre3-dbg libpcre3-dev build-essential autoconf automake libtool libpcap-dev libnet1-dev libyaml-0-2 libyaml-dev zlib1g zlib1g-dev libmagic-dev libcap-ng-dev libjansson-dev pkg-config
             wget https://www.openinfosecfoundation.org/download/suricata-"$SURICATA_VERSION".tar.gz
             tar -xzf suricata-"$SURICATA_VERSION".tar.gz
-            (cd suricata-"$SURICATA_VERSION" && ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var && make && sudo make install)
+            (cd suricata-"$SURICATA_VERSION" && ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var && make && sudo make install && sudo make install-conf)
         elif [[ $issue = *"Ubuntu"* ]]; then
             sudo add-apt-repository -y ppa:oisf/suricata-stable
             sudo apt update

@@ -8,6 +8,8 @@ destfull=$2
 config=""
 rules=""
 if [[ "$SURICATA_VERSION" != "" ]]; then
+sudo apt update
+sudo apt -y install libpcre3 libpcre3-dbg libpcre3-dev build-essential autoconf automake libtool libpcap-dev libnet1-dev libyaml-0-2 libyaml-dev zlib1g zlib1g-dev libmagic-dev libcap-ng-dev libjansson-dev pkg-config
 wget https://www.openinfosecfoundation.org/download/suricata-"$SURICATA_VERSION".tar.gz
 tar -xzf suricata-"$SURICATA_VERSION".tar.gz
 (cd suricata-"$SURICATA_VERSION" && ./configure && make && sudo make install-conf)

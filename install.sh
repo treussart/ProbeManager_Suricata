@@ -42,18 +42,22 @@ elif [ -f /etc/debian_version ]; then
     config="/etc/suricata/suricata.yaml"
     rules="/etc/suricata/rules"
     if [[ "$arg" = 'prod' ]]; then
-        suricata -V
         sudo touch /var/log/suricata/suricata.log
         sudo chmod a+rw  /var/log/suricata/suricata.log
         sudo chown -R $(whoami) /etc/suricata
-        sudo chown $(whoami) $( which suricata )
         sudo ls -l /etc/suricata
-        if [ ! -f /etc/suricata/rules ]; then
+        sudo ls -l /usr/bin
+        if [ -f /usr/bin/suricata ]; then
+            sudo chown $(whoami) /usr/bin/suricata
+        fi
+        if [ ! -d /etc/suricata/rules ]; then
             mkdir /etc/suricata/rules
         fi
         if [ -f /etc/suricata/suricata-debian.yaml ]; then
             mv /etc/suricata/suricata-debian.yaml /etc/suricata/suricata.yaml
         fi
+        which suricata
+        suricata -V
     fi
 fi
 echo "SURICATA_BINARY = '$( which suricata )'" > "$destfull"probemanager/suricata/settings.py

@@ -933,7 +933,7 @@ class BlackListSuricata(CommonMixin, models.Model):
                 signature.save()
             md5_suricata = Md5Suricata(value=self.value, signature=signature)
             md5_suricata.save()
-        else:
+        else:  # pragma: no cover
             raise Exception("Blacklist type unknown")
         for ruleset in self.rulesets.all():
             ruleset.signatures.add(signature)

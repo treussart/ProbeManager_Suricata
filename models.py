@@ -656,7 +656,6 @@ class Suricata(Probe):
             raise Exception("Not yet implemented")
         tasks_unordered = {"1_update_repo": command1,
                            "2_upgrade": command2}
-
         tasks = OrderedDict(sorted(tasks_unordered.items(), key=lambda t: t[0]))
         try:
             response = execute(self.server, tasks, become=True)

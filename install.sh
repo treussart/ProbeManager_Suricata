@@ -20,13 +20,16 @@ if [[ $OSTYPE = *"darwin"* ]]; then
 fi
 # Debian
 if [ -f /etc/debian_version ]; then
-    echo 'DEBIAN '$( cat /etc/debian_version )
-    cat /etc/issue
+    cat /etc/issue.net
     if ! type suricata ; then
-        echo 'deb http://http.debian.net/debian stretch-backports main' | sudo tee -a /etc/apt/sources.list.d/stretch-backports.list
-        sudo apt update
-        sudo apt -y -t stretch-backports install suricata
-        sudo apt -y install suricata
+        issue=$( cat /etc/issue.net )
+        if [[ $issue = *"Ubuntu"* ]]; then
+          sudo apt -y install suricata
+        else
+            echo 'deb http://http.debian.net/debian stretch-backports main' | sudo tee -a /etc/apt/sources.list.d/stretch-backports.list
+            sudo apt update
+            sudo apt -y -t stretch-backports install suricata
+        fi
     fi
     which suricata
     config="/etc/suricata/suricata.yaml"

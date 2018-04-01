@@ -86,7 +86,6 @@ class ViewsConfAdminTest(TestCase):
                                                                           }, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(' was added successfully', str(response.content))
-        # Problem with travis
         self.assertIn('Test configuration OK', str(response.content))
         response = self.client.post('/admin/suricata/confsuricata/add/', {'name': 'conftest-false',
                                                                           'conf_rules_directory': '/etc/suricata/rules',

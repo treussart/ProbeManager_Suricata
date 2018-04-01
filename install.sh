@@ -24,9 +24,9 @@ if [ -f /etc/debian_version ]; then
     if ! type suricata ; then
         issue=$( cat /etc/issue.net )
         if [[ $issue = *"Ubuntu"* ]]; then
-            echo 'deb http://archive.ubuntu.com/ubuntu trusty-backports main restricted universe multiverse' | sudo tee -a /etc/apt/sources.list
+            sudo add-apt-repository ppa:oisf/suricata-stable
             sudo apt update
-            sudo apt -y -t trusty-backports install suricata
+            sudo apt -y install suricata
         else
             echo 'deb http://http.debian.net/debian stretch-backports main' | sudo tee -a /etc/apt/sources.list.d/stretch-backports.list
             sudo apt update

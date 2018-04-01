@@ -24,7 +24,7 @@ if [ -f /etc/debian_version ]; then
     if ! type suricata ; then
         issue=$( cat /etc/issue.net )
         if [[ $issue = *"Ubuntu"* ]]; then
-            sudo add-apt-repository ppa:oisf/suricata-stable
+            sudo add-apt-repository -y ppa:oisf/suricata-stable
             sudo apt update
             sudo apt -y install suricata
         else

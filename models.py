@@ -554,7 +554,7 @@ class SourceSuricata(Source):
         # URL HTTP - multiple files in compressed file
         if self.data_type.name == "multiple files in compressed file":
             logger.debug("multiple files in compressed file")
-            if response.info()['Content-type'] == 'application/x-gzip':
+            if response.info()['Content-type'] == 'application/x-gzip' or response.info()['Content-type'] == 'application/x-tar':
                 count_created, count_updated = self.extract_files(file_dowloaded, rulesets)
                 logger.debug('File uploaded successfully : ' + str(count_created) + ' signatures created and ' + str(
                     count_updated) + ' signatures updated.')

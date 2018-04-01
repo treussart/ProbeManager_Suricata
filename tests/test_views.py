@@ -62,6 +62,16 @@ class ViewsSuricataTest(TestCase):
         response = self.client.get('/suricata/reload/' + str(suricata.id), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Probe reloaded successfully', str(response.content))
+        response = self.client.get('/suricata/deploy-conf/' + str(suricata.id), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Test configuration OK', str(response.content))
+        self.assertIn('Deployed configuration successfully', str(response.content))
+        response = self.client.get('/suricata/deploy-rules/' + str(suricata.id), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Deployed rules launched with succeed', str(response.content))
+        response = self.client.get('/suricata/update/' + str(suricata.id), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('launched with succeed', str(response.content))
 
     def test_admin_index(self):
         # index

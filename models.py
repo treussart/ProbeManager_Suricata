@@ -620,6 +620,12 @@ class Suricata(Probe):
             command3 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower()
             command4 = "mkdir /etc/suricata/lua"
             command5 = "sudo chown -R $(whoami) /etc/suricata"
+        elif self.server.os.name == 'ubuntu':
+            command1 = "add-apt-repository -y ppa:oisf/suricata-stable"
+            command2 = "apt update"
+            command3 = "apt -y install " + self.__class__.__name__.lower()
+            command4 = "mkdir /etc/suricata/lua"
+            command5 = "sudo chown -R $(whoami) /etc/suricata"
         else:
             raise Exception("Not yet implemented")
         tasks_unordered = {"1_add_repo": command1,
@@ -639,8 +645,30 @@ class Suricata(Probe):
         logger.debug("output : " + str(response))
         return {'status': True}
 
-    def reload(self):
+    def update(self):
         if self.server.os.name == 'debian':
+            command1 = "apt update"
+            command2 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower()
+        elif self.server.os.name == 'ubuntu':
+            command1 = "apt update"
+            command2 = "apt -y install " + self.__class__.__name__.lower()
+        else:
+            raise Exception("Not yet implemented")
+        tasks_unordered = {"1_update_repo": command1,
+                           "2_upgrade": command2}
+        tasks = OrderedDict(sorted(tasks_unordered.items(), key=lambda t: t[0]))
+        try:
+            response = execute(self.server, tasks, become=True)
+            self.installed = True
+            self.save()
+        except Exception as e:
+            logger.exception('update failed')
+            return {'status': False, 'errors': str(e)}
+        logger.debug("output : " + str(response))
+        return {'status': True}
+
+    def reload(self):
+        if self.server.os.name == 'debian' or self.server.os.name == 'ubuntu':
             command = "kill -USR2 $( pidof suricata )"
         else:
             raise Exception("Not yet implemented")

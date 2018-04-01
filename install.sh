@@ -27,7 +27,7 @@ elif [ -f /etc/debian_version ]; then
             sudo apt -y install libpcre3 libpcre3-dbg libpcre3-dev build-essential autoconf automake libtool libpcap-dev libnet1-dev libyaml-0-2 libyaml-dev zlib1g zlib1g-dev libmagic-dev libcap-ng-dev libjansson-dev pkg-config
             wget https://www.openinfosecfoundation.org/download/suricata-"$SURICATA_VERSION".tar.gz
             tar -xzf suricata-"$SURICATA_VERSION".tar.gz
-            (cd suricata-"$SURICATA_VERSION" && ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var && make && sudo make install-conf)
+            (cd suricata-"$SURICATA_VERSION" && ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var && make && sudo make install)
         elif [[ $issue = *"Ubuntu"* ]]; then
             sudo add-apt-repository -y ppa:oisf/suricata-stable
             sudo apt update
@@ -45,10 +45,8 @@ elif [ -f /etc/debian_version ]; then
         sudo touch /var/log/suricata/suricata.log
         sudo chmod a+rw  /var/log/suricata/suricata.log
         sudo chown -R $(whoami) /etc/suricata
-        sudo ls -l /etc/suricata
-        sudo ls -l /usr/bin
-        if [ -f /usr/bin/suricata ]; then
-            sudo chown $(whoami) /usr/bin/suricata
+        if [ -f $( which suricata ) ]; then
+            sudo chown $(whoami) $( which suricata )
         fi
         if [ ! -d /etc/suricata/rules ]; then
             mkdir /etc/suricata/rules

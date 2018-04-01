@@ -124,6 +124,7 @@ class ScriptSuricataTest(TestCase):
         self.assertEqual(ScriptSuricata.get_by_name("test.lua").rev, 0)
         script_suricata = ScriptSuricata.get_by_id(99)
         self.assertEqual(script_suricata, None)
+        self.assertEqual(ScriptSuricata.get_by_name('does not exist'), None)
         with self.assertRaises(AttributeError):
             script_suricata.name
         with self.assertRaises(IntegrityError):
@@ -134,6 +135,7 @@ class ScriptSuricataTest(TestCase):
                                           enabled=True,
                                           created_date=self.date_now
                                           )
+
 
 
 class SignatureSuricataTest(TestCase):

@@ -1,4 +1,3 @@
-import glob
 import logging
 import os
 import time
@@ -214,12 +213,7 @@ class SignatureSuricataAdmin(admin.ModelAdmin):
         test = True
         errors = list()
         for signature in obj:
-            response = signature.test()
-            if signature.pcap_success:
-                response_pcap = signature.test_pcap()
-                if not response_pcap['status']:
-                    test = False
-                    errors.append(str(signature) + " : " + str(response_pcap['errors']))
+            response = signature.test_all()
             if not response['status']:
                 test = False
                 errors.append(str(signature) + " : " + str(response['errors']))
@@ -236,7 +230,7 @@ class SignatureSuricataAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
-        response = obj.test()
+        response = obj.test_all()
         if response['status']:
             messages.add_message(request, messages.SUCCESS, "Test signature OK")
         else:
@@ -276,6 +270,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                 pass
             source.delete()
             logger.debug(str(source) + " deleted")
+            messages.add_message(request, messages.SUCCESS, str(source) + " deleted")
 
     actions = [delete_source]
     list_display = ('__str__',)
@@ -321,7 +316,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                                           )
                                         schedule.save()
                                         create_deploy_rules_task(probe, schedule, obj)
-                                except Exception as e:
+                                except Exception as e:  # pragma: no cover
                                     logger.exception(str(e))
                 upload_url_http.delay(obj.uri, rulesets_id=rulesets_id)
                 messages.add_message(request, messages.SUCCESS, mark_safe("Upload source in progress. "
@@ -334,18 +329,15 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                 message = obj.upload_file(request, rulesets)
                 logger.debug("Upload file: " + str(message))
                 messages.add_message(request, messages.SUCCESS, message)
-            else:
+            else:  # pragma: no cover
                 logger.error('Upload method unknown : ' + obj.method.name)
                 messages.add_message(request, messages.ERROR, 'Upload method unknown : ' + obj.method.name)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             logger.exception(str(e))
             messages.add_message(request, messages.ERROR, str(e))
         finally:
             if os.path.isfile(settings.BASE_DIR + "/" + obj.file.name):
                 os.remove(settings.BASE_DIR + "/" + obj.file.name)
-            else:
-                for file in glob.glob(settings.BASE_DIR + "/tmp/upload/*"):
-                    os.remove(file)
             if os.path.isfile(settings.BASE_DIR + "/tmp/" + 'progress.json'):
                 os.remove(settings.BASE_DIR + "/tmp/" + 'progress.json')
 
@@ -364,9 +356,7 @@ class BlackListSuricataAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.save()
-        obj.rulesets = form.cleaned_data['rulesets']
         obj.create_blacklist()
-        # super().save_model(request, obj, form, change)
 
     def get_actions(self, request):
         actions = super(BlackListSuricataAdmin, self).get_actions(request)
@@ -385,6 +375,7 @@ class BlackListSuricataAdmin(admin.ModelAdmin):
                     signature = SignatureSuricata.get_by_sid(blacklist.sid)
                     signature.delete()
         super().delete_model(request, obj)
+        messages.add_message(request, messages.SUCCESS, "Blacklists deleted")
 
     list_display = ('__str__',)
     list_display_links = None

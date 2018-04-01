@@ -46,6 +46,22 @@ class ViewsSuricataTest(TestCase):
             self.client.get('/suricata/' + str(suricata.id))
         response = self.client.get('/suricata/' + str(99))
         self.assertEqual(response.status_code, 404)
+        response = self.client.get('/suricata/stop/' + str(suricata.id), follow=True)
+        self.assertEqual(response.status_code, 200)
+        # self.assertIn('Error during the stop: Error during stop', str(response.content))
+        self.assertIn('Probe stopped successfully', str(response.content))
+        response = self.client.get('/suricata/start/' + str(suricata.id), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Probe started successfully', str(response.content))
+        response = self.client.get('/suricata/status/' + str(suricata.id), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('get status successfully', str(response.content))
+        response = self.client.get('/suricata/restart/' + str(suricata.id), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Probe restarted successfully', str(response.content))
+        response = self.client.get('/suricata/reload/' + str(suricata.id), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Probe reloaded successfully', str(response.content))
 
     def test_admin_index(self):
         # index

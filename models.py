@@ -144,7 +144,7 @@ class ConfSuricata(ProbeConfiguration):
 
     def test(self):
         tmpdir = settings.BASE_DIR + "/tmp/test_conf/"
-        if not os.path.exists(tmpdir):
+        if not os.path.exists(tmpdir):  # pragma: no cover
             os.makedirs(tmpdir)
         rule_file = settings.BASE_DIR + "/suricata/tests/data/test.rules"
         conf_file = tmpdir + self.name + ".yaml"
@@ -280,7 +280,7 @@ class SignatureSuricata(Rule):
 
     def test(self):
         tmpdir = settings.BASE_DIR + "/tmp/test_sig/"
-        if not os.path.exists(tmpdir):
+        if not os.path.exists(tmpdir):  # pragma: no cover
             os.makedirs(tmpdir)
         rule_file = tmpdir + str(self.sid) + ".rules"
         with open(rule_file, 'w', encoding='utf_8') as f:
@@ -302,7 +302,7 @@ class SignatureSuricata(Rule):
 
     def test_pcap(self):
         tmpdir = settings.BASE_DIR + "/tmp/test_pcap/" + str(self.sid) + "/"
-        if not os.path.exists(tmpdir):
+        if not os.path.exists(tmpdir):  # pragma: no cover
             os.makedirs(tmpdir)
         rule_file = tmpdir + "rule.rules"
         conf_file = tmpdir + "suricata.yaml"
@@ -355,6 +355,23 @@ logging:
         # if not -> return error
         errdata += b"Alert not generated"
         return {'status': False, 'errors': errdata}
+
+    def test_all(self):
+        test = True
+        errors = list()
+        response = self.test()
+        if not response['status']:
+            test = False
+            errors.append(str(self) + " : " + str(response['errors']))
+        if self.pcap_success:
+            response_pcap = self.test_pcap()
+            if not response_pcap['status']:
+                test = False
+                errors.append(str(self) + " : " + str(response_pcap['errors']))
+        if test:
+            return {'status': True}
+        else:
+            return {'status': False, 'errors': errors}
 
 
 class ScriptSuricata(Rule):
@@ -602,12 +619,14 @@ class Suricata(Probe):
             command2 = "apt update"
             command3 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower()
             command4 = "mkdir /etc/suricata/lua"
+            command5 = "sudo chown -R $(whoami) /etc/suricata"
         else:
             raise Exception("Not yet implemented")
         tasks_unordered = {"1_add_repo": command1,
                            "2_update_repo": command2,
                            "3_install": command3,
-                           "4_create_dir": command4}
+                           "4_create_dir": command4,
+                           "5_change_rights": command5}
 
         tasks = OrderedDict(sorted(tasks_unordered.items(), key=lambda t: t[0]))
         try:
@@ -836,7 +855,7 @@ class Md5Suricata(models.Model):
         return object
 
 
-class BlackListSuricata(models.Model):
+class BlackListSuricata(CommonMixin, models.Model):
     """
     Stores an instance of a pattern in blacklist.
     """
@@ -914,7 +933,7 @@ class BlackListSuricata(models.Model):
                 signature.save()
             md5_suricata = Md5Suricata(value=self.value, signature=signature)
             md5_suricata.save()
-        else:
+        else:  # pragma: no cover
             raise Exception("Blacklist type unknown")
         for ruleset in self.rulesets.all():
             ruleset.signatures.add(signature)

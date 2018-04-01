@@ -63,7 +63,6 @@ class ViewsSuricataTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('Probe reloaded successfully', str(response.content))
 
-
     def test_admin_index(self):
         # index
         response = self.client.get('/admin/suricata/', follow=True)

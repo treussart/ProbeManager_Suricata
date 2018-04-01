@@ -646,7 +646,7 @@ class Suricata(Probe):
         return {'status': True}
 
     def reload(self):
-        if self.server.os.name == 'debian':
+        if self.server.os.name == 'debian' or self.server.os.name == 'ubuntu':
             command = "kill -USR2 $( pidof suricata )"
         else:
             raise Exception("Not yet implemented")

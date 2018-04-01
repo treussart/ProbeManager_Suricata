@@ -20,7 +20,9 @@ fi
 # Debian
 if [ -f /etc/debian_version ]; then
     if ! type suricata ; then
-        sudo apt install -y suricata
+        sudo echo 'deb http://http.debian.net/debian stretch-backports main' | sudo tee -a /etc/apt/sources.list.d/stretch-backports.list
+        sudo apt update
+        sudo apt -y -t stretch-backports install suricata
     fi
     which suricata
     config="/etc/suricata/suricata.yaml"

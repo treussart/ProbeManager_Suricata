@@ -7,8 +7,12 @@ destfull=$2
 
 config=""
 rules=""
+if [[ "$SURICATA_VERSION" != "" ]]; then
+wget https://www.openinfosecfoundation.org/download/suricata-"$SURICATA_VERSION".tar.gz
+tar -xzf suricata-"$SURICATA_VERSION".tar.gz
+(cd suricata-"$SURICATA_VERSION" && ./configure && make && sudo make install-conf)
 # OSX with brew
-if [[ $OSTYPE = *"darwin"* ]]; then
+elif [[ $OSTYPE = *"darwin"* ]]; then
     if brew --version | grep -qw Homebrew ; then
         if ! brew list | grep -qw suricata ; then
             brew install suricata
@@ -17,9 +21,8 @@ if [[ $OSTYPE = *"darwin"* ]]; then
         config="/usr/local/etc/suricata/suricata.yaml"
         rules="/usr/local/etc/suricata/rules"
     fi
-fi
 # Debian
-if [ -f /etc/debian_version ]; then
+elif [ -f /etc/debian_version ]; then
     cat /etc/issue.net
     if ! type suricata ; then
         issue=$( cat /etc/issue.net )

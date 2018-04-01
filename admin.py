@@ -296,6 +296,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                 rulesets_id = request.POST.getlist('rulesets')
                 for ruleset_id in rulesets_id:
                     rulesets.append(RuleSetSuricata.get_by_id(ruleset_id))
+            update_progress(0)
             # URL HTTP
             if obj.method.name == "URL HTTP":
                 obj.save()
@@ -323,7 +324,6 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                                                           "<a href='/admin/core/job/'>View Job</a>"))
             # Upload file
             elif obj.method.name == "Upload file":
-                update_progress(0)
                 obj.uri = str(time.time()) + "_to_delete"
                 obj.save()
                 message = obj.upload_file(request, rulesets)

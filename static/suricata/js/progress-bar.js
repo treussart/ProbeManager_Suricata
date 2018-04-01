@@ -1,6 +1,6 @@
 
 django.jQuery(document).ready(function(){
-
+    var width = 0;
     django.jQuery('.submit-row').before('<div id="myProgress"><div id="myBar">0%</div></div>');
     var url_protocol = window.location.protocol;
     var url_hostname = window.location.hostname;

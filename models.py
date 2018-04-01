@@ -620,6 +620,12 @@ class Suricata(Probe):
             command3 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower()
             command4 = "mkdir /etc/suricata/lua"
             command5 = "sudo chown -R $(whoami) /etc/suricata"
+        elif self.server.os.name == 'ubuntu':
+            command1 = "add-apt-repository -y ppa:oisf/suricata-stable"
+            command2 = "apt update"
+            command3 = "apt -y install " + self.__class__.__name__.lower()
+            command4 = "mkdir /etc/suricata/lua"
+            command5 = "sudo chown -R $(whoami) /etc/suricata"
         else:
             raise Exception("Not yet implemented")
         tasks_unordered = {"1_add_repo": command1,

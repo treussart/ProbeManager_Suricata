@@ -13,6 +13,7 @@ if [[ $OSTYPE = *"darwin"* ]]; then
         if ! brew list | grep -qw suricata ; then
             brew install suricata
         fi
+        which suricata
         config="/usr/local/etc/suricata/suricata.yaml"
         rules="/usr/local/etc/suricata/rules"
     fi

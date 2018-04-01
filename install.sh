@@ -24,7 +24,7 @@ if [ -f /etc/debian_version ]; then
     if ! type suricata ; then
         issue=$( cat /etc/issue.net )
         if [[ $issue = *"Ubuntu"* ]]; then
-          sudo apt -y install suricata
+            sudo apt -y install suricata
         else
             echo 'deb http://http.debian.net/debian stretch-backports main' | sudo tee -a /etc/apt/sources.list.d/stretch-backports.list
             sudo apt update

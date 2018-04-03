@@ -200,11 +200,11 @@ class SignatureSuricata(Rule):
     @classmethod
     def get_by_sid(cls, sid):
         try:
-            object = cls.objects.get(sid=sid)
+            obj = cls.objects.get(sid=sid)
         except cls.DoesNotExist as e:
             logger.debug('Tries to access an object that does not exist : ' + str(e))
             return None
-        return object
+        return obj
 
     @classmethod
     def find(cls, pattern):
@@ -389,11 +389,11 @@ class ScriptSuricata(Rule):
     @classmethod
     def get_by_name(cls, name):
         try:
-            object = cls.objects.get(name=name)
+            obj = cls.objects.get(name=name)
         except cls.DoesNotExist as e:
             logger.debug('Tries to access an object that does not exist : ' + str(e))
             return None
-        return object
+        return obj
 
     @classmethod
     def find(cls, pattern):
@@ -881,11 +881,11 @@ class Md5Suricata(models.Model):
     @classmethod
     def get_by_value(cls, value):
         try:
-            object = cls.objects.get(value=value)
+            obj = cls.objects.get(value=value)
         except cls.DoesNotExist as e:
             logger.debug('Tries to access an object that does not exist : ' + str(e))
             return None
-        return object
+        return obj
 
 
 class BlackListSuricata(CommonMixin, models.Model):
@@ -909,11 +909,11 @@ class BlackListSuricata(CommonMixin, models.Model):
     @classmethod
     def get_by_value(cls, value):
         try:
-            object = cls.objects.get(value=value)
+            obj = cls.objects.get(value=value)
         except cls.DoesNotExist as e:
             logger.debug('Tries to access an object that does not exist : ' + str(e))
             return None
-        return object
+        return obj
 
     def create_signature(self, t):
         if not self.comment:
@@ -986,11 +986,11 @@ class CategoryReputationSuricata(CommonMixin, models.Model):
     @classmethod
     def get_by_short_name(cls, short_name):
         try:
-            object = cls.objects.get(short_name=short_name)
+            obj = cls.objects.get(short_name=short_name)
         except cls.DoesNotExist as e:
             logger.debug('Tries to access an object that does not exist : ' + str(e))
             return None
-        return object
+        return obj
 
     @classmethod
     def store(cls):
@@ -1056,11 +1056,11 @@ class IPReputationSuricata(CommonMixin, models.Model):
     @classmethod
     def get_by_ip(cls, ip):
         try:
-            object = cls.objects.get(ip=ip)
+            obj = cls.objects.get(ip=ip)
         except cls.DoesNotExist as e:
             logger.debug('Tries to access an object that does not exist : ' + str(e))
             return None
-        return object
+        return obj
 
     @classmethod
     def store(cls):

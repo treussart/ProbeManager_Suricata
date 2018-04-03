@@ -4,6 +4,8 @@ import time
 
 from django import forms
 from django.conf import settings
+from django.shortcuts import render
+from django.conf.urls import url
 from django.contrib import admin
 from django.contrib import messages
 from django.contrib.admin.helpers import ActionForm
@@ -17,7 +19,7 @@ from core.utils import update_progress
 from suricata.utils import create_upload_task
 from suricata.forms import SuricataChangeForm
 from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, \
-    SourceSuricata, BlackListSuricata, Md5Suricata
+    SourceSuricata, BlackListSuricata, Md5Suricata, IPReputationSuricata, CategoryReputationSuricata
 from suricata.utils import create_conf, convert_conf
 
 logger = logging.getLogger(__name__)
@@ -296,6 +298,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                 rulesets_id = request.POST.getlist('rulesets')
                 for ruleset_id in rulesets_id:
                     rulesets.append(RuleSetSuricata.get_by_id(ruleset_id))
+            update_progress(0)
             # URL HTTP
             if obj.method.name == "URL HTTP":
                 obj.save()
@@ -323,7 +326,6 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                                                           "<a href='/admin/core/job/'>View Job</a>"))
             # Upload file
             elif obj.method.name == "Upload file":
-                update_progress(0)
                 obj.uri = str(time.time()) + "_to_delete"
                 obj.save()
                 message = obj.upload_file(request, rulesets)
@@ -382,6 +384,64 @@ class BlackListSuricataAdmin(admin.ModelAdmin):
     actions = [delete_blacklist]
 
 
+class IPReputationSuricataAdmin(admin.ModelAdmin):
+
+    def get_urls(self):
+        urls = super(IPReputationSuricataAdmin, self).get_urls()
+        my_urls = [url(r'^import_csv/$', self.import_csv, name="import_csv"), ]
+        return my_urls + urls
+
+    def import_csv(self, request):
+        if request.method == 'GET':
+            return render(request, 'import_csv.html')
+        elif request.method == 'POST':
+            if request.FILES['file']:
+                try:
+                    if not os.path.exists(settings.BASE_DIR + '/tmp/'):
+                        os.mkdir(settings.BASE_DIR + '/tmp/')
+                    with open(settings.BASE_DIR + '/tmp/imported.csv', 'wb+') as destination:
+                        for chunk in request.FILES['file'].chunks():
+                            destination.write(chunk)
+                    IPReputationSuricata.import_from_csv(settings.BASE_DIR + '/tmp/imported.csv')
+                except Exception as e:
+                    messages.add_message(request, messages.ERROR, 'Error during the import : ' + str(e))
+                    return render(request, 'import_csv.html')
+                messages.add_message(request, messages.SUCCESS, 'CSV file imported successfully !')
+                return render(request, 'import_csv.html')
+            else:
+                messages.add_message(request, messages.ERROR, 'No file submitted')
+                return render(request, 'import_csv.html')
+
+
+class CategoryReputationSuricataAdmin(admin.ModelAdmin):
+
+    def get_urls(self):
+        urls = super(CategoryReputationSuricataAdmin, self).get_urls()
+        my_urls = [url(r'^import_csv/$', self.import_csv, name="import_csv_cat_rep"), ]
+        return my_urls + urls
+
+    def import_csv(self, request):
+        if request.method == 'GET':
+            return render(request, 'import_csv.html')
+        elif request.method == 'POST':
+            if request.FILES['file']:
+                try:
+                    if not os.path.exists(settings.BASE_DIR + '/tmp/'):
+                        os.mkdir(settings.BASE_DIR + '/tmp/')
+                    with open(settings.BASE_DIR + '/tmp/imported.csv', 'wb+') as destination:
+                        for chunk in request.FILES['file'].chunks():
+                            destination.write(chunk)
+                    CategoryReputationSuricata.import_from_csv(settings.BASE_DIR + '/tmp/imported.csv')
+                except Exception as e:
+                    messages.add_message(request, messages.ERROR, 'Error during the import : ' + str(e))
+                    return render(request, 'import_csv.html')
+                messages.add_message(request, messages.SUCCESS, 'CSV file imported successfully !')
+                return render(request, 'import_csv.html')
+            else:
+                messages.add_message(request, messages.ERROR, 'No file submitted')
+                return render(request, 'import_csv.html')
+
+
 admin.site.register(Suricata, SuricataAdmin)
 admin.site.register(SignatureSuricata, SignatureSuricataAdmin)
 admin.site.register(ScriptSuricata, ScriptSuricataAdmin)
@@ -389,3 +449,5 @@ admin.site.register(RuleSetSuricata, RuleSetSuricataAdmin)
 admin.site.register(ConfSuricata, ConfSuricataAdmin)
 admin.site.register(SourceSuricata, SourceSuricataAdmin)
 admin.site.register(BlackListSuricata, BlackListSuricataAdmin)
+admin.site.register(IPReputationSuricata, IPReputationSuricataAdmin)
+admin.site.register(CategoryReputationSuricata, CategoryReputationSuricataAdmin)

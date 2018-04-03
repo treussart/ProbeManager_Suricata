@@ -1,13 +1,12 @@
 """ venv/bin/python probemanager/manage.py test suricata.tests.test_models --settings=probemanager.settings.dev """
-import os
-
 from django.db.utils import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
+from django.conf import settings
 
 from rules.models import ClassType
 from suricata.models import AppLayerType, ConfSuricata, Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, \
-    SourceSuricata
+    SourceSuricata, IPReputationSuricata, CategoryReputationSuricata
 
 
 class SourceSuricataTest(TestCase):
@@ -219,3 +218,52 @@ class SuricataTest(TestCase):
         suricata = Suricata.get_by_id(1)
         response = suricata.deploy_rules()
         self.assertTrue(response['status'])
+
+
+class ReputationTest(TestCase):
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+                'test-suricata-source', 'test-suricata-conf', 'test-suricata-suricata', 'test-suricata-reputation']
+
+    @classmethod
+    def setUpTestData(cls):
+        pass
+
+    def test_cat_rep(self):
+        all_cat_rep = CategoryReputationSuricata.get_all()
+        cat_rep = CategoryReputationSuricata.get_by_id(1)
+        self.assertEqual(len(all_cat_rep), 1)
+        self.assertEqual(cat_rep.short_name, "Google")
+        self.assertEqual(str(cat_rep), "Google")
+        self.assertEqual(CategoryReputationSuricata.store(), settings.BASE_DIR + "/tmp/categories.txt")
+        self.assertEqual(str(CategoryReputationSuricata.get_by_short_name("Google")), "Google")
+        self.assertEqual(CategoryReputationSuricata.deploy(Suricata.get_by_id(1)), {'status': True})
+        CategoryReputationSuricata.import_from_csv(settings.BASE_DIR + '/suricata/tests/data/cat-rep.csv')
+        self.assertEqual(str(CategoryReputationSuricata.get_by_short_name('Pam')), 'Pam')
+        CategoryReputationSuricata.get_by_id(2).delete()
+        CategoryReputationSuricata.get_by_id(3).delete()
+        cat_rep = CategoryReputationSuricata.get_by_id(99)
+        self.assertEqual(cat_rep, None)
+        with self.assertRaises(AttributeError):
+            cat_rep.short_name
+        with self.assertRaises(IntegrityError):
+            CategoryReputationSuricata.objects.create(short_name="Google", description="test")
+
+    def test_ip_rep(self):
+        all_ip_rep = IPReputationSuricata.get_all()
+        ip_rep = IPReputationSuricata.get_by_id(1)
+        self.assertEqual(len(all_ip_rep), 1)
+        self.assertEqual(ip_rep.ip, "8.8.8.8")
+        self.assertEqual(str(ip_rep), "8.8.8.8")
+        self.assertEqual(IPReputationSuricata.store(), settings.BASE_DIR + "/tmp/reputation.list")
+        self.assertEqual(str(IPReputationSuricata.get_by_ip('8.8.8.8')), '8.8.8.8')
+        self.assertEqual(IPReputationSuricata.deploy(Suricata.get_by_id(1)), {'status': True})
+        IPReputationSuricata.import_from_csv(settings.BASE_DIR + '/suricata/tests/data/ip-rep.csv')
+        self.assertEqual(str(IPReputationSuricata.get_by_ip('9.9.9.9')), '9.9.9.9')
+        IPReputationSuricata.get_by_ip('9.9.9.9').delete()
+        IPReputationSuricata.get_by_ip('1.2.3.4').delete()
+        ip_rep = IPReputationSuricata.get_by_id(99)
+        self.assertEqual(ip_rep, None)
+        with self.assertRaises(AttributeError):
+            ip_rep.ip
+        with self.assertRaises(IntegrityError):
+            IPReputationSuricata.objects.create(ip="8.8.8.8", category=CategoryReputationSuricata.get_by_id(1), reputation_score=0)

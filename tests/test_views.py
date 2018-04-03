@@ -72,6 +72,9 @@ class ViewsSuricataTest(TestCase):
         response = self.client.get('/suricata/update/' + str(suricata.id), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('launched with succeed', str(response.content))
+        response = self.client.get('/suricata/deploy-reputation-list/' + str(suricata.id), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('launched with succeed', str(response.content))
 
     def test_admin_index(self):
         # index

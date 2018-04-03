@@ -1,0 +1,19 @@
+[
+{
+    "model": "suricata.categoryreputationsuricata",
+    "pk": 1,
+    "fields": {
+        "short_name": "Google",
+        "description": "Known google host"
+    }
+},
+{
+    "model": "suricata.ipreputationsuricata",
+    "pk": 1,
+    "fields": {
+        "ip": "8.8.8.8",
+        "category": 1,
+        "reputation_score": 1
+    }
+}
+]

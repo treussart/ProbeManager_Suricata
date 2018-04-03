@@ -388,7 +388,7 @@ class IPReputationSuricataAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         urls = super(IPReputationSuricataAdmin, self).get_urls()
-        my_urls = [ url(r'^import_csv/$', self.import_csv, name="import_csv"), ]
+        my_urls = [url(r'^import_csv/$', self.import_csv, name="import_csv"), ]
         return my_urls + urls
 
     def import_csv(self, request):
@@ -417,7 +417,7 @@ class CategoryReputationSuricataAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         urls = super(CategoryReputationSuricataAdmin, self).get_urls()
-        my_urls = [ url(r'^import_csv/$', self.import_csv, name="import_csv_cat_rep"), ]
+        my_urls = [url(r'^import_csv/$', self.import_csv, name="import_csv_cat_rep"), ]
         return my_urls + urls
 
     def import_csv(self, request):

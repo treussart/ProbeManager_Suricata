@@ -54,12 +54,15 @@ def deploy_reputation_list(probe_name):
         response_ip = IPReputationSuricata.deploy(probe)
         if response_cat['status'] and response_ip['status']:
             job.update_job(str(response_cat) + " - " + str(response_ip), 'Completed')
-            logger.info("task - deploy_reputation_list : " + str(probe_name) + " - " + str(response_cat) + " - " + str(response_ip))
+            logger.info("task - deploy_reputation_list : " + str(probe_name) + " - " +
+                        str(response_cat) + " - " + str(response_ip))
         else:
             logger.error(str(response_cat) + " - " + str(response_ip))
             job.update_job(str(response_cat) + " - " + str(response_ip), 'Error')
-            send_notification("Error during deploy reputation list for " + str(probe.name), str(response_cat) + " - " + str(response_ip))
-            return {"message": "Error for probe " + str(probe.name) + " to deploy reputation list", "exception": str(response_cat) + " - " + str(response_ip)}
+            send_notification("Error during deploy reputation list for " +
+                              str(probe.name), str(response_cat) + " - " + str(response_ip))
+            return {"message": "Error for probe " + str(probe.name) + " to deploy reputation list",
+                    "exception": str(response_cat) + " - " + str(response_ip)}
     except Exception as e:  # pragma: no cover
         logger.exception(str(e))
         job.update_job(str(e), 'Error')

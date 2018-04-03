@@ -1,3 +1,4 @@
+import csv
 import glob
 import logging
 import os
@@ -55,6 +56,7 @@ class ConfSuricata(ProbeConfiguration):
         CONF_FULL_DEFAULT = f.read()
     conf_rules_directory = models.CharField(max_length=400, default="/etc/suricata/rules")
     conf_script_directory = models.CharField(max_length=400, default='/etc/suricata/lua')
+    conf_iprep_directory = models.CharField(max_length=400, default='/etc/suricata/iprep')
     conf_file = models.CharField(max_length=400, default="/etc/suricata/suricata.yaml")
     conf_advanced = models.BooleanField(default=False)
     conf_advanced_text = models.TextField(default=CONF_FULL_DEFAULT)
@@ -618,13 +620,15 @@ class Suricata(Probe):
                        "/etc/apt/sources.list.d/stretch-backports.list"
             command2 = "apt update"
             command3 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower()
-            command4 = "mkdir /etc/suricata/lua"
+            command4 = "mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep " \
+                       "&& touch /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list"
             command5 = "sudo chown -R $(whoami) /etc/suricata"
         elif self.server.os.name == 'ubuntu':
             command1 = "add-apt-repository -y ppa:oisf/suricata-stable"
             command2 = "apt update"
             command3 = "apt -y install " + self.__class__.__name__.lower()
-            command4 = "mkdir /etc/suricata/lua"
+            command4 = "mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep " \
+                       "&& touch /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list"
             command5 = "sudo chown -R $(whoami) /etc/suricata"
         else:
             raise Exception("Not yet implemented")
@@ -966,3 +970,139 @@ class BlackListSuricata(CommonMixin, models.Model):
         for ruleset in self.rulesets.all():
             ruleset.signatures.add(signature)
             ruleset.save()
+
+
+class CategoryReputationSuricata(CommonMixin, models.Model):
+    """
+    Store an instance of a reputation category.
+    """
+    short_name = models.CharField(max_length=100, unique=True, null=False, blank=False)
+    description = models.CharField(max_length=600, null=True, blank=True)
+
+    def __str__(self):
+        return str(self.short_name)
+
+    @classmethod
+    def get_by_short_name(cls, short_name):
+        try:
+            object = cls.objects.get(short_name=short_name)
+        except cls.DoesNotExist as e:
+            logger.debug('Tries to access an object that does not exist : ' + str(e))
+            return None
+        return object
+
+    @classmethod
+    def store(cls):
+        tmp_file = settings.BASE_DIR + "/tmp/categories.txt"
+        if not os.path.exists(settings.BASE_DIR + "/tmp"):
+            os.makedirs(settings.BASE_DIR + "/tmp")
+        with open(tmp_file, 'w', encoding='utf_8') as f:
+            for category_reputation in cls.get_all():
+                f.write(str(category_reputation.id) + "," + category_reputation.short_name +
+                        "," + category_reputation.description)
+        return tmp_file
+
+    @classmethod
+    def deploy(cls, suricata_instance):
+        deploy = True
+        errors = ""
+        response = dict()
+        try:
+            category_file = cls.store()
+            response = execute_copy(suricata_instance.server, src=category_file,
+                                    dest=suricata_instance.configuration.conf_iprep_directory.rstrip('/')
+                                    + '/' + os.path.basename(category_file),
+                                    become=True)
+        except Exception as e:
+            logger.exception('excecute_copy failed')
+            deploy = False
+            errors = str(e)
+        if deploy:
+            return {'status': deploy}
+        else:
+            return {'status': deploy, 'errors': errors + ' - ' + str(response)}
+
+    @classmethod
+    def import_from_csv(cls, csv_file):
+        with open(csv_file, newline='') as file:
+            reader = csv.DictReader(file, fieldnames=['id', 'short name', 'description'], delimiter=',')
+            for row in reader:
+                cat_name = cls.get_by_short_name(row['short name'])
+                cat_id = cls.get_by_id(row['id'])
+                if cat_name:
+                    if cat_name.id == row['id']:
+                        cls.objects.filter(id=cat_name.id).update(description=row['description'])
+                    else:
+                        raise Exception("Category already exist under another id")
+                elif cat_id and cat_id.short_name != row['short name']:
+                    raise Exception("Category id already exist under another short name")
+                else:
+                    cls.objects.create(id=row['id'], short_name=row['short name'], description=row['description'])
+
+
+class IPReputationSuricata(CommonMixin, models.Model):
+    """
+    Store an instance of a reputation IP.
+    """
+    ip = models.GenericIPAddressField(unique=True, null=False, blank=False)
+    category = models.ForeignKey(CategoryReputationSuricata, on_delete=models.CASCADE)
+    reputation_score = models.IntegerField(null=False, default=0, verbose_name='reputation score : a number between '
+                                                                               '1 and 127 (0 means no data)')
+
+    def __str__(self):
+        return str(self.ip)
+
+    @classmethod
+    def get_by_ip(cls, ip):
+        try:
+            object = cls.objects.get(ip=ip)
+        except cls.DoesNotExist as e:
+            logger.debug('Tries to access an object that does not exist : ' + str(e))
+            return None
+        return object
+
+    @classmethod
+    def store(cls):
+        tmp_file = settings.BASE_DIR + "/tmp/reputation.list"
+        if not os.path.exists(settings.BASE_DIR + "/tmp"):
+            os.makedirs(settings.BASE_DIR + "/tmp")
+        with open(tmp_file, 'w', encoding='utf_8') as f:
+            for ip_reputation in cls.get_all():
+                f.write(ip_reputation.ip + "," + str(ip_reputation.category.id) + ","
+                        + str(ip_reputation.reputation_score))
+        return tmp_file
+
+    @classmethod
+    def deploy(cls, suricata_instance):
+        deploy = True
+        errors = ""
+        response = dict()
+        try:
+            ip_file = cls.store()
+            response = execute_copy(suricata_instance.server, src=ip_file,
+                                    dest=suricata_instance.configuration.conf_iprep_directory.rstrip('/')
+                                    + '/' + os.path.basename(ip_file),
+                                    become=True)
+        except Exception as e:
+            logger.exception('excecute_copy failed')
+            deploy = False
+            errors = str(e)
+        if deploy:
+            return {'status': deploy}
+        else:
+            return {'status': deploy, 'errors': errors + ' - ' + str(response)}
+
+    @classmethod
+    def import_from_csv(cls, csv_file):
+        with open(csv_file, newline='') as file:
+            reader = csv.DictReader(file, fieldnames=['ip', 'category', 'reputation score'], delimiter=',')
+            for row in reader:
+                same_ip = cls.get_by_ip(row['ip'])
+                if same_ip:
+                    cls.objects.filter(id=same_ip.id).update(
+                        category=CategoryReputationSuricata.get_by_id(row['category']),
+                        reputation_score=row['reputation score'])
+                else:
+                    cls.objects.create(ip=row['ip'],
+                                       category=CategoryReputationSuricata.get_by_id(row['category']),
+                                       reputation_score=row['reputation score'])

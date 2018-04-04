@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 @login_required
 def deploy_reputation_list(request, pk):
     probe = Suricata.get_by_id(pk)
-    if probe is None:  # pragma: no cover
-        return HttpResponseNotFound
+    if probe is None:
+        return HttpResponseNotFound()
     else:
         try:
             task_deploy_reputation_list.delay(probe.name)

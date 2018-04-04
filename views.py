@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 @login_required
-def deploy_reputation_list(request, id):
-    probe = Suricata.get_by_id(id)
+def deploy_reputation_list(request, pk):
+    probe = Suricata.get_by_id(pk)
     if probe is None:  # pragma: no cover
         return HttpResponseNotFound
     else:

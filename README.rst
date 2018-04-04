@@ -5,7 +5,7 @@ Suricata for  Probe Manager
 Presentation
 ~~~~~~~~~~~~
 
-|Licence| |Version|
+|Licence| |Version| |Coverage_Status|
 
 .. image:: https://api.codacy.com/project/badge/Grade/8ed3ca514eaa4aeb8941b082273444f3?branch=develop
    :alt: Codacy Badge

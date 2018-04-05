@@ -474,9 +474,8 @@ class SourceSuricata(Source):
         count_created = 0
         count_updated = 0
         tmpdir = self.get_tmpdir()
-        f = open(tmpdir + "temp.tar.gz", 'wb')
-        f.write(file_dowloaded)
-        f.close()
+        with open(tmpdir + "temp.tar.gz", 'wb') as f:
+            f.write(file_dowloaded)
         tar = tarfile.open(tmpdir + "temp.tar.gz", encoding='utf_8')
         update_progress(10)
         progress_value = 10
@@ -522,24 +521,22 @@ class SourceSuricata(Source):
         # Upload file - one file not compressed
         elif self.data_type.name == "one file not compressed":
             logger.debug('one file not compressed')
-            f = open(tmpdir + "temp.rules", 'wb')
-            f.write(self.file.read())
-            f.close()
-            f = open(tmpdir + "temp.rules", 'r', encoding='utf_8')
-            if os.path.splitext(request.FILES['file'].name)[1] == '.rules':
-                for line in f.readlines():
-                    rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
+            with open(tmpdir + "temp.rules", 'wb') as f:
+                f.write(self.file.read())
+            with open(tmpdir + "temp.rules", 'r', encoding='utf_8') as f:
+                if os.path.splitext(request.FILES['file'].name)[1] == '.rules':
+                    for line in f.readlines():
+                        rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
+                        if rule_created:
+                            count_created += 1
+                        if rule_updated:
+                            count_updated += 1
+                elif os.path.splitext(request.FILES['file'].name)[1] == '.lua':
+                    rule_created, rule_updated = ScriptSuricata.extract_script_attributs(f, rulesets)
                     if rule_created:
                         count_created += 1
                     if rule_updated:
                         count_updated += 1
-            elif os.path.splitext(request.FILES['file'].name)[1] == '.lua':
-                rule_created, rule_updated = ScriptSuricata.extract_script_attributs(f, rulesets)
-                if rule_created:
-                    count_created += 1
-                if rule_updated:
-                    count_updated += 1
-            f.close()
             os.remove(tmpdir + "temp.rules")
             return 'File uploaded successfully : ' + str(count_created) + ' signatures created and ' + str(
                 count_updated) + ' signatures updated.'
@@ -571,24 +568,22 @@ class SourceSuricata(Source):
         elif self.data_type.name == "one file not compressed":
             logger.debug("one file not compressed")
             if response.info()['Content-type'] == 'text/plain':
-                f = open(tmpdir + "temp.rules", 'wb')
-                f.write(file_dowloaded)
-                f.close()
-                f = open(tmpdir + "temp.rules", 'r', encoding='utf_8')
-                if os.path.splitext(self.uri)[1] == '.rules':
-                    for line in f.readlines():
-                        rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
+                with open(tmpdir + "temp.rules", 'wb') as f:
+                    f.write(file_dowloaded)
+                with open(tmpdir + "temp.rules", 'r', encoding='utf_8') as f:
+                    if os.path.splitext(self.uri)[1] == '.rules':
+                        for line in f.readlines():
+                            rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
+                            if rule_created:
+                                count_created += 1
+                            if rule_updated:
+                                count_updated += 1
+                    elif os.path.splitext(self.uri)[1] == '.lua':
+                        rule_created, rule_updated = ScriptSuricata.extract_script_attributs(f, rulesets)
                         if rule_created:
                             count_created += 1
                         if rule_updated:
                             count_updated += 1
-                elif os.path.splitext(self.uri)[1] == '.lua':
-                    rule_created, rule_updated = ScriptSuricata.extract_script_attributs(f, rulesets)
-                    if rule_created:
-                        count_created += 1
-                    if rule_updated:
-                        count_updated += 1
-                f.close()
                 os.remove(tmpdir + "temp.rules")
                 logger.debug('signatures : created : ' + str(count_created) + ' updated : ' + str(count_updated))
                 return 'File uploaded successfully : ' + str(
@@ -776,9 +771,8 @@ class Suricata(Probe):
             for signature in ruleset.signatures.all():
                 if signature.enabled:
                     value += signature.rule_full + os.linesep
-        f = open(tmpdir + "temp.rules", 'w', encoding='utf_8')
-        f.write(value)
-        f.close()
+        with open(tmpdir + "temp.rules", 'w', encoding='utf_8') as f:
+            f.write(value)
         try:
             response = execute_copy(self.server, src=tmpdir + 'temp.rules',
                                     dest=self.configuration.conf_rules_directory.rstrip('/') + '/deployed.rules',
@@ -792,9 +786,8 @@ class Suricata(Probe):
         value = ""
         for md5 in Md5Suricata.get_all():
             value += md5.value + os.linesep
-        f = open(tmpdir + "md5-blacklist", 'w', encoding='utf_8')
-        f.write(value)
-        f.close()
+        with open(tmpdir + "md5-blacklist", 'w', encoding='utf_8') as f:
+            f.write(value)
         try:
             response = execute_copy(self.server, src=tmpdir + 'md5-blacklist',
                                     dest=self.configuration.conf_rules_directory.rstrip('/') + '/md5-blacklist',
@@ -808,9 +801,8 @@ class Suricata(Probe):
         for ruleset in self.rulesets.all():
             for script in ruleset.scripts.all():
                 if script.enabled:
-                    f = open(tmpdir + script.name, 'w', encoding='utf_8')
-                    f.write(script.rule_full)
-                    f.close()
+                    with open(tmpdir + script.name, 'w', encoding='utf_8') as f:
+                        f.write(script.rule_full)
                     try:
                         response = execute_copy(self.server, src=tmpdir + script.name,
                                                 dest=self.configuration.conf_script_directory.rstrip(
@@ -840,9 +832,8 @@ class Suricata(Probe):
         if not os.path.exists(tmpdir):
             os.makedirs(tmpdir)
         value = self.configuration.conf_advanced_text
-        f = open(tmpdir + "temp.conf", 'w', encoding='utf_8')
-        f.write(value)
-        f.close()
+        with open(tmpdir + "temp.conf", 'w', encoding='utf_8') as f:
+            f.write(value)
         deploy = True
         errors = list()
         response = dict()

@@ -14,7 +14,7 @@ def create_upload_task(source):
 
 
 def convert_conf(configuration):
-    conf = yaml.load(configuration.conf_advanced_text)
+    conf = yaml.safe_load(configuration.conf_advanced_text)
     configuration.conf_advanced_text = """
 %YAML 1.1
 ---
@@ -27,7 +27,7 @@ def convert_conf(configuration):
 def create_conf(configuration):
     with open(BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
         conf_full_default = f.read()
-    conf = yaml.load(conf_full_default)
+    conf = yaml.safe_load(conf_full_default)
     conf['vars']['address-groups']['HOME_NET'] = configuration.conf_HOME_NET
     conf['vars']['address-groups']['EXTERNAL_NET'] = configuration.conf_EXTERNAL_NET
     conf['vars']['address-groups']['HTTP_SERVERS'] = configuration.conf_HTTP_SERVERS

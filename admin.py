@@ -63,8 +63,8 @@ class SuricataAdmin(admin.ModelAdmin):
         messages.add_message(request, messages.SUCCESS, "Suricata instance " + probe.name + " deleted")
         super().delete_model(request, obj)
 
-    """A ModelAdmin that uses a different form class when adding an object."""
     def get_form(self, request, obj=None, **kwargs):
+        """A ModelAdmin that uses a different form class when adding an object."""
         if obj is None:
             return super(SuricataAdmin, self).get_form(request, obj, **kwargs)
         else:
@@ -322,8 +322,8 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                 except Exception as e:  # pragma: no cover
                                     logger.exception(str(e))
                 upload_url_http.delay(obj.uri, rulesets_id=rulesets_id)
-                messages.add_message(request, messages.SUCCESS, mark_safe("Upload source in progress. "
-                                                                          "<a href='/admin/core/job/'>View Job</a>"))
+                messages.add_message(request, messages.SUCCESS, "Upload source in progress. " +
+                                     mark_safe("<a href='/admin/core/job/'>View Job</a>"))
             # Upload file
             elif obj.method.name == "Upload file":
                 obj.uri = str(time.time()) + "_to_delete"

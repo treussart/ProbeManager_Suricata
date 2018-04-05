@@ -13,7 +13,6 @@ django.jQuery(document).ready(function(){
                     var width = json.progress;
                     var elem = document.getElementById("myBar");
                     if (typeof(elem) != "undefined" && elem != null) {
-                        //console.log(width);
                         if (width <= 100) {
                             elem.style.width = width + "%";
                             elem.innerHTML = width + "%";

@@ -25,6 +25,27 @@ from suricata.utils import create_conf, convert_conf
 logger = logging.getLogger(__name__)
 
 
+class MarkedRuleMixin(admin.ModelAdmin):
+    def make_enabled(self, request, queryset):
+        rows_updated = queryset.update(enabled=True)
+        if rows_updated == 1:
+            message_bit = "1 rule was"
+        else:
+            message_bit = "%s rules were" % rows_updated
+        self.message_user(request, "%s successfully marked as enabled." % message_bit)
+
+    def make_disabled(self, request, queryset):
+        rows_updated = queryset.update(enabled=False)
+        if rows_updated == 1:
+            message_bit = "1 rule was"
+        else:
+            message_bit = "%s rules were" % rows_updated
+        self.message_user(request, "%s successfully marked as disabled." % message_bit)
+
+    make_enabled.short_description = "Mark rule as enabled"
+    make_disabled.short_description = "Mark rule as disabled"
+
+
 class RuleSetSuricataAdmin(admin.ModelAdmin):
 
     def test_signatures(self, request, obj):
@@ -139,34 +160,15 @@ class ConfSuricataAdmin(admin.ModelAdmin):
     actions = [test_configurations]
 
 
-class ScriptSuricataAdmin(admin.ModelAdmin):
-
-    def make_enabled(self, request, queryset):
-        rows_updated = queryset.update(enabled=True)
-        if rows_updated == 1:
-            message_bit = "1 rule was"
-        else:
-            message_bit = "%s rules were" % rows_updated
-        self.message_user(request, "%s successfully marked as enabled." % message_bit)
-
-    def make_disabled(self, request, queryset):
-        rows_updated = queryset.update(enabled=False)
-        if rows_updated == 1:
-            message_bit = "1 rule was"
-        else:
-            message_bit = "%s rules were" % rows_updated
-        self.message_user(request, "%s successfully marked as disabled." % message_bit)
-
-    make_enabled.short_description = "Mark rule as enabled"
-    make_disabled.short_description = "Mark rule as disabled"
+class ScriptSuricataAdmin(MarkedRuleMixin, admin.ModelAdmin):
 
     search_fields = ('rule_full',)
     list_filter = ('enabled', 'created_date', 'updated_date', 'rulesetsuricata__name')
     list_display = ('id', 'name', 'enabled')
-    actions = [make_enabled, make_disabled]
+    actions = [MarkedRuleMixin.make_enabled, MarkedRuleMixin.make_disabled]
 
 
-class SignatureSuricataAdmin(admin.ModelAdmin):
+class SignatureSuricataAdmin(MarkedRuleMixin, admin.ModelAdmin):
 
     def add_ruleset(self, request, queryset):
         ruleset_id = request.POST['ruleset']
@@ -192,25 +194,6 @@ class SignatureSuricataAdmin(admin.ModelAdmin):
         ruleset = forms.ModelChoiceField(queryset=RuleSetSuricata.get_all(), empty_label="Select a ruleset",
                                          required=False)
 
-    def make_enabled(self, request, queryset):
-        rows_updated = queryset.update(enabled=True)
-        if rows_updated == 1:
-            message_bit = "1 rule was"
-        else:
-            message_bit = "%s rules were" % rows_updated
-        self.message_user(request, "%s successfully marked as enabled." % message_bit)
-
-    def make_disabled(self, request, queryset):
-        rows_updated = queryset.update(enabled=False)
-        if rows_updated == 1:
-            message_bit = "1 rule was"
-        else:
-            message_bit = "%s rules were" % rows_updated
-        self.message_user(request, "%s successfully marked as disabled." % message_bit)
-
-    make_enabled.short_description = "Mark rule as enabled"
-    make_disabled.short_description = "Mark rule as disabled"
-
     def test_signatures(self, request, obj):
         test = True
         errors = list()
@@ -228,7 +211,7 @@ class SignatureSuricataAdmin(admin.ModelAdmin):
     list_filter = ('enabled', 'created_date', 'updated_date', 'rulesetsuricata__name')
     list_display = ('sid', 'msg', 'enabled')
     action_form = UpdateActionForm
-    actions = [make_enabled, make_disabled, add_ruleset, remove_ruleset, test_signatures]
+    actions = [MarkedRuleMixin.make_enabled, MarkedRuleMixin.make_disabled, add_ruleset, remove_ruleset, test_signatures]
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)

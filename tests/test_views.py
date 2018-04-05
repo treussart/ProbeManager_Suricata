@@ -14,9 +14,6 @@ class ViewsSuricataTest(TestCase):
         if not self.client.login(username='testuser', password='12345'):
             self.assertRaises(Exception("Not logged"))
 
-    def tearDown(self):
-        self.client.logout()
-
     def test_home(self):
         """
         Home Page who list instances of Suricata

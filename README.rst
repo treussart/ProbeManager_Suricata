@@ -8,11 +8,11 @@ Presentation
 |Licence| |Version|
 
 
-.. image:: https://api.codacy.com/project/badge/Grade/8ed3ca514eaa4aeb8941b082273444f3?branch=develop
+.. image:: https://api.codacy.com/project/badge/Grade/8ed3ca514eaa4aeb8941b082273444f3?branch=master
    :alt: Codacy Badge
    :target: https://www.codacy.com/app/treussart/ProbeManager_Suricata?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=treussart/ProbeManager_Suricata&amp;utm_campaign=Badge_Grade
 
-.. image:: https://api.codacy.com/project/badge/Coverage/8ed3ca514eaa4aeb8941b082273444f3?branch=develop
+.. image:: https://api.codacy.com/project/badge/Coverage/8ed3ca514eaa4aeb8941b082273444f3?branch=master
    :alt: Codacy Coverage
    :target: https://www.codacy.com/app/treussart/ProbeManager_Suricata?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=treussart/ProbeManager_Suricata&amp;utm_campaign=Badge_Coverage
 

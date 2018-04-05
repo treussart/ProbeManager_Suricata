@@ -174,6 +174,7 @@ logging:
                ]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (outdata, errdata) = process.communicate()
+        logger.debug(str(outdata))
         os.remove(conf_file)
         # if success ok
         if process.returncode == 0:
@@ -460,7 +461,7 @@ class SourceSuricata(Source):
     rulesets = models.ManyToManyField(RuleSetSuricata, blank=True)
 
     def __init__(self, *args, **kwargs):
-        super(Source, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.type = self.__class__.__name__
 
     def get_tmpdir(self):
@@ -609,7 +610,7 @@ class Suricata(Probe):
     configuration = models.ForeignKey(ConfSuricata, on_delete=models.CASCADE)
 
     def __init__(self, *args, **kwargs):
-        super(Probe, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.type = self.__class__.__name__
 
     def __str__(self):

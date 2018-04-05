@@ -14,9 +14,6 @@ class ViewsSuricataTest(TestCase):
         if not self.client.login(username='testuser', password='12345'):
             self.assertRaises(Exception("Not logged"))
 
-    def tearDown(self):
-        self.client.logout()
-
     def test_home(self):
         """
         Home Page who list instances of Suricata
@@ -44,37 +41,66 @@ class ViewsSuricataTest(TestCase):
         self.assertEqual(str(response.context['user']), 'testuser')
         with self.assertTemplateUsed('suricata/index.html'):
             self.client.get('/suricata/' + str(suricata.id))
-        response = self.client.get('/suricata/' + str(99))
+        response = self.client.get('/suricata/99')
         self.assertEqual(response.status_code, 404)
         response = self.client.get('/suricata/stop/' + str(suricata.id), follow=True)
         self.assertEqual(response.status_code, 200)
-        # self.assertIn('Error during the stop: Error during stop', str(response.content))
         self.assertIn('Probe stopped successfully', str(response.content))
+        response = self.client.get('/suricata/stop/99')
+        self.assertEqual(response.status_code, 404)
         response = self.client.get('/suricata/start/' + str(suricata.id), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Probe started successfully', str(response.content))
+        response = self.client.get('/suricata/start/99')
+        self.assertEqual(response.status_code, 404)
         response = self.client.get('/suricata/status/' + str(suricata.id), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('get status successfully', str(response.content))
+        response = self.client.get('/suricata/status/99')
+        self.assertEqual(response.status_code, 404)
         response = self.client.get('/suricata/restart/' + str(suricata.id), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Probe restarted successfully', str(response.content))
+        response = self.client.get('/suricata/restart/99')
+        self.assertEqual(response.status_code, 404)
         response = self.client.get('/suricata/reload/' + str(suricata.id), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Probe reloaded successfully', str(response.content))
+        response = self.client.get('/suricata/reload/99')
+        self.assertEqual(response.status_code, 404)
         response = self.client.get('/suricata/deploy-conf/' + str(suricata.id), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Test configuration OK', str(response.content))
         self.assertIn('Deployed configuration successfully', str(response.content))
+        response = self.client.get('/suricata/deploy-conf/99')
+        self.assertEqual(response.status_code, 404)
         response = self.client.get('/suricata/deploy-rules/' + str(suricata.id), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Deployed rules launched with succeed', str(response.content))
+        response = self.client.get('/suricata/deploy-rules/99')
+        self.assertEqual(response.status_code, 404)
         response = self.client.get('/suricata/update/' + str(suricata.id), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('launched with succeed', str(response.content))
+        response = self.client.get('/suricata/update/99')
+        self.assertEqual(response.status_code, 404)
         response = self.client.get('/suricata/deploy-reputation-list/' + str(suricata.id), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('launched with succeed', str(response.content))
+        response = self.client.get('/suricata/deploy-reputation-list/99')
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.get('/suricata/install/' + str(suricata.id), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('launched with succeed', str(response.content))
+        response = self.client.get('/suricata/install/99')
+        self.assertEqual(response.status_code, 404)
+        response = self.client.get('/suricata/update/' + str(suricata.id), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('launched with succeed', str(response.content))
+        response = self.client.get('/suricata/update/99')
+        self.assertEqual(response.status_code, 404)
+
 
     def test_admin_index(self):
         # index

@@ -340,6 +340,7 @@ logging:
                ]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (outdata, errdata) = process.communicate()
+        logger.debug("outdata : " + str(outdata), "errdata : " + str(errdata))
         # test if alert is generated :
         test = False
         if os.path.isfile(tmpdir + "fast.log"):

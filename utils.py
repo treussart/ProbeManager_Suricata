@@ -97,7 +97,7 @@ def generic_import_csv(cls, request):
     elif request.method == 'POST':
         if request.FILES['file']:
             try:
-                if not os.path.exists(settings.BASE_DIR + '/tmp/'):
+                if not os.path.exists(settings.BASE_DIR + '/tmp/'):  # pragma: no cover
                     os.mkdir(settings.BASE_DIR + '/tmp/')
                 with open(settings.BASE_DIR + '/tmp/imported.csv', 'wb+') as destination:
                     for chunk in request.FILES['file'].chunks():
@@ -108,6 +108,6 @@ def generic_import_csv(cls, request):
                 return render(request, 'import_csv.html')
             messages.add_message(request, messages.SUCCESS, 'CSV file imported successfully !')
             return render(request, 'import_csv.html')
-        else:
+        else:  # pragma: no cover
             messages.add_message(request, messages.ERROR, 'No file submitted')
             return render(request, 'import_csv.html')

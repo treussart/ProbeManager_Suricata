@@ -211,7 +211,8 @@ class SignatureSuricataAdmin(MarkedRuleMixin, admin.ModelAdmin):
     list_filter = ('enabled', 'created_date', 'updated_date', 'rulesetsuricata__name')
     list_display = ('sid', 'msg', 'enabled')
     action_form = UpdateActionForm
-    actions = [MarkedRuleMixin.make_enabled, MarkedRuleMixin.make_disabled, add_ruleset, remove_ruleset, test_signatures]
+    actions = [MarkedRuleMixin.make_enabled, MarkedRuleMixin.make_disabled,
+               add_ruleset, remove_ruleset, test_signatures]
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)

@@ -1,8 +1,10 @@
 import yaml
 import json
+import os
 from django_celery_beat.models import PeriodicTask
-
-from probemanager.settings import BASE_DIR
+from django.conf import settings
+from django.shortcuts import render
+from django.contrib import messages
 
 
 def create_upload_task(source):
@@ -25,7 +27,7 @@ def convert_conf(configuration):
 
 
 def create_conf(configuration):
-    with open(BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
+    with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
         conf_full_default = f.read()
     conf = yaml.safe_load(conf_full_default)
     conf['vars']['address-groups']['HOME_NET'] = configuration.conf_HOME_NET
@@ -87,3 +89,25 @@ def create_conf(configuration):
 """
     configuration.conf_advanced_text += yaml.dump(conf, default_flow_style=False)
     return configuration
+
+
+def generic_import_csv(cls, request):
+    if request.method == 'GET':
+        return render(request, 'import_csv.html')
+    elif request.method == 'POST':
+        if request.FILES['file']:
+            try:
+                if not os.path.exists(settings.BASE_DIR + '/tmp/'):
+                    os.mkdir(settings.BASE_DIR + '/tmp/')
+                with open(settings.BASE_DIR + '/tmp/imported.csv', 'wb+') as destination:
+                    for chunk in request.FILES['file'].chunks():
+                        destination.write(chunk)
+                cls.import_from_csv(settings.BASE_DIR + '/tmp/imported.csv')
+            except Exception as e:
+                messages.add_message(request, messages.ERROR, 'Error during the import : ' + str(e))
+                return render(request, 'import_csv.html')
+            messages.add_message(request, messages.SUCCESS, 'CSV file imported successfully !')
+            return render(request, 'import_csv.html')
+        else:
+            messages.add_message(request, messages.ERROR, 'No file submitted')
+            return render(request, 'import_csv.html')

@@ -4,7 +4,6 @@ import time
 
 from django import forms
 from django.conf import settings
-from django.shortcuts import render
 from django.conf.urls import url
 from django.contrib import admin
 from django.contrib import messages
@@ -13,6 +12,7 @@ from django.http import HttpResponseRedirect
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
 from django.utils.safestring import mark_safe
 
+from .utils import generic_import_csv
 from suricata.tasks import upload_url_http
 from core.utils import create_deploy_rules_task,  add_1_hour, create_check_task
 from core.utils import update_progress
@@ -375,25 +375,7 @@ class IPReputationSuricataAdmin(admin.ModelAdmin):
         return my_urls + urls
 
     def import_csv(self, request):
-        if request.method == 'GET':
-            return render(request, 'import_csv.html')
-        elif request.method == 'POST':
-            if request.FILES['file']:
-                try:
-                    if not os.path.exists(settings.BASE_DIR + '/tmp/'):
-                        os.mkdir(settings.BASE_DIR + '/tmp/')
-                    with open(settings.BASE_DIR + '/tmp/imported.csv', 'wb+') as destination:
-                        for chunk in request.FILES['file'].chunks():
-                            destination.write(chunk)
-                    IPReputationSuricata.import_from_csv(settings.BASE_DIR + '/tmp/imported.csv')
-                except Exception as e:
-                    messages.add_message(request, messages.ERROR, 'Error during the import : ' + str(e))
-                    return render(request, 'import_csv.html')
-                messages.add_message(request, messages.SUCCESS, 'CSV file imported successfully !')
-                return render(request, 'import_csv.html')
-            else:
-                messages.add_message(request, messages.ERROR, 'No file submitted')
-                return render(request, 'import_csv.html')
+        return generic_import_csv(IPReputationSuricata, request)
 
 
 class CategoryReputationSuricataAdmin(admin.ModelAdmin):
@@ -404,25 +386,7 @@ class CategoryReputationSuricataAdmin(admin.ModelAdmin):
         return my_urls + urls
 
     def import_csv(self, request):
-        if request.method == 'GET':
-            return render(request, 'import_csv.html')
-        elif request.method == 'POST':
-            if request.FILES['file']:
-                try:
-                    if not os.path.exists(settings.BASE_DIR + '/tmp/'):
-                        os.mkdir(settings.BASE_DIR + '/tmp/')
-                    with open(settings.BASE_DIR + '/tmp/imported.csv', 'wb+') as destination:
-                        for chunk in request.FILES['file'].chunks():
-                            destination.write(chunk)
-                    CategoryReputationSuricata.import_from_csv(settings.BASE_DIR + '/tmp/imported.csv')
-                except Exception as e:
-                    messages.add_message(request, messages.ERROR, 'Error during the import : ' + str(e))
-                    return render(request, 'import_csv.html')
-                messages.add_message(request, messages.SUCCESS, 'CSV file imported successfully !')
-                return render(request, 'import_csv.html')
-            else:
-                messages.add_message(request, messages.ERROR, 'No file submitted')
-                return render(request, 'import_csv.html')
+        return generic_import_csv(CategoryReputationSuricata, request)
 
 
 admin.site.register(Suricata, SuricataAdmin)

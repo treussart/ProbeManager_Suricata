@@ -41,6 +41,6 @@ django.jQuery(document).ready(function(){
     });
     wraper();
     django.jQuery("#id_method").change(function(){
-        wraper()
+        wraper();
     });
 });

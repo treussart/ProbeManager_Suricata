@@ -936,15 +936,12 @@ class CategoryReputationSuricata(CommonMixin, models.Model):
         return obj
 
     @classmethod
-    def store(cls):
-        with cls.get_tmp_dir() as tmp_dir:
-            tmp_file = tmp_dir + "categories.txt"
-            if not os.path.exists(settings.BASE_DIR + "/tmp"):
-                os.makedirs(settings.BASE_DIR + "/tmp")
-            with open(tmp_file, 'w', encoding='utf_8') as f:
-                for category_reputation in cls.get_all():
-                    f.write(str(category_reputation.id) + "," + category_reputation.short_name +
-                            "," + category_reputation.description)
+    def store(cls, tmp_dir):
+        tmp_file = tmp_dir + "categories.txt"
+        with open(tmp_file, 'w', encoding='utf_8') as f:
+            for category_reputation in cls.get_all():
+                f.write(str(category_reputation.id) + "," + category_reputation.short_name +
+                        "," + category_reputation.description)
         return tmp_file
 
     @classmethod
@@ -953,11 +950,12 @@ class CategoryReputationSuricata(CommonMixin, models.Model):
         errors = ""
         response = dict()
         try:
-            category_file = cls.store()
-            response = execute_copy(suricata_instance.server, src=category_file,
-                                    dest=suricata_instance.configuration.conf_iprep_directory.rstrip('/')
-                                    + '/' + os.path.basename(category_file),
-                                    become=True)
+            with cls.get_tmp_dir() as tmp_dir:
+                category_file = cls.store(tmp_dir)
+                response = execute_copy(suricata_instance.server, src=category_file,
+                                        dest=suricata_instance.configuration.conf_iprep_directory.rstrip('/')
+                                        + '/' + os.path.basename(category_file),
+                                        become=True)
         except Exception as e:
             logger.exception('excecute_copy failed')
             deploy = False
@@ -1007,15 +1005,12 @@ class IPReputationSuricata(CommonMixin, models.Model):
         return obj
 
     @classmethod
-    def store(cls):
-        with cls.get_tmp_dir() as tmp_dir:
-            tmp_file = tmp_dir + "reputation.list"
-            if not os.path.exists(settings.BASE_DIR + "/tmp"):
-                os.makedirs(settings.BASE_DIR + "/tmp")
-            with open(tmp_file, 'w', encoding='utf_8') as f:
-                for ip_reputation in cls.get_all():
-                    f.write(ip_reputation.ip + "," + str(ip_reputation.category.id) + ","
-                            + str(ip_reputation.reputation_score))
+    def store(cls, tmp_dir):
+        tmp_file = tmp_dir + "reputation.list"
+        with open(tmp_file, 'w', encoding='utf_8') as f:
+            for ip_reputation in cls.get_all():
+                f.write(ip_reputation.ip + "," + str(ip_reputation.category.id) + ","
+                        + str(ip_reputation.reputation_score))
         return tmp_file
 
     @classmethod
@@ -1024,11 +1019,12 @@ class IPReputationSuricata(CommonMixin, models.Model):
         errors = ""
         response = dict()
         try:
-            ip_file = cls.store()
-            response = execute_copy(suricata_instance.server, src=ip_file,
-                                    dest=suricata_instance.configuration.conf_iprep_directory.rstrip('/')
-                                    + '/' + os.path.basename(ip_file),
-                                    become=True)
+            with cls.get_tmp_dir() as tmp_dir:
+                ip_file = cls.store(tmp_dir)
+                response = execute_copy(suricata_instance.server, src=ip_file,
+                                        dest=suricata_instance.configuration.conf_iprep_directory.rstrip('/')
+                                        + '/' + os.path.basename(ip_file),
+                                        become=True)
         except Exception as e:
             logger.exception('excecute_copy failed')
             deploy = False

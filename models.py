@@ -1,5 +1,4 @@
 import csv
-import glob
 import logging
 import os
 import re
@@ -144,19 +143,12 @@ class ConfSuricata(ProbeConfiguration):
     def __str__(self):
         return self.name
 
-    def get_tmpdir(self):
-        tmpdir = settings.BASE_DIR + "/tmp/" + self.__class__.__name__ + "/" + \
-                 str(self.pk) + "/" + str(time.time()) + '/'
-        if not os.path.exists(tmpdir):
-            os.makedirs(tmpdir)
-        return tmpdir
-
     def test(self):
-        tmpdir = self.get_tmpdir()
-        rule_file = settings.BASE_DIR + "/suricata/tests/data/test.rules"
-        conf_file = tmpdir + self.name + ".yaml"
-        config = self.conf_advanced_text
-        config += """
+        with self.get_tmp_dir(self.pk) as tmp_dir:
+            rule_file = settings.BASE_DIR + "/suricata/tests/data/test.rules"
+            conf_file = tmp_dir + self.name + ".yaml"
+            config = self.conf_advanced_text
+            config += """
 
 logging:
   default-log-level: error
@@ -168,18 +160,18 @@ logging:
       filename: /var/log/suricata/suricata.log
       level: info
 """
-        with open(conf_file, 'w', encoding='utf_8') as f:
-            f.write(config)
-        cmd = [settings.SURICATA_BINARY, '-T',
-               '-l', tmpdir,
-               '-S', rule_file,
-               '-c', conf_file,
-               '--set', 'classification-file=' + settings.BASE_DIR + '/suricata/tests/data/classification.config',
-               '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
-               ]
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (outdata, errdata) = process.communicate()
-        logger.debug(str(outdata))
+            with open(conf_file, 'w', encoding='utf_8') as f:
+                f.write(config)
+            cmd = [settings.SURICATA_BINARY, '-T',
+                   '-l', tmp_dir,
+                   '-S', rule_file,
+                   '-c', conf_file,
+                   '--set', 'classification-file=' + settings.BASE_DIR + '/suricata/tests/data/classification.config',
+                   '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
+                   ]
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (outdata, errdata) = process.communicate()
+            logger.debug(str(outdata))
         # if success ok
         if process.returncode == 0:
             return {'status': True}
@@ -201,13 +193,6 @@ class SignatureSuricata(Rule):
 
     def __str__(self):
         return str(self.sid) + " : " + str(self.msg)
-
-    def get_tmpdir(self, folder):
-        tmpdir = settings.BASE_DIR + "/tmp/" + self.__class__.__name__ + "/" + str(self.pk) + "/" + \
-                 str(time.time()) + '/' + folder + '/'
-        if not os.path.exists(tmpdir):
-            os.makedirs(tmpdir)
-        return tmpdir
 
     @classmethod
     def get_by_sid(cls, sid):
@@ -293,18 +278,18 @@ class SignatureSuricata(Rule):
         return rule_created, rule_updated
 
     def test(self):
-        tmpdir = self.get_tmpdir("test_sig")
-        rule_file = tmpdir + str(self.sid) + ".rules"
-        with open(rule_file, 'w', encoding='utf_8') as f:
-            f.write(self.rule_full)
-        cmd = [settings.SURICATA_BINARY, '-T',
-               '-l', tmpdir,
-               '-S', rule_file,
-               '-c', settings.SURICATA_CONFIG
-               ]
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (outdata, errdata) = process.communicate()
-        logger.debug(outdata)
+        with self.get_tmp_dir("test_sig") as tmp_dir:
+            rule_file = tmp_dir + str(self.sid) + ".rules"
+            with open(rule_file, 'w', encoding='utf_8') as f:
+                f.write(self.rule_full)
+            cmd = [settings.SURICATA_BINARY, '-T',
+                   '-l', tmp_dir,
+                   '-S', rule_file,
+                   '-c', settings.SURICATA_CONFIG
+                   ]
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (outdata, errdata) = process.communicate()
+            logger.debug(outdata)
         # if success ok
         if process.returncode == 0:
             return {'status': True}
@@ -312,17 +297,15 @@ class SignatureSuricata(Rule):
         return {'status': False, 'errors': errdata}
 
     def test_pcap(self):
-        tmpdir = self.get_tmpdir("test_pcap")
-        if not os.path.exists(tmpdir):  # pragma: no cover
-            os.makedirs(tmpdir)
-        rule_file = tmpdir + "rule.rules"
-        conf_file = tmpdir + "suricata.yaml"
-        with open(rule_file, 'w', encoding='utf_8') as f:
-            f.write(self.rule_full)
-        with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
-            conf_full_default = f.read()
-        config = conf_full_default
-        config += """
+        with self.get_tmp_dir("test_pcap") as tmp_dir:
+            rule_file = tmp_dir + "rule.rules"
+            conf_file = tmp_dir + "suricata.yaml"
+            with open(rule_file, 'w', encoding='utf_8') as f:
+                f.write(self.rule_full)
+            with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
+                conf_full_default = f.read()
+            config = conf_full_default
+            config += """
 
 logging:
   default-log-level: error
@@ -334,27 +317,27 @@ logging:
       filename: /var/log/suricata/suricata.log
       level: info
 """
-        with open(conf_file, 'w', encoding='utf_8') as f:
-            f.write(config)
-        # test pcap success
-        cmd = [settings.SURICATA_BINARY,
-               '-l', tmpdir,
-               '-S', rule_file,
-               '-c', conf_file,
-               '-r', settings.BASE_DIR + "/" + self.pcap_success.name,
-               '--set', 'outputs.0.fast.enabled=yes',
-               '--set', 'classification-file=' + settings.BASE_DIR + '/suricata/tests/data/classification.config',
-               '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
-               ]
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (outdata, errdata) = process.communicate()
-        logger.debug("outdata : " + str(outdata), "errdata : " + str(errdata))
-        # test if alert is generated :
-        test = False
-        if os.path.isfile(tmpdir + "fast.log"):
-            with open(tmpdir + "fast.log", "r", encoding='utf_8') as f:
-                if self.msg in f.read():
-                    test = True
+            with open(conf_file, 'w', encoding='utf_8') as f:
+                f.write(config)
+            # test pcap success
+            cmd = [settings.SURICATA_BINARY,
+                   '-l', tmp_dir,
+                   '-S', rule_file,
+                   '-c', conf_file,
+                   '-r', settings.BASE_DIR + "/" + self.pcap_success.name,
+                   '--set', 'outputs.0.fast.enabled=yes',
+                   '--set', 'classification-file=' + settings.BASE_DIR + '/suricata/tests/data/classification.config',
+                   '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
+                   ]
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (outdata, errdata) = process.communicate()
+            logger.debug("outdata : " + str(outdata), "errdata : " + str(errdata))
+            # test if alert is generated :
+            test = False
+            if os.path.isfile(tmp_dir + "fast.log"):
+                with open(tmp_dir + "fast.log", "r", encoding='utf_8') as f:
+                    if self.msg in f.read():
+                        test = True
         # if success ok
         if process.returncode == 0 and test:
             return {'status': True}
@@ -467,44 +450,35 @@ class SourceSuricata(Source):
         super().__init__(*args, **kwargs)
         self.type = self.__class__.__name__
 
-    def get_tmpdir(self):
-        tmpdir = settings.BASE_DIR + "/tmp/" + self.__class__.__name__ + "/" + \
-                 str(self.pk) + "/" + str(time.time()) + '/'
-        if not os.path.exists(tmpdir):
-            os.makedirs(tmpdir)
-        return tmpdir
-
     def extract_files(self, file_dowloaded, rulesets=None):
         count_created = 0
         count_updated = 0
-        tmpdir = self.get_tmpdir()
-        with open(tmpdir + "temp.tar.gz", 'wb') as f:
-            f.write(file_dowloaded)
-        tar = tarfile.open(tmpdir + "temp.tar.gz", encoding='utf_8')
-        for member in tar.getmembers():
-            if member.isfile():
-                file = tar.extractfile(member)
-                if os.path.splitext(member.name)[1] == '.rules':
-                    for line in file.readlines():
-                        line = line.decode('utf-8')
-                        rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
-                        if rule_created:
-                            count_created += 1
-                        if rule_updated:
-                            count_updated += 1
-                elif os.path.splitext(member.name)[1] == '.lua':
-                    rule_created, rule_updated = ScriptSuricata.extract_script_attributs(file, rulesets)
-                    if rule_created:
-                        count_created += 1
-                    if rule_updated:
-                        count_updated += 1
-        tar.close()
+        with self.get_tmp_dir(self.pk) as tmp_dir:
+            with open(tmp_dir + "temp.tar.gz", 'wb') as f:
+                f.write(file_dowloaded)
+            with tarfile.open(tmp_dir + "temp.tar.gz", encoding='utf_8') as tar:
+                for member in tar.getmembers():
+                    if member.isfile():
+                        file = tar.extractfile(member)
+                        if os.path.splitext(member.name)[1] == '.rules':
+                            for line in file.readlines():
+                                line = line.decode('utf-8')
+                                rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
+                                if rule_created:
+                                    count_created += 1
+                                if rule_updated:
+                                    count_updated += 1
+                        elif os.path.splitext(member.name)[1] == '.lua':
+                            rule_created, rule_updated = ScriptSuricata.extract_script_attributs(file, rulesets)
+                            if rule_created:
+                                count_created += 1
+                            if rule_updated:
+                                count_updated += 1
         return count_created, count_updated
 
     def upload_file(self, file_name, rulesets=None):
         count_created = 0
         count_updated = 0
-        tmpdir = self.get_tmpdir()
         # Upload file - multiple files in compressed file
         if self.data_type.name == "multiple files in compressed file":
             logger.debug('multiple files in compressed file')
@@ -516,23 +490,23 @@ class SourceSuricata(Source):
         # Upload file - one file not compressed
         elif self.data_type.name == "one file not compressed":
             logger.debug('one file not compressed')
-            with open(tmpdir + "temp.rules", 'wb') as f:
-                f.write(self.file.read())
-            with open(tmpdir + "temp.rules", 'r', encoding='utf_8') as f:
-                if os.path.splitext(file_name)[1] == '.rules':
-                    for line in f.readlines():
-                        rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
+            with self.get_tmp_dir(self.pk) as tmp_dir:
+                with open(tmp_dir + "temp.rules", 'wb') as f:
+                    f.write(self.file.read())
+                with open(tmp_dir + "temp.rules", 'r', encoding='utf_8') as f:
+                    if os.path.splitext(file_name)[1] == '.rules':
+                        for line in f.readlines():
+                            rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
+                            if rule_created:
+                                count_created += 1
+                            if rule_updated:
+                                count_updated += 1
+                    elif os.path.splitext(file_name)[1] == '.lua':
+                        rule_created, rule_updated = ScriptSuricata.extract_script_attributs(f, rulesets)
                         if rule_created:
                             count_created += 1
                         if rule_updated:
                             count_updated += 1
-                elif os.path.splitext(file_name)[1] == '.lua':
-                    rule_created, rule_updated = ScriptSuricata.extract_script_attributs(f, rulesets)
-                    if rule_created:
-                        count_created += 1
-                    if rule_updated:
-                        count_updated += 1
-            os.remove(tmpdir + "temp.rules")
             return 'File uploaded successfully : ' + str(count_created) + ' signatures created and ' + str(
                 count_updated) + ' signatures updated.'
         else:
@@ -540,7 +514,6 @@ class SourceSuricata(Source):
             raise Exception('Data type upload unknown : ' + self.data_type.name)
 
     def upload(self, rulesets=None):
-        tmpdir = self.get_tmpdir()
         count_created = 0
         count_updated = 0
         context = ssl._create_unverified_context()
@@ -563,22 +536,23 @@ class SourceSuricata(Source):
         elif self.data_type.name == "one file not compressed":
             logger.debug("one file not compressed")
             if response.info()['Content-type'] == 'text/plain':
-                with open(tmpdir + "temp.rules", 'wb') as f:
-                    f.write(file_dowloaded)
-                with open(tmpdir + "temp.rules", 'r', encoding='utf_8') as f:
-                    if os.path.splitext(self.uri)[1] == '.rules':
-                        for line in f.readlines():
-                            rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
+                with self.get_tmp_dir(self.pk) as tmp_dir:
+                    with open(tmp_dir + "temp.rules", 'wb') as f:
+                        f.write(file_dowloaded)
+                    with open(tmp_dir + "temp.rules", 'r', encoding='utf_8') as f:
+                        if os.path.splitext(self.uri)[1] == '.rules':
+                            for line in f.readlines():
+                                rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
+                                if rule_created:
+                                    count_created += 1
+                                if rule_updated:
+                                    count_updated += 1
+                        elif os.path.splitext(self.uri)[1] == '.lua':
+                            rule_created, rule_updated = ScriptSuricata.extract_script_attributs(f, rulesets)
                             if rule_created:
                                 count_created += 1
                             if rule_updated:
                                 count_updated += 1
-                    elif os.path.splitext(self.uri)[1] == '.lua':
-                        rule_created, rule_updated = ScriptSuricata.extract_script_attributs(f, rulesets)
-                        if rule_created:
-                            count_created += 1
-                        if rule_updated:
-                            count_updated += 1
                 logger.debug('signatures : created : ' + str(count_created) + ' updated : ' + str(count_updated))
                 return 'File uploaded successfully : ' + str(
                     count_created) + ' signatures created and ' + str(
@@ -604,13 +578,6 @@ class Suricata(Probe):
 
     def __str__(self):
         return self.name + "  " + self.description
-
-    def get_tmpdir(self):
-        tmpdir = settings.BASE_DIR + "/tmp/" + self.__class__.__name__ + "/" + \
-                 str(self.pk) + "/" + str(time.time()) + '/'
-        if not os.path.exists(tmpdir):
-            os.makedirs(tmpdir)
-        return tmpdir
 
     def install(self):
         if self.server.os.name == 'debian':
@@ -758,8 +725,6 @@ class Suricata(Probe):
             logger.exception("Error for probe " + str(self.name) + " during the tests")
             return {"status": False, "message": "Error for probe " + str(self.name) + " during the tests",
                     "exception": str(e)}
-
-        tmpdir = self.get_tmpdir()
         deploy = True
         response = dict()
         errors = list()
@@ -770,47 +735,48 @@ class Suricata(Probe):
             for signature in ruleset.signatures.all():
                 if signature.enabled:
                     value += signature.rule_full + os.linesep
-        with open(tmpdir + "temp.rules", 'w', encoding='utf_8') as f:
-            f.write(value)
-        try:
-            response = execute_copy(self.server, src=tmpdir + 'temp.rules',
-                                    dest=self.configuration.conf_rules_directory.rstrip('/') + '/deployed.rules',
-                                    become=True)
-        except Exception as e:
-            logger.exception('excecute_copy failed')
-            deploy = False
-            errors.append(str(e))
+        with self.get_tmp_dir(self.pk) as tmp_dir:
+            with open(tmp_dir + "temp.rules", 'w', encoding='utf_8') as f:
+                f.write(value)
+            try:
+                response = execute_copy(self.server, src=tmp_dir + 'temp.rules',
+                                        dest=self.configuration.conf_rules_directory.rstrip('/') + '/deployed.rules',
+                                        become=True)
+            except Exception as e:
+                logger.exception('excecute_copy failed')
+                deploy = False
+                errors.append(str(e))
 
-        # Blacklists MD5
-        value = ""
-        for md5 in Md5Suricata.get_all():
-            value += md5.value + os.linesep
-        with open(tmpdir + "md5-blacklist", 'w', encoding='utf_8') as f:
-            f.write(value)
-        try:
-            response = execute_copy(self.server, src=tmpdir + 'md5-blacklist',
-                                    dest=self.configuration.conf_rules_directory.rstrip('/') + '/md5-blacklist',
-                                    become=True)
-        except Exception as e:
-            logger.exception('excecute_copy failed')
-            deploy = False
-            errors.append(str(e))
+            # Blacklists MD5
+            value = ""
+            for md5 in Md5Suricata.get_all():
+                value += md5.value + os.linesep
+            with open(tmp_dir + "md5-blacklist", 'w', encoding='utf_8') as f:
+                f.write(value)
+            try:
+                response = execute_copy(self.server, src=tmp_dir + 'md5-blacklist',
+                                        dest=self.configuration.conf_rules_directory.rstrip('/') + '/md5-blacklist',
+                                        become=True)
+            except Exception as e:
+                logger.exception('excecute_copy failed')
+                deploy = False
+                errors.append(str(e))
 
-        # Scripts
-        for ruleset in self.rulesets.all():
-            for script in ruleset.scripts.all():
-                if script.enabled:
-                    with open(tmpdir + script.name, 'w', encoding='utf_8') as f:
-                        f.write(script.rule_full)
-                    try:
-                        response = execute_copy(self.server, src=tmpdir + script.name,
-                                                dest=self.configuration.conf_script_directory.rstrip(
-                                                    '/') + '/' + script.name, become=True)
-                    except Exception as e:
-                        logger.exception('excecute_copy failed')
-                        deploy = False
-                        errors.append(str(e))
-                    logger.debug("output : " + str(response))
+            # Scripts
+            for ruleset in self.rulesets.all():
+                for script in ruleset.scripts.all():
+                    if script.enabled:
+                        with open(tmp_dir + script.name, 'w', encoding='utf_8') as f:
+                            f.write(script.rule_full)
+                        try:
+                            response = execute_copy(self.server, src=tmp_dir + script.name,
+                                                    dest=self.configuration.conf_script_directory.rstrip(
+                                                        '/') + '/' + script.name, become=True)
+                        except Exception as e:
+                            logger.exception('excecute_copy failed')
+                            deploy = False
+                            errors.append(str(e))
+                        logger.debug("output : " + str(response))
         if deploy:
             self.rules_updated_date = timezone.now()
             self.save()
@@ -819,21 +785,21 @@ class Suricata(Probe):
             return {'status': deploy, 'errors': errors}
 
     def deploy_conf(self):
-        tmpdir = self.get_tmpdir()
-        value = self.configuration.conf_advanced_text
-        with open(tmpdir + "temp.conf", 'w', encoding='utf_8') as f:
-            f.write(value)
-        deploy = True
-        errors = list()
-        response = dict()
-        try:
-            response = execute_copy(self.server, src=os.path.abspath(tmpdir + 'temp.conf'),
-                                    dest=self.configuration.conf_file, become=True)
-        except Exception as e:
-            logger.exception('deploy conf failed')
-            deploy = False
-            errors.append(str(e))
-        logger.debug("output : " + str(response))
+        with self.get_tmp_dir(self.pk) as tmp_dir:
+            value = self.configuration.conf_advanced_text
+            with open(tmp_dir + "temp.conf", 'w', encoding='utf_8') as f:
+                f.write(value)
+            deploy = True
+            errors = list()
+            response = dict()
+            try:
+                response = execute_copy(self.server, src=os.path.abspath(tmp_dir + 'temp.conf'),
+                                        dest=self.configuration.conf_file, become=True)
+            except Exception as e:
+                logger.exception('deploy conf failed')
+                deploy = False
+                errors.append(str(e))
+            logger.debug("output : " + str(response))
         if deploy:
             return {'status': deploy}
         else:
@@ -962,13 +928,6 @@ class CategoryReputationSuricata(CommonMixin, models.Model):
         return str(self.short_name)
 
     @classmethod
-    def get_tmpdir(cls):
-        tmpdir = settings.BASE_DIR + "/tmp/" + cls.__name__ + "/" + str(time.time()) + '/'
-        if not os.path.exists(tmpdir):
-            os.makedirs(tmpdir)
-        return tmpdir
-
-    @classmethod
     def get_by_short_name(cls, short_name):
         try:
             obj = cls.objects.get(short_name=short_name)
@@ -979,13 +938,14 @@ class CategoryReputationSuricata(CommonMixin, models.Model):
 
     @classmethod
     def store(cls):
-        tmp_file = cls.get_tmpdir() + "categories.txt"
-        if not os.path.exists(settings.BASE_DIR + "/tmp"):
-            os.makedirs(settings.BASE_DIR + "/tmp")
-        with open(tmp_file, 'w', encoding='utf_8') as f:
-            for category_reputation in cls.get_all():
-                f.write(str(category_reputation.id) + "," + category_reputation.short_name +
-                        "," + category_reputation.description)
+        with cls.get_tmp_dir() as tmp_dir:
+            tmp_file = tmp_dir + "categories.txt"
+            if not os.path.exists(settings.BASE_DIR + "/tmp"):
+                os.makedirs(settings.BASE_DIR + "/tmp")
+            with open(tmp_file, 'w', encoding='utf_8') as f:
+                for category_reputation in cls.get_all():
+                    f.write(str(category_reputation.id) + "," + category_reputation.short_name +
+                            "," + category_reputation.description)
         return tmp_file
 
     @classmethod
@@ -1039,13 +999,6 @@ class IPReputationSuricata(CommonMixin, models.Model):
         return str(self.ip)
 
     @classmethod
-    def get_tmpdir(cls):
-        tmpdir = settings.BASE_DIR + "/tmp/" + cls.__name__ + "/" + str(time.time()) + '/'
-        if not os.path.exists(tmpdir):
-            os.makedirs(tmpdir)
-        return tmpdir
-
-    @classmethod
     def get_by_ip(cls, ip):
         try:
             obj = cls.objects.get(ip=ip)
@@ -1056,13 +1009,14 @@ class IPReputationSuricata(CommonMixin, models.Model):
 
     @classmethod
     def store(cls):
-        tmp_file = cls.get_tmpdir() + "reputation.list"
-        if not os.path.exists(settings.BASE_DIR + "/tmp"):
-            os.makedirs(settings.BASE_DIR + "/tmp")
-        with open(tmp_file, 'w', encoding='utf_8') as f:
-            for ip_reputation in cls.get_all():
-                f.write(ip_reputation.ip + "," + str(ip_reputation.category.id) + ","
-                        + str(ip_reputation.reputation_score))
+        with cls.get_tmp_dir() as tmp_dir:
+            tmp_file = tmp_dir + "reputation.list"
+            if not os.path.exists(settings.BASE_DIR + "/tmp"):
+                os.makedirs(settings.BASE_DIR + "/tmp")
+            with open(tmp_file, 'w', encoding='utf_8') as f:
+                for ip_reputation in cls.get_all():
+                    f.write(ip_reputation.ip + "," + str(ip_reputation.category.id) + ","
+                            + str(ip_reputation.reputation_score))
         return tmp_file
 
     @classmethod

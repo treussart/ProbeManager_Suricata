@@ -20,7 +20,6 @@ from core.models import Probe, ProbeConfiguration
 from core.modelsmixins import CommonMixin
 from core.notifications import send_notification
 from core.ssh import execute, execute_copy
-from core.utils import update_progress
 from rules.models import RuleSet, Rule, ClassType, Source
 from .exceptions import RuleNotFoundParam
 
@@ -478,16 +477,8 @@ class SourceSuricata(Source):
         with open(tmpdir + "temp.tar.gz", 'wb') as f:
             f.write(file_dowloaded)
         tar = tarfile.open(tmpdir + "temp.tar.gz", encoding='utf_8')
-        update_progress(10)
-        progress_value = 10
-        total_value = len(tar.getmembers())
-        total = int(90 / total_value)
-        if total == 0:
-            total = 1
         for member in tar.getmembers():
             if member.isfile():
-                progress_value = progress_value + total
-                update_progress(progress_value)
                 file = tar.extractfile(member)
                 if os.path.splitext(member.name)[1] == '.rules':
                     for line in file.readlines():
@@ -507,7 +498,7 @@ class SourceSuricata(Source):
         os.remove(tmpdir + "temp.tar.gz")
         return count_created, count_updated
 
-    def upload_file(self, request, rulesets=None):
+    def upload_file(self, file_name, rulesets=None):
         count_created = 0
         count_updated = 0
         tmpdir = self.get_tmpdir()
@@ -525,14 +516,14 @@ class SourceSuricata(Source):
             with open(tmpdir + "temp.rules", 'wb') as f:
                 f.write(self.file.read())
             with open(tmpdir + "temp.rules", 'r', encoding='utf_8') as f:
-                if os.path.splitext(request.FILES['file'].name)[1] == '.rules':
+                if os.path.splitext(file_name)[1] == '.rules':
                     for line in f.readlines():
                         rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
                         if rule_created:
                             count_created += 1
                         if rule_updated:
                             count_updated += 1
-                elif os.path.splitext(request.FILES['file'].name)[1] == '.lua':
+                elif os.path.splitext(file_name)[1] == '.lua':
                     rule_created, rule_updated = ScriptSuricata.extract_script_attributs(f, rulesets)
                     if rule_created:
                         count_created += 1

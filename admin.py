@@ -15,7 +15,6 @@ from django.utils.safestring import mark_safe
 from .utils import generic_import_csv
 from suricata.tasks import upload_url_http
 from core.utils import create_deploy_rules_task,  add_1_hour, create_check_task
-from core.utils import update_progress
 from suricata.utils import create_upload_task
 from suricata.forms import SuricataChangeForm
 from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, \
@@ -282,7 +281,6 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                 rulesets_id = request.POST.getlist('rulesets')
                 for ruleset_id in rulesets_id:
                     rulesets.append(RuleSetSuricata.get_by_id(ruleset_id))
-            update_progress(0)
             # URL HTTP
             if obj.method.name == "URL HTTP":
                 obj.save()
@@ -312,7 +310,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
             elif obj.method.name == "Upload file":
                 obj.uri = str(time.time()) + "_to_delete"
                 obj.save()
-                message = obj.upload_file(request, rulesets)
+                message = obj.upload_file(request.FILES['file'].name, rulesets)
                 logger.debug("Upload file: " + str(message))
                 messages.add_message(request, messages.SUCCESS, message)
             else:  # pragma: no cover
@@ -324,18 +322,12 @@ class SourceSuricataAdmin(admin.ModelAdmin):
         finally:
             if os.path.isfile(settings.BASE_DIR + "/" + obj.file.name):
                 os.remove(settings.BASE_DIR + "/" + obj.file.name)
-            if os.path.isfile(settings.BASE_DIR + "/tmp/" + 'progress.json'):
-                os.remove(settings.BASE_DIR + "/tmp/" + 'progress.json')
 
     class Media:
         js = (
             'suricata/js/add-link-reference.js',
             'suricata/js/method-options.js',
-            'suricata/js/progress-bar.js',
         )
-        css = {
-            'all': ('suricata/css/progress-bar.css',),
-        }
 
 
 class BlackListSuricataAdmin(admin.ModelAdmin):

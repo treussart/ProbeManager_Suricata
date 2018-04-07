@@ -6,6 +6,7 @@ import re
 import ssl
 import subprocess
 import tarfile
+import time
 import urllib.request
 from collections import OrderedDict
 
@@ -143,10 +144,15 @@ class ConfSuricata(ProbeConfiguration):
     def __str__(self):
         return self.name
 
-    def test(self):
-        tmpdir = settings.BASE_DIR + "/tmp/test_conf/"
-        if not os.path.exists(tmpdir):  # pragma: no cover
+    def get_tmpdir(self):
+        tmpdir = settings.BASE_DIR + "/tmp/" + self.__class__.__name__ + "/" + \
+                 str(self.pk) + "/" + str(time.time()) + '/'
+        if not os.path.exists(tmpdir):
             os.makedirs(tmpdir)
+        return tmpdir
+
+    def test(self):
+        tmpdir = self.get_tmpdir()
         rule_file = settings.BASE_DIR + "/suricata/tests/data/test.rules"
         conf_file = tmpdir + self.name + ".yaml"
         config = self.conf_advanced_text
@@ -174,7 +180,6 @@ logging:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (outdata, errdata) = process.communicate()
         logger.debug(str(outdata))
-        os.remove(conf_file)
         # if success ok
         if process.returncode == 0:
             return {'status': True}
@@ -192,10 +197,17 @@ class SignatureSuricata(Rule):
                                         "href='http://doc.emergingthreats.net/bin/view/Main/SidAllocation'>help</a>")
     classtype = models.ForeignKey(ClassType, on_delete=models.CASCADE)
     msg = models.CharField(max_length=1000)
-    pcap_success = models.FileField(name='pcap_success', upload_to='tmp/pcap/', blank=True)
+    pcap_success = models.FileField(name='pcap_success', upload_to='pcap_success', blank=True)
 
     def __str__(self):
         return str(self.sid) + " : " + str(self.msg)
+
+    def get_tmpdir(self, folder):
+        tmpdir = settings.BASE_DIR + "/tmp/" + self.__class__.__name__ + "/" + str(self.pk) + "/" + \
+                 str(time.time()) + '/' + folder + '/'
+        if not os.path.exists(tmpdir):
+            os.makedirs(tmpdir)
+        return tmpdir
 
     @classmethod
     def get_by_sid(cls, sid):
@@ -281,9 +293,7 @@ class SignatureSuricata(Rule):
         return rule_created, rule_updated
 
     def test(self):
-        tmpdir = settings.BASE_DIR + "/tmp/test_sig/"
-        if not os.path.exists(tmpdir):  # pragma: no cover
-            os.makedirs(tmpdir)
+        tmpdir = self.get_tmpdir("test_sig")
         rule_file = tmpdir + str(self.sid) + ".rules"
         with open(rule_file, 'w', encoding='utf_8') as f:
             f.write(self.rule_full)
@@ -295,7 +305,6 @@ class SignatureSuricata(Rule):
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (outdata, errdata) = process.communicate()
         logger.debug(outdata)
-        os.remove(rule_file)
         # if success ok
         if process.returncode == 0:
             return {'status': True}
@@ -303,7 +312,7 @@ class SignatureSuricata(Rule):
         return {'status': False, 'errors': errdata}
 
     def test_pcap(self):
-        tmpdir = settings.BASE_DIR + "/tmp/test_pcap/" + str(self.sid) + "/"
+        tmpdir = self.get_tmpdir("test_pcap")
         if not os.path.exists(tmpdir):  # pragma: no cover
             os.makedirs(tmpdir)
         rule_file = tmpdir + "rule.rules"
@@ -346,12 +355,6 @@ logging:
             with open(tmpdir + "fast.log", "r", encoding='utf_8') as f:
                 if self.msg in f.read():
                     test = True
-
-        # Remove files
-        os.remove(rule_file)
-        os.remove(conf_file)
-        for file in glob.glob(tmpdir + "*.log"):
-            os.remove(file)
         # if success ok
         if process.returncode == 0 and test:
             return {'status': True}
@@ -465,7 +468,8 @@ class SourceSuricata(Source):
         self.type = self.__class__.__name__
 
     def get_tmpdir(self):
-        tmpdir = settings.BASE_DIR + "/tmp/" + str(self.pk) + "/"
+        tmpdir = settings.BASE_DIR + "/tmp/" + self.__class__.__name__ + "/" + \
+                 str(self.pk) + "/" + str(time.time()) + '/'
         if not os.path.exists(tmpdir):
             os.makedirs(tmpdir)
         return tmpdir
@@ -495,7 +499,6 @@ class SourceSuricata(Source):
                     if rule_updated:
                         count_updated += 1
         tar.close()
-        os.remove(tmpdir + "temp.tar.gz")
         return count_created, count_updated
 
     def upload_file(self, file_name, rulesets=None):
@@ -576,7 +579,6 @@ class SourceSuricata(Source):
                             count_created += 1
                         if rule_updated:
                             count_updated += 1
-                os.remove(tmpdir + "temp.rules")
                 logger.debug('signatures : created : ' + str(count_created) + ' updated : ' + str(count_updated))
                 return 'File uploaded successfully : ' + str(
                     count_created) + ' signatures created and ' + str(
@@ -602,6 +604,13 @@ class Suricata(Probe):
 
     def __str__(self):
         return self.name + "  " + self.description
+
+    def get_tmpdir(self):
+        tmpdir = settings.BASE_DIR + "/tmp/" + self.__class__.__name__ + "/" + \
+                 str(self.pk) + "/" + str(time.time()) + '/'
+        if not os.path.exists(tmpdir):
+            os.makedirs(tmpdir)
+        return tmpdir
 
     def install(self):
         if self.server.os.name == 'debian':
@@ -750,9 +759,7 @@ class Suricata(Probe):
             return {"status": False, "message": "Error for probe " + str(self.name) + " during the tests",
                     "exception": str(e)}
 
-        tmpdir = settings.BASE_DIR + "/tmp/" + self.name + "/"
-        if not os.path.exists(tmpdir):
-            os.makedirs(tmpdir)
+        tmpdir = self.get_tmpdir()
         deploy = True
         response = dict()
         errors = list()
@@ -804,14 +811,6 @@ class Suricata(Probe):
                         deploy = False
                         errors.append(str(e))
                     logger.debug("output : " + str(response))
-
-        # clean
-        for file in glob.glob(tmpdir + '*.lua'):
-            os.remove(file)
-        if os.path.isfile(tmpdir + 'temp.rules'):
-            os.remove(tmpdir + "temp.rules")
-        if os.path.isfile(tmpdir + 'md5-blacklist'):
-            os.remove(tmpdir + "md5-blacklist")
         if deploy:
             self.rules_updated_date = timezone.now()
             self.save()
@@ -820,9 +819,7 @@ class Suricata(Probe):
             return {'status': deploy, 'errors': errors}
 
     def deploy_conf(self):
-        tmpdir = settings.BASE_DIR + "/tmp/" + self.name + "/"
-        if not os.path.exists(tmpdir):
-            os.makedirs(tmpdir)
+        tmpdir = self.get_tmpdir()
         value = self.configuration.conf_advanced_text
         with open(tmpdir + "temp.conf", 'w', encoding='utf_8') as f:
             f.write(value)
@@ -837,9 +834,6 @@ class Suricata(Probe):
             deploy = False
             errors.append(str(e))
         logger.debug("output : " + str(response))
-
-        if os.path.isfile(tmpdir + 'temp.conf'):
-            os.remove(tmpdir + "temp.conf")
         if deploy:
             return {'status': deploy}
         else:
@@ -968,6 +962,13 @@ class CategoryReputationSuricata(CommonMixin, models.Model):
         return str(self.short_name)
 
     @classmethod
+    def get_tmpdir(cls):
+        tmpdir = settings.BASE_DIR + "/tmp/" + cls.__name__ + "/" + str(time.time()) + '/'
+        if not os.path.exists(tmpdir):
+            os.makedirs(tmpdir)
+        return tmpdir
+
+    @classmethod
     def get_by_short_name(cls, short_name):
         try:
             obj = cls.objects.get(short_name=short_name)
@@ -978,7 +979,7 @@ class CategoryReputationSuricata(CommonMixin, models.Model):
 
     @classmethod
     def store(cls):
-        tmp_file = settings.BASE_DIR + "/tmp/categories.txt"
+        tmp_file = cls.get_tmpdir() + "categories.txt"
         if not os.path.exists(settings.BASE_DIR + "/tmp"):
             os.makedirs(settings.BASE_DIR + "/tmp")
         with open(tmp_file, 'w', encoding='utf_8') as f:
@@ -1038,6 +1039,13 @@ class IPReputationSuricata(CommonMixin, models.Model):
         return str(self.ip)
 
     @classmethod
+    def get_tmpdir(cls):
+        tmpdir = settings.BASE_DIR + "/tmp/" + cls.__name__ + "/" + str(time.time()) + '/'
+        if not os.path.exists(tmpdir):
+            os.makedirs(tmpdir)
+        return tmpdir
+
+    @classmethod
     def get_by_ip(cls, ip):
         try:
             obj = cls.objects.get(ip=ip)
@@ -1048,7 +1056,7 @@ class IPReputationSuricata(CommonMixin, models.Model):
 
     @classmethod
     def store(cls):
-        tmp_file = settings.BASE_DIR + "/tmp/reputation.list"
+        tmp_file = cls.get_tmpdir() + "reputation.list"
         if not os.path.exists(settings.BASE_DIR + "/tmp"):
             os.makedirs(settings.BASE_DIR + "/tmp")
         with open(tmp_file, 'w', encoding='utf_8') as f:

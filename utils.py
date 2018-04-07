@@ -1,6 +1,7 @@
 import yaml
 import json
 import os
+import time
 from django_celery_beat.models import PeriodicTask
 from django.conf import settings
 from django.shortcuts import render
@@ -97,12 +98,13 @@ def generic_import_csv(cls, request):
     elif request.method == 'POST':
         if request.FILES['file']:
             try:
-                if not os.path.exists(settings.BASE_DIR + '/tmp/'):  # pragma: no cover
-                    os.mkdir(settings.BASE_DIR + '/tmp/')
-                with open(settings.BASE_DIR + '/tmp/imported.csv', 'wb+') as destination:
+                tmp_dir = settings.BASE_DIR + '/tmp/csv/' + str(time.time()) + '/'
+                if not os.path.exists(tmp_dir):
+                    os.makedirs(tmp_dir)
+                with open(tmp_dir + 'imported.csv', 'wb+') as destination:
                     for chunk in request.FILES['file'].chunks():
                         destination.write(chunk)
-                cls.import_from_csv(settings.BASE_DIR + '/tmp/imported.csv')
+                cls.import_from_csv(tmp_dir + 'imported.csv')
             except Exception as e:
                 messages.add_message(request, messages.ERROR, 'Error during the import : ' + str(e))
                 return render(request, 'import_csv.html')

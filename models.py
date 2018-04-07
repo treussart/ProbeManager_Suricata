@@ -5,7 +5,6 @@ import re
 import ssl
 import subprocess
 import tarfile
-import time
 import urllib.request
 from collections import OrderedDict
 

@@ -462,7 +462,8 @@ class SourceSuricata(Source):
                         if os.path.splitext(member.name)[1] == '.rules':
                             for line in file.readlines():
                                 line = line.decode('utf-8')
-                                rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
+                                rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line,
+                                                                                                           rulesets)
                                 if rule_created:
                                     count_created += 1
                                 if rule_updated:
@@ -541,7 +542,8 @@ class SourceSuricata(Source):
                     with open(tmp_dir + "temp.rules", 'r', encoding='utf_8') as f:
                         if os.path.splitext(self.uri)[1] == '.rules':
                             for line in f.readlines():
-                                rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
+                                rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line,
+                                                                                                           rulesets)
                                 if rule_created:
                                     count_created += 1
                                 if rule_updated:

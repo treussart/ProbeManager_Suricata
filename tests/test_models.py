@@ -234,7 +234,8 @@ class ReputationTest(TestCase):
         self.assertEqual(len(all_cat_rep), 1)
         self.assertEqual(cat_rep.short_name, "Google")
         self.assertEqual(str(cat_rep), "Google")
-        self.assertEqual(CategoryReputationSuricata.store(), settings.BASE_DIR + "/tmp/categories.txt")
+        with CategoryReputationSuricata.get_tmp_dir() as tmp_dir:
+            self.assertEqual(CategoryReputationSuricata.store(tmp_dir), settings.BASE_DIR + "/tmp/categories.txt")
         self.assertEqual(str(CategoryReputationSuricata.get_by_short_name("Google")), "Google")
         self.assertEqual(CategoryReputationSuricata.deploy(Suricata.get_by_id(1)), {'status': True})
         CategoryReputationSuricata.import_from_csv(settings.BASE_DIR + '/suricata/tests/data/cat-rep.csv')
@@ -254,7 +255,8 @@ class ReputationTest(TestCase):
         self.assertEqual(len(all_ip_rep), 1)
         self.assertEqual(ip_rep.ip, "8.8.8.8")
         self.assertEqual(str(ip_rep), "8.8.8.8")
-        self.assertEqual(IPReputationSuricata.store(), settings.BASE_DIR + "/tmp/reputation.list")
+        with IPReputationSuricata.get_tmp_dir() as tmp_dir:
+            self.assertEqual(IPReputationSuricata.store(tmp_dir), settings.BASE_DIR + "/tmp/reputation.list")
         self.assertEqual(str(IPReputationSuricata.get_by_ip('8.8.8.8')), '8.8.8.8')
         self.assertEqual(IPReputationSuricata.deploy(Suricata.get_by_id(1)), {'status': True})
         IPReputationSuricata.import_from_csv(settings.BASE_DIR + '/suricata/tests/data/ip-rep.csv')

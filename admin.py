@@ -304,8 +304,8 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                 except Exception as e:  # pragma: no cover
                                     logger.exception(str(e))
                 upload_url_http.delay(obj.uri, rulesets_id=rulesets_id)
-                messages.add_message(request, messages.SUCCESS, "Upload source in progress. " +
-                                     mark_safe("<a href='/admin/core/job/'>View Job</a>"))
+                messages.add_message(request, messages.SUCCESS, mark_safe("Upload source in progress. " +
+                                     "<a href='/admin/core/job/'>View Job</a>"))
             # Upload file
             elif obj.method.name == "Upload file":
                 obj.uri = str(time.time()) + "_to_delete"

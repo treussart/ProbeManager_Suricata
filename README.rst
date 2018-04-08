@@ -33,16 +33,17 @@ Features
 ========
 
  * Install and update Suricata NIDS on a remote server.
- * Configure the settings.
+ * Configure the settings and test the configuration.
  * Add, Delete, Update scripts and signatures.
  * Tests signatures compliance.
  * Tests signatures if generates alert via Pcap.
  * Adding rules via HTTP or via upload file.
  * Scheduling rules update via HTTP (EmergingThreat ...)
  * Grouping rules into groups and assign this to probes.
+ * Possibility to add into blacklist an IP, Domain or MD5.
+ * Implements IP reputation.
 
+Installation
+~~~~~~~~~~~~
 
-TODO
-====
-
- * increase tests
+Install with `ProbeManager <https://github.com/treussart/ProbeManager/>`_

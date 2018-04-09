@@ -2,8 +2,6 @@
 Suricata for  Probe Manager
 ===========================
 
-Presentation
-~~~~~~~~~~~~
 
 |Licence| |Version|
 
@@ -19,6 +17,9 @@ Presentation
 .. |Licence| image:: https://img.shields.io/github/license/treussart/ProbeManager_Suricata.svg
 .. |Version| image:: https://img.shields.io/github/tag/treussart/ProbeManager_Suricata.svg
 
+
+Presentation
+~~~~~~~~~~~~
 
 Module for Suricata IDS
 

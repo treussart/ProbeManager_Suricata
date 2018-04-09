@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.utils import timezone
 
-from suricata.models import BlackListSuricata
+from suricata.models import BlackList
 
 
 class ViewsBlacklistAdminTest(TestCase):
@@ -22,10 +22,10 @@ class ViewsBlacklistAdminTest(TestCase):
         self.client.logout()
 
     def test_blacklist(self):
-        response = self.client.get('/admin/suricata/blacklistsuricata/', follow=True)
+        response = self.client.get('/admin/suricata/blacklist/', follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(BlackListSuricata.get_all()), 0)
-        response = self.client.post('/admin/suricata/blacklistsuricata/add/', {'type': 'IP',
+        self.assertEqual(len(BlackList.get_all()), 0)
+        response = self.client.post('/admin/suricata/blacklist/add/', {'type': 'IP',
                                                                                'value': '192.168.0.1',
                                                                                'comment': 'test',
                                                                                'rulesets': [1, ]
@@ -33,15 +33,15 @@ class ViewsBlacklistAdminTest(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(' was added successfully.', str(response.content))
-        self.assertEqual(len(BlackListSuricata.get_all()), 1)
-        response = self.client.post('/admin/suricata/blacklistsuricata/',
+        self.assertEqual(len(BlackList.get_all()), 1)
+        response = self.client.post('/admin/suricata/blacklist/',
                                     {'action': 'delete_blacklist',
-                                     '_selected_action': BlackListSuricata.get_by_value('192.168.0.1').id},
+                                     '_selected_action': BlackList.get_by_value('192.168.0.1').id},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Blacklists deleted', str(response.content))
-        self.assertEqual(len(BlackListSuricata.get_all()), 0)
-        response = self.client.post('/admin/suricata/blacklistsuricata/add/', {'type': 'HOST',
+        self.assertEqual(len(BlackList.get_all()), 0)
+        response = self.client.post('/admin/suricata/blacklist/add/', {'type': 'HOST',
                                                                                'value': 'test.com',
                                                                                'comment': 'test',
                                                                                'rulesets': [1, ]
@@ -49,15 +49,15 @@ class ViewsBlacklistAdminTest(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(' was added successfully.', str(response.content))
-        self.assertEqual(len(BlackListSuricata.get_all()), 1)
-        response = self.client.post('/admin/suricata/blacklistsuricata/',
+        self.assertEqual(len(BlackList.get_all()), 1)
+        response = self.client.post('/admin/suricata/blacklist/',
                                     {'action': 'delete_blacklist',
-                                     '_selected_action': BlackListSuricata.get_by_value('test.com').id},
+                                     '_selected_action': BlackList.get_by_value('test.com').id},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Blacklists deleted', str(response.content))
-        self.assertEqual(len(BlackListSuricata.get_all()), 0)
-        response = self.client.post('/admin/suricata/blacklistsuricata/add/',
+        self.assertEqual(len(BlackList.get_all()), 0)
+        response = self.client.post('/admin/suricata/blacklist/add/',
                                     {'type': 'MD5',
                                      'value': 'e41c0631f6f2c138a417b59bcb880fce',
                                      'comment': 'test',
@@ -66,12 +66,12 @@ class ViewsBlacklistAdminTest(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(' was added successfully.', str(response.content))
-        self.assertEqual(len(BlackListSuricata.get_all()), 1)
-        response = self.client.post('/admin/suricata/blacklistsuricata/',
+        self.assertEqual(len(BlackList.get_all()), 1)
+        response = self.client.post('/admin/suricata/blacklist/',
                                     {'action': 'delete_blacklist',
-                                     '_selected_action': BlackListSuricata.
+                                     '_selected_action': BlackList.
                                      get_by_value('e41c0631f6f2c138a417b59bcb880fce').id},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Blacklists deleted', str(response.content))
-        self.assertEqual(len(BlackListSuricata.get_all()), 0)
+        self.assertEqual(len(BlackList.get_all()), 0)

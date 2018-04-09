@@ -1,17 +1,17 @@
 from rest_framework import viewsets
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 
-from suricata.api.serializers import ConfSuricataSerializer, SuricataSerializer, SignatureSuricataSerializer, \
+from suricata.api.serializers import ConfigurationSerializer, SuricataSerializer, SignatureSuricataSerializer, \
     ScriptSuricataSerializer, SourceSuricataSerializer, RuleSetSuricataSerializer
-from suricata.models import Suricata, ConfSuricata, SignatureSuricata, ScriptSuricata, SourceSuricata, RuleSetSuricata
+from suricata.models import Suricata, Configuration, SignatureSuricata, ScriptSuricata, SourceSuricata, RuleSetSuricata
 
 
-class ConfSuricataViewSet(viewsets.ModelViewSet):
+class ConfigurationViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows groups to be viewed or edited.
     """
-    queryset = ConfSuricata.objects.all()
-    serializer_class = ConfSuricataSerializer
+    queryset = Configuration.objects.all()
+    serializer_class = ConfigurationSerializer
 
 
 class SuricataViewSet(ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet):

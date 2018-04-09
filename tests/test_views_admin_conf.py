@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.utils import timezone
 
-from suricata.models import ConfSuricata
+from suricata.models import Configuration
 
 
 class ViewsConfAdminTest(TestCase):
@@ -23,13 +23,13 @@ class ViewsConfAdminTest(TestCase):
         self.client.logout()
 
     def test_conf(self):
-        response = self.client.get('/admin/suricata/confsuricata/', follow=True)
+        response = self.client.get('/admin/suricata/configuration/', follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(ConfSuricata.get_all()), 2)
+        self.assertEqual(len(Configuration.get_all()), 2)
 
         with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
             CONF_FULL_DEFAULT = f.read()
-        response = self.client.post('/admin/suricata/confsuricata/add/', {'name': 'conftest',
+        response = self.client.post('/admin/suricata/configuration/add/', {'name': 'conftest',
                                                                           'conf_rules_directory': '/etc/suricata/rules',
                                                                           'conf_script_directory': '/etc/suricata/lua',
                                                                           'conf_iprep_directory': '/etc/suricata/iprep',
@@ -88,7 +88,7 @@ class ViewsConfAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(' was added successfully', str(response.content))
         self.assertIn('Test configuration OK', str(response.content))
-        response = self.client.post('/admin/suricata/confsuricata/add/', {'name': 'conftest-false',
+        response = self.client.post('/admin/suricata/configuration/add/', {'name': 'conftest-false',
                                                                           'conf_rules_directory': '/etc/suricata/rules',
                                                                           'conf_script_directory': '/etc/suricata/lua',
                                                                           'conf_iprep_directory': '/etc/suricata/iprep',
@@ -147,14 +147,14 @@ class ViewsConfAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(' was added successfully', str(response.content))
         self.assertIn('Test configuration OK', str(response.content))
-        self.assertEqual(len(ConfSuricata.get_all()), 4)
-        response = self.client.post('/admin/suricata/confsuricata/', {'action': 'test_configurations',
+        self.assertEqual(len(Configuration.get_all()), 4)
+        response = self.client.post('/admin/suricata/configuration/', {'action': 'test_configurations',
                                                                       '_selected_action': '2'},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn("Test configurations OK", str(response.content))
         # Conf failed
-        response = self.client.post('/admin/suricata/confsuricata/add/', {'name': 'conftest-failed',
+        response = self.client.post('/admin/suricata/configuration/add/', {'name': 'conftest-failed',
                                                                           'conf_rules_directory': '/etc/suricata/rules',
                                                                           'conf_script_directory': '/etc/suricata/lua',
                                                                           'conf_iprep_directory': '/etc/suricata/iprep',
@@ -213,8 +213,8 @@ class ViewsConfAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(' was added successfully', str(response.content))
         self.assertIn('Test configuration failed !', str(response.content))
-        self.assertEqual(len(ConfSuricata.get_all()), 5)
-        response = self.client.post('/admin/suricata/confsuricata/', {'action': 'test_configurations',
+        self.assertEqual(len(Configuration.get_all()), 5)
+        response = self.client.post('/admin/suricata/configuration/', {'action': 'test_configurations',
                                                                       '_selected_action': '5'},
                                     follow=True)
         self.assertEqual(response.status_code, 200)

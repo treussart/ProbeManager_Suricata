@@ -46,7 +46,7 @@ class AppLayerType(CommonMixin, models.Model):
         return self.name
 
 
-class ConfSuricata(ProbeConfiguration):
+class Configuration(ProbeConfiguration):
     """
     Configuration for Suricata IDS, Allows you to reuse the configuration.
     """
@@ -571,7 +571,7 @@ class Suricata(Probe):
     Stores an instance of Suricata IDS software.
     """
     rulesets = models.ManyToManyField(RuleSetSuricata, blank=True)
-    configuration = models.ForeignKey(ConfSuricata, on_delete=models.CASCADE)
+    configuration = models.ForeignKey(Configuration, on_delete=models.CASCADE)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -654,7 +654,7 @@ class Suricata(Probe):
     def test_rules(self):
         # Set blacklists file
         value = ""
-        for md5 in Md5Suricata.get_all():
+        for md5 in Md5.get_all():
             value += md5.value + os.linesep
         if not os.path.exists(settings.SURICATA_RULES):
             os.mkdir(settings.SURICATA_RULES)
@@ -750,7 +750,7 @@ class Suricata(Probe):
 
             # Blacklists MD5
             value = ""
-            for md5 in Md5Suricata.get_all():
+            for md5 in Md5.get_all():
                 value += md5.value + os.linesep
             with open(tmp_dir + "md5-blacklist", 'w', encoding='utf_8') as f:
                 f.write(value)
@@ -808,14 +808,14 @@ class Suricata(Probe):
 
 
 def increment_sid():
-    last_sid = BlackListSuricata.objects.all().order_by('id').last()
+    last_sid = BlackList.objects.all().order_by('id').last()
     if not last_sid:
         return 41000000
     else:
         return last_sid.sid + 1
 
 
-class Md5Suricata(models.Model):
+class Md5(models.Model):
     value = models.CharField(max_length=600, unique=True, null=False, blank=False)
     signature = models.ForeignKey(SignatureSuricata, editable=False, on_delete=models.CASCADE)
 
@@ -833,7 +833,7 @@ class Md5Suricata(models.Model):
         return obj
 
 
-class BlackListSuricata(CommonMixin, models.Model):
+class BlackList(CommonMixin, models.Model):
     """
     Stores an instance of a pattern in blacklist.
     """
@@ -909,7 +909,7 @@ class BlackListSuricata(CommonMixin, models.Model):
             if not signature:
                 signature = self.create_signature(Template(rule_md5_template))
                 signature.save()
-            md5_suricata = Md5Suricata(value=self.value, signature=signature)
+            md5_suricata = Md5(value=self.value, signature=signature)
             md5_suricata.save()
         else:  # pragma: no cover
             raise Exception("Blacklist type unknown")
@@ -918,7 +918,7 @@ class BlackListSuricata(CommonMixin, models.Model):
             ruleset.save()
 
 
-class CategoryReputationSuricata(CommonMixin, models.Model):
+class CategoryReputation(CommonMixin, models.Model):
     """
     Store an instance of a reputation category.
     """
@@ -985,12 +985,12 @@ class CategoryReputationSuricata(CommonMixin, models.Model):
                     cls.objects.create(id=row['id'], short_name=row['short name'], description=row['description'])
 
 
-class IPReputationSuricata(CommonMixin, models.Model):
+class IPReputation(CommonMixin, models.Model):
     """
     Store an instance of a reputation IP.
     """
     ip = models.GenericIPAddressField(unique=True, null=False, blank=False)
-    category = models.ForeignKey(CategoryReputationSuricata, on_delete=models.CASCADE)
+    category = models.ForeignKey(CategoryReputation, on_delete=models.CASCADE)
     reputation_score = models.IntegerField(null=False, default=0, verbose_name='reputation score : a number between '
                                                                                '1 and 127 (0 means no data)')
 
@@ -1044,9 +1044,9 @@ class IPReputationSuricata(CommonMixin, models.Model):
                 same_ip = cls.get_by_ip(row['ip'])
                 if same_ip:
                     cls.objects.filter(id=same_ip.id).update(
-                        category=CategoryReputationSuricata.get_by_id(row['category']),
+                        category=CategoryReputation.get_by_id(row['category']),
                         reputation_score=row['reputation score'])
                 else:
                     cls.objects.create(ip=row['ip'],
-                                       category=CategoryReputationSuricata.get_by_id(row['category']),
+                                       category=CategoryReputation.get_by_id(row['category']),
                                        reputation_score=row['reputation score'])

@@ -3,7 +3,7 @@ import importlib
 from core.models import Job, Probe
 from core.notifications import send_notification
 from rules.models import Source
-from suricata.models import RuleSetSuricata, IPReputationSuricata, CategoryReputationSuricata
+from suricata.models import RuleSetSuricata, IPReputation, CategoryReputation
 
 from celery import task
 from celery.utils.log import get_task_logger
@@ -50,8 +50,8 @@ def deploy_reputation_list(probe_name):
     my_class = getattr(importlib.import_module(probe.type.lower() + ".models"), probe.type)
     probe = my_class.get_by_name(probe_name)
     try:
-        response_cat = CategoryReputationSuricata.deploy(probe)
-        response_ip = IPReputationSuricata.deploy(probe)
+        response_cat = CategoryReputation.deploy(probe)
+        response_ip = IPReputation.deploy(probe)
         if response_cat['status'] and response_ip['status']:
             job.update_job(str(response_cat) + " - " + str(response_ip), 'Completed')
             logger.info("task - deploy_reputation_list : " + str(probe_name) + " - " +

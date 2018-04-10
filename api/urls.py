@@ -1,7 +1,7 @@
 from suricata.api import views
 
 urls_to_register = [
-    (r'suricata/conf', views.ConfigurationViewSet),
+    (r'suricata/configuration', views.ConfigurationViewSet),
     (r'suricata/suricata', views.SuricataViewSet),
     (r'suricata/signature', views.SignatureSuricataViewSet),
     (r'suricata/script', views.ScriptSuricataViewSet),

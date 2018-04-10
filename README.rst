@@ -1,6 +1,6 @@
-===========================
-Suricata for  Probe Manager
-===========================
+==========================
+Suricata for Probe Manager
+==========================
 
 
 |Licence| |Version|
@@ -21,7 +21,7 @@ Suricata for  Probe Manager
 Presentation
 ~~~~~~~~~~~~
 
-Module for Suricata IDS
+Module for `Suricata IDS <https://suricata-ids.org/>`_
 
 
 Compatible version

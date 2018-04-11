@@ -50,6 +50,8 @@ class Configuration(ProbeConfiguration):
     """
     Configuration for Suricata IDS, Allows you to reuse the configuration.
     """
+    probeconfiguration = models.OneToOneField(ProbeConfiguration, parent_link=True, related_name='suricata_configuration',
+                                              on_delete=models.CASCADE, editable=False)
     with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
         CONF_FULL_DEFAULT = f.read()
     conf_rules_directory = models.CharField(max_length=400, default="/etc/suricata/rules")

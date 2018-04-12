@@ -90,7 +90,7 @@ class SuricataAdmin(admin.ModelAdmin):
             return SuricataChangeForm
 
     def save_model(self, request, obj, form, change):
-        logger.debug("create scheduled")
+        logger.debug("create scheduled for " + str(obj))
         create_deploy_rules_task(obj)
         create_check_task(obj)
         super().save_model(request, obj, form, change)

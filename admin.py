@@ -13,13 +13,12 @@ from django_celery_beat.models import PeriodicTask, CrontabSchedule
 from django.utils.safestring import mark_safe
 
 from .utils import generic_import_csv
-from suricata.tasks import upload_url_http
+from .tasks import upload_url_http
 from core.utils import create_deploy_rules_task,  add_1_hour, create_check_task
-from suricata.utils import create_upload_task
-from suricata.forms import SuricataChangeForm
-from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, Configuration, \
+from .utils import create_upload_task, create_conf, convert_conf
+from .forms import SuricataChangeForm
+from .models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, Configuration, \
     SourceSuricata, BlackList, Md5, IPReputation, CategoryReputation
-from suricata.utils import create_conf, convert_conf
 
 logger = logging.getLogger(__name__)
 

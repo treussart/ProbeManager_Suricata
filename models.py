@@ -582,7 +582,7 @@ class Suricata(Probe):
     def __str__(self):
         return self.name + "  " + self.description
 
-    def install(self):
+    def install(self, version=None):
         if self.server.os.name == 'debian':
             command1 = "echo 'deb http://http.debian.net/debian stretch-backports main' | sudo tee -a " \
                        "/etc/apt/sources.list.d/stretch-backports.list"

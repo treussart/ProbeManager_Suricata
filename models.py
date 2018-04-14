@@ -582,7 +582,7 @@ class Suricata(Probe):
     def __str__(self):
         return self.name + "  " + self.description
 
-    def install(self, version=None):
+    def install(self, version=settings.SURICATA_VERSION):
         if self.server.os.name == 'debian':
             install_script = """
             if ! type suricata ; then

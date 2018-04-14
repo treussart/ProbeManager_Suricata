@@ -54,3 +54,4 @@ fi
 echo "SURICATA_BINARY = '$( which suricata )'" > "$destfull"probemanager/suricata/settings.py
 echo "SURICATA_CONFIG = '$config'" >> "$destfull"probemanager/suricata/settings.py
 echo "SURICATA_RULES = '$rules'" >> "$destfull"probemanager/suricata/settings.py
+echo "SURICATA_VERSION = '$SURICATA_VERSION'" >> "$destfull"probemanager/suricata/settings.py

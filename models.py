@@ -13,7 +13,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
-from jinja2 import Template
+from string import Template
 
 from core.models import Probe, ProbeConfiguration
 from core.modelsmixins import CommonMixin
@@ -584,29 +584,38 @@ class Suricata(Probe):
 
     def install(self, version=None):
         if self.server.os.name == 'debian':
-            command1 = "echo 'deb http://http.debian.net/debian stretch-backports main' | sudo tee -a " \
-                       "/etc/apt/sources.list.d/stretch-backports.list"
-            command2 = "apt update"
-            command3 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower()
-            command4 = "mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep " \
-                       "&& touch /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list"
-            command5 = "sudo chown -R $(whoami) /etc/suricata"
+            install_script = """
+            if ! type suricata ; then
+                echo 'deb http://http.debian.net/debian stretch-backports main' | sudo tee -a /etc/apt/sources.list.d/stretch-backports.list 
+                apt update
+                apt -y -t stretch-backports install suricata
+                mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep && touch /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list
+                chown -R $(whoami) /etc/suricata
+                exit 0
+            else
+                echo "Already installed"
+                exit 0
+            fi
+            """
         elif self.server.os.name == 'ubuntu':
-            command1 = "add-apt-repository -y ppa:oisf/suricata-stable"
-            command2 = "apt update"
-            command3 = "apt -y install " + self.__class__.__name__.lower()
-            command4 = "mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep " \
-                       "&& touch /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list"
-            command5 = "sudo chown -R $(whoami) /etc/suricata"
+            install_script = """
+            if ! type suricata ; then
+                add-apt-repository -y ppa:oisf/suricata-stable                
+                apt update
+                apt -y install suricata
+                mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep && touch /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list
+                chown -R $(whoami) /etc/suricata
+                exit 0
+            else
+                echo "Already installed"
+                exit 0
+            fi
+            """
         else:
             raise Exception("Not yet implemented")
-        tasks_unordered = {"1_add_repo": command1,
-                           "2_update_repo": command2,
-                           "3_install": command3,
-                           "4_create_dir": command4,
-                           "5_change_rights": command5}
-
-        tasks = OrderedDict(sorted(tasks_unordered.items(), key=lambda t: t[0]))
+        t = Template(install_script)
+        command = "sh -c '" + t.substitute(version=version) + "'"
+        tasks = {"install": command}
         try:
             response = execute(self.server, tasks, become=True)
             self.installed = True
@@ -864,12 +873,12 @@ class BlackList(CommonMixin, models.Model):
 
     def create_signature(self, t):
         if not self.comment:
-            self.comment = self.type + " " + self.value + " in BlackList"
-        rule_created = t.render(value=self.value,
-                                type=self.type,
-                                comment=self.comment,
-                                sid=self.sid
-                                )
+            self.comment = str(self.type) + " " + str(self.value) + " in BlackList"
+        rule_created = t.safe_substitute(value=self.value,
+                                         type=self.type,
+                                         comment=self.comment,
+                                         sid=self.sid
+                                         )
         if self.type == "MD5":
             signature = SignatureSuricata(sid=self.sid,
                                           classtype=ClassType.get_by_name("misc-attack"),
@@ -884,7 +893,7 @@ class BlackList(CommonMixin, models.Model):
                                           classtype=ClassType.get_by_name("misc-attack"),
                                           msg=self.comment,
                                           rev=1,
-                                          reference=self.type + "," + self.value,
+                                          reference=str(self.type) + "," + str(self.value),
                                           rule_full=rule_created,
                                           enabled=True,
                                           created_date=timezone.now(),
@@ -892,13 +901,13 @@ class BlackList(CommonMixin, models.Model):
         return signature
 
     def create_blacklist(self):
-        rule_ip_template = "alert ip $HOME_NET any -> {{ value }} any (msg:\"{{ comment }}\"; " \
-                           "classtype:misc-attack; target:src_ip; sid:{{ sid }}; rev:1;)\n"
+        rule_ip_template = "alert ip $HOME_NET any -> ${value} any (msg:\"${comment}\"; " \
+                           "classtype:misc-attack; target:src_ip; sid:${sid}; rev:1;)\n"
         rule_md5_template = "alert ip $HOME_NET any -> any any (msg:\"MD5 in blacklist\"; " \
-                            "filemd5:md5-blacklist; classtype:misc-attack; sid:{{ sid }}; rev:1;)\n"
-        rule_host_template = "alert http $HOME_NET any -> any any (msg:\"{{ comment }}\"; " \
-                             "content:\"{{ value }}\"; http_host; classtype:misc-attack; target:src_ip; " \
-                             "sid:{{ sid }}; rev:1;)\n"
+                            "filemd5:md5-blacklist; classtype:misc-attack; sid:${sid}; rev:1;)\n"
+        rule_host_template = "alert http $HOME_NET any -> any any (msg:\"${comment}\"; " \
+                             "content:\"${value}\"; http_host; classtype:misc-attack; target:src_ip; " \
+                             "sid:${sid}; rev:1;)\n"
         if self.type == "IP":
             signature = self.create_signature(Template(rule_ip_template))
             signature.save()

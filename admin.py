@@ -12,7 +12,7 @@ from django.http import HttpResponseRedirect
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
 from django.utils.safestring import mark_safe
 
-from .utils import generic_import_csv
+from core.utils import generic_import_csv
 from .tasks import upload_url_http
 from core.utils import create_deploy_rules_task,  add_1_hour, create_check_task
 from .utils import create_upload_task, create_conf, convert_conf
@@ -362,7 +362,7 @@ class BlackListAdmin(admin.ModelAdmin):
 class IPReputationAdmin(admin.ModelAdmin):
 
     def get_urls(self):
-        urls = super(IPReputationAdmin, self).get_urls()
+        urls = super().get_urls()
         my_urls = [url(r'^import_csv/$', self.import_csv, name="import_csv"), ]
         return my_urls + urls
 
@@ -373,7 +373,7 @@ class IPReputationAdmin(admin.ModelAdmin):
 class CategoryReputationAdmin(admin.ModelAdmin):
 
     def get_urls(self):
-        urls = super(CategoryReputationAdmin, self).get_urls()
+        urls = super().get_urls()
         my_urls = [url(r'^import_csv/$', self.import_csv, name="import_csv_cat_rep"), ]
         return my_urls + urls
 

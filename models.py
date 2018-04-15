@@ -6,7 +6,6 @@ import ssl
 import subprocess
 import tarfile
 import urllib.request
-from collections import OrderedDict
 
 import select2.fields
 from django.conf import settings
@@ -50,7 +49,8 @@ class Configuration(ProbeConfiguration):
     """
     Configuration for Suricata IDS, Allows you to reuse the configuration.
     """
-    probeconfiguration = models.OneToOneField(ProbeConfiguration, parent_link=True, related_name='suricata_configuration',
+    probeconfiguration = models.OneToOneField(ProbeConfiguration, parent_link=True,
+                                              related_name='suricata_configuration',
                                               on_delete=models.CASCADE, editable=False)
     with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
         CONF_FULL_DEFAULT = f.read()
@@ -587,10 +587,12 @@ class Suricata(Probe):
         if self.server.os.name == 'debian':
             install_script = """
             if ! type suricata ; then
-                echo 'deb http://http.debian.net/debian stretch-backports main' | sudo tee -a /etc/apt/sources.list.d/stretch-backports.list 
+                echo 'deb http://http.debian.net/debian stretch-backports main' | \
+                sudo tee -a /etc/apt/sources.list.d/stretch-backports.list
                 apt update
                 apt -y -t stretch-backports install suricata
-                mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep && touch /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list
+                mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep && touch \
+                /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list
                 chown -R $(whoami) /etc/suricata
                 exit 0
             else

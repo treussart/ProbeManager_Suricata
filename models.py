@@ -171,8 +171,9 @@ logging:
                    '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
                    ]
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (outdata, errdata) = process.communicate()
-            logger.debug(str(outdata))
+            outdata, errdata = process.communicate()
+            logger.debug("outdata : " + str(outdata), "errdata : " + str(errdata))
+
         # if success ok
         if process.returncode == 0:
             return {'status': True}
@@ -289,8 +290,8 @@ class SignatureSuricata(Rule):
                    '-c', settings.SURICATA_CONFIG
                    ]
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (outdata, errdata) = process.communicate()
-            logger.debug(outdata)
+            outdata, errdata = process.communicate()
+            logger.debug("outdata : " + str(outdata), "errdata : " + str(errdata))
         # if success ok
         if process.returncode == 0:
             return {'status': True}
@@ -331,7 +332,7 @@ logging:
                    '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
                    ]
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (outdata, errdata) = process.communicate()
+            outdata, errdata = process.communicate()
             logger.debug("outdata : " + str(outdata), "errdata : " + str(errdata))
             # test if alert is generated :
             test = False

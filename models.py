@@ -603,10 +603,11 @@ class Suricata(Probe):
         elif self.server.os.name == 'ubuntu':
             install_script = """
             if ! type suricata ; then
-                add-apt-repository -y ppa:oisf/suricata-stable                
+                add-apt-repository -y ppa:oisf/suricata-stable
                 apt update
                 apt -y install suricata
-                mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep && touch /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list
+                mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep
+                touch /etc/suricata/iprep/reputation.list && touch /etc/suricata/iprep/categories.txt
                 chown -R $(whoami) /etc/suricata
                 exit 0
             else

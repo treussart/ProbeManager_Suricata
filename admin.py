@@ -363,7 +363,7 @@ class IPReputationAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         urls = super().get_urls()
-        my_urls = [url(r'^import_csv/$', self.import_csv, name="import_csv"), ]
+        my_urls = [url(r'^import_csv/$', self.import_csv, name="import_csv_ip_rep"), ]
         return my_urls + urls
 
     def import_csv(self, request):

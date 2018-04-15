@@ -647,7 +647,7 @@ class Suricata(Probe):
         # Set blacklists file
         value = ""
         for md5 in Md5.get_all():
-            value += md5.value + os.linesep
+            value += md5.value + '\n'
         if not os.path.exists(settings.SURICATA_RULES):
             os.mkdir(settings.SURICATA_RULES)
         with open(settings.SURICATA_RULES + '/md5-blacklist', 'w', encoding='utf_8') as f:
@@ -727,7 +727,7 @@ class Suricata(Probe):
         for ruleset in self.rulesets.all():
             for signature in ruleset.signatures.all():
                 if signature.enabled:
-                    value += signature.rule_full + os.linesep
+                    value += signature.rule_full + '\n'
         with self.get_tmp_dir(self.pk) as tmp_dir:
             with open(tmp_dir + "temp.rules", 'w', encoding='utf_8') as f:
                 f.write(value)
@@ -743,7 +743,7 @@ class Suricata(Probe):
             # Blacklists MD5
             value = ""
             for md5 in Md5.get_all():
-                value += md5.value + os.linesep
+                value += md5.value + '\n'
             with open(tmp_dir + "md5-blacklist", 'w', encoding='utf_8') as f:
                 f.write(value)
             try:

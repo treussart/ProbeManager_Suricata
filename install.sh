@@ -21,7 +21,7 @@ if [[ $OSTYPE = *"darwin"* ]]; then
         config="/usr/local/etc/suricata/suricata.yaml"
         rules="/usr/local/etc/suricata/rules"
     fi
-# Debian
+# Debian and Ubuntu
 elif [ -f /etc/debian_version ]; then
     cat /etc/issue.net
     if ! type suricata ; then

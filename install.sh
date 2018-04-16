@@ -51,6 +51,9 @@ elif [ -f /etc/debian_version ]; then
         suricata -V
     fi
 fi
+if ! type suricata ; then
+    exit 1
+fi
 echo "SURICATA_BINARY = '$( which suricata )'" > "$destfull"probemanager/suricata/settings.py
 echo "SURICATA_CONFIG = '$config'" >> "$destfull"probemanager/suricata/settings.py
 echo "SURICATA_RULES = '$rules'" >> "$destfull"probemanager/suricata/settings.py

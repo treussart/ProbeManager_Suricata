@@ -1,3 +1,5 @@
-class RuleNotFoundParam(Exception):
-    def __init__(self, message):
-        self.message = message
+from core.exceptions import ProbeManagerError
+
+
+class RuleNotFoundParam(ProbeManagerError):
+    pass

@@ -70,6 +70,7 @@ def deploy_reputation_list(probe_name):
         return {"message": "Error for probe " + str(probe.name) + " to deploy reputation list", "exception": str(e)}
     return {"message": "Probe " + str(probe.name) + " deployed successfully reputation list"}
 
+
 @task
 def upload_misp(source_uri, rulesets_id=None):
     job = Job.create_job('upload_misp', source_uri)

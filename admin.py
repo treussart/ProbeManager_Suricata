@@ -321,8 +321,9 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                     obj.save()
                     logger.debug("MISP uploading rules")
                     upload_misp.delay(obj.uri, rulesets_id=rulesets_id)
-                    messages.add_message(request, messages.SUCCESS, mark_safe("Upload source in progress. " +
-                                                                              "<a href='/admin/core/job/'>View Job</a>"))
+                    messages.add_message(request, messages.SUCCESS,
+                                         mark_safe("Upload source in progress. " +
+                                                   "<a href='/admin/core/job/'>View Job</a>"))
                 else:
                     logger.error('MISP Configuration missed')
                     messages.add_message(request, messages.ERROR, 'MISP Configuration missed')

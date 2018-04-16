@@ -13,8 +13,10 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from string import Template
+from pymisp import PyMISP
 
 from core.models import Probe, ProbeConfiguration
+from core.models import Configuration as CoreConfiguration
 from core.modelsmixins import CommonMixin
 from core.notifications import send_notification
 from core.ssh import execute, execute_copy
@@ -478,6 +480,18 @@ class SourceSuricata(Source):
                             if rule_updated:
                                 count_updated += 1
         return count_created, count_updated
+
+    def upload_misp(self, rulesets=None):
+        if CoreConfiguration.get_value("MISP_HOST") and CoreConfiguration.get_value("MISP_API_KEY"):
+            misp = PyMISP(CoreConfiguration.get_value("MISP_HOST"), CoreConfiguration.get_value("MISP_API_KEY"), False)
+            with self.get_tmp_dir(self.pk) as tmp_dir:
+                with open(tmp_dir + 'misp.rules', 'w', encoding='utf_8') as f:
+                    f.write(misp.download_all_suricata().text)
+                    response = self.upload_file(tmp_dir + 'misp.rules', rulesets=rulesets)
+            return response
+        else:
+            logger.error('MISP Configuration missed')
+            raise Exception('MISP Configuration missed')
 
     def upload_file(self, file_name, rulesets=None):
         count_created = 0

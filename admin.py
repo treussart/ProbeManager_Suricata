@@ -13,12 +13,14 @@ from django_celery_beat.models import PeriodicTask, CrontabSchedule
 from django.utils.safestring import mark_safe
 
 from core.utils import generic_import_csv
-from .tasks import upload_url_http
+from .tasks import upload_url_http, upload_misp
 from core.utils import create_deploy_rules_task,  add_1_hour, create_check_task
 from .utils import create_upload_task, create_conf, convert_conf
 from .forms import SuricataChangeForm
 from .models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, Configuration, \
     SourceSuricata, BlackList, Md5, IPReputation, CategoryReputation
+from core.models import Configuration as CoreConfiguration
+
 
 logger = logging.getLogger(__name__)
 
@@ -312,6 +314,18 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                 message = obj.upload_file(request.FILES['file'].name, rulesets)
                 logger.debug("Upload file: " + str(message))
                 messages.add_message(request, messages.SUCCESS, message)
+            # MISP
+            elif obj.method.name == "MISP":
+                if CoreConfiguration.get_value("MISP_HOST") and CoreConfiguration.get_value("MISP_API_KEY"):
+                    obj.uri = CoreConfiguration.get_value("MISP_HOST")
+                    obj.save()
+                    logger.debug("MISP uploading rules")
+                    upload_misp.delay(obj.uri, rulesets_id=rulesets_id)
+                    messages.add_message(request, messages.SUCCESS, mark_safe("Upload source in progress. " +
+                                                                              "<a href='/admin/core/job/'>View Job</a>"))
+                else:
+                    logger.error('MISP Configuration missed')
+                    messages.add_message(request, messages.ERROR, 'MISP Configuration missed')
             else:  # pragma: no cover
                 logger.error('Upload method unknown : ' + obj.method.name)
                 messages.add_message(request, messages.ERROR, 'Upload method unknown : ' + obj.method.name)

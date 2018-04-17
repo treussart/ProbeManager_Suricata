@@ -489,8 +489,8 @@ class SourceSuricata(Source):
                     response = self.upload_file(tmp_dir + 'misp.rules', rulesets=rulesets)
             return response
         else:
-            logger.error('MISP Configuration missed')
-            raise Exception('MISP Configuration missed')
+            logger.error('Missing MISP Configuration')
+            raise Exception('Missing MISP Configuration')
 
     def upload_file(self, file_name, rulesets=None):
         count_created = 0

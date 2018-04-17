@@ -213,7 +213,7 @@ class SignatureSuricata(Rule):
         return cls.objects.filter(rule_full__contains=pattern)
 
     @classmethod
-    def extract_signature_attributs(cls, line, rulesets=None):  # TODO -> too complex
+    def extract_attributs(cls, line, rulesets=None):  # TODO -> too complex
         rule_created = False
         rule_updated = False
         getsid = re.compile("sid *: *(\d+)")
@@ -392,7 +392,7 @@ class ScriptSuricata(Rule):
         return cls.objects.filter(rule_full__contains=pattern)
 
     @classmethod
-    def extract_script_attributs(cls, file, rulesets=None):
+    def extract_attributs(cls, file, rulesets=None):
         """ A script by file """
         rule_created = False
         rule_updated = False
@@ -467,14 +467,13 @@ class SourceSuricata(Source):
                         if os.path.splitext(member.name)[1] == '.rules':
                             for line in file.readlines():
                                 line = line.decode('utf-8')
-                                rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line,
-                                                                                                           rulesets)
+                                rule_created, rule_updated = SignatureSuricata.extract_attributs(line, rulesets)
                                 if rule_created:
                                     count_created += 1
                                 if rule_updated:
                                     count_updated += 1
                         elif os.path.splitext(member.name)[1] == '.lua':
-                            rule_created, rule_updated = ScriptSuricata.extract_script_attributs(file, rulesets)
+                            rule_created, rule_updated = ScriptSuricata.extract_attributs(file, rulesets)
                             if rule_created:
                                 count_created += 1
                             if rule_updated:
@@ -513,13 +512,13 @@ class SourceSuricata(Source):
                 with open(tmp_dir + "temp.rules", 'r', encoding='utf_8') as f:
                     if os.path.splitext(file_name)[1] == '.rules':
                         for line in f.readlines():
-                            rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
+                            rule_created, rule_updated = SignatureSuricata.extract_attributs(line, rulesets)
                             if rule_created:
                                 count_created += 1
                             if rule_updated:
                                 count_updated += 1
                     elif os.path.splitext(file_name)[1] == '.lua':
-                        rule_created, rule_updated = ScriptSuricata.extract_script_attributs(f, rulesets)
+                        rule_created, rule_updated = ScriptSuricata.extract_attributs(f, rulesets)
                         if rule_created:
                             count_created += 1
                         if rule_updated:
@@ -559,14 +558,13 @@ class SourceSuricata(Source):
                     with open(tmp_dir + "temp.rules", 'r', encoding='utf_8') as f:
                         if os.path.splitext(self.uri)[1] == '.rules':
                             for line in f.readlines():
-                                rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line,
-                                                                                                           rulesets)
+                                rule_created, rule_updated = SignatureSuricata.extract_attributs(line, rulesets)
                                 if rule_created:
                                     count_created += 1
                                 if rule_updated:
                                     count_updated += 1
                         elif os.path.splitext(self.uri)[1] == '.lua':
-                            rule_created, rule_updated = ScriptSuricata.extract_script_attributs(f, rulesets)
+                            rule_created, rule_updated = ScriptSuricata.extract_attributs(f, rulesets)
                             if rule_created:
                                 count_created += 1
                             if rule_updated:

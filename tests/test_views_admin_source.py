@@ -5,7 +5,6 @@ from django.test import Client, TestCase
 from django.utils import timezone
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
-from core.models import Configuration as CoreConfiguration
 from rules.models import DataTypeUpload, MethodUpload
 from suricata.models import SourceSuricata, SignatureSuricata
 
@@ -101,7 +100,7 @@ class ViewsSourceAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('Upload source in progress.', str(response.content))
 
-   def test_source_signature_file_misp(self):
+    def test_source_signature_file_misp(self):
         response = self.client.post('/admin/suricata/sourcesuricata/add/', {
                                     'method': MethodUpload.get_by_name("MISP").id,
                                     'scheduled_rules_deployment_enabled': 'False',
@@ -110,20 +109,7 @@ class ViewsSourceAdminTest(TestCase):
                                     }, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Upload source in progress.', str(response.content))
-        
-   def test_source_signature_file_misp_error(self):
-        conf = CoreConfiguration.objects.get(key="MISP_HOST")
-        conf.value = ""
-        conf.save()
-        response = self.client.post('/admin/suricata/sourcesuricata/add/', {
-                                    'method': MethodUpload.get_by_name("MISP").id,
-                                    'scheduled_rules_deployment_enabled': 'False',
-                                    'scheduled_deploy': 'False',
-                                    'data_type': DataTypeUpload.get_by_name("one file not compressed").id
-                                    }, follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('Missing MISP Configuration', str(response.content))
-        
+
     def test_source_signature_file_one_file(self):
         with open(settings.BASE_DIR + '/suricata/tests/data/sslblacklist.rules', encoding='utf_8') as fp:
             response = self.client.post('/admin/suricata/sourcesuricata/add/', {

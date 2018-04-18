@@ -316,17 +316,13 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                 messages.add_message(request, messages.SUCCESS, message)
             # MISP
             elif obj.method.name == "MISP":
-                if CoreConfiguration.get_value("MISP_HOST") and CoreConfiguration.get_value("MISP_API_KEY"):
-                    obj.uri = CoreConfiguration.get_value("MISP_HOST")
-                    obj.save()
-                    logger.debug("Uploading rules from MISP")
-                    upload_misp.delay(obj.uri, rulesets_id=rulesets_id)
-                    messages.add_message(request, messages.SUCCESS,
-                                         mark_safe("Upload source in progress. " +
-                                                   "<a href='/admin/core/job/'>View Job</a>"))
-                else:
-                    logger.error('Missing MISP Configuration')
-                    messages.add_message(request, messages.ERROR, 'Missing MISP Configuration')
+                obj.uri = CoreConfiguration.get_value("MISP_HOST")
+                obj.save()
+                logger.debug("Uploading rules from MISP")
+                upload_misp.delay(obj.uri, rulesets_id=rulesets_id)
+                messages.add_message(request, messages.SUCCESS,
+                                     mark_safe("Upload source in progress. " +
+                                               "<a href='/admin/core/job/'>View Job</a>"))
             else:  # pragma: no cover
                 logger.error('Upload method unknown : ' + obj.method.name)
                 messages.add_message(request, messages.ERROR, 'Upload method unknown : ' + obj.method.name)

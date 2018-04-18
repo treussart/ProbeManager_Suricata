@@ -4,7 +4,9 @@ from django.test import TestCase
 from django.utils import timezone
 from django.conf import settings
 
+from rules.models import DataTypeUpload, MethodUpload
 from rules.models import ClassType
+from core.models import Configuration as CoreConfiguration
 from suricata.models import AppLayerType, Configuration, Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, \
     SourceSuricata, IPReputation, CategoryReputation
 
@@ -25,13 +27,18 @@ class SourceSuricataTest(TestCase):
         self.assertEqual(str(source_suricata), "https://sslbl.abuse.ch/blacklist/sslblacklist.rules")
         source_suricata = SourceSuricata.get_by_id(99)
         self.assertEqual(source_suricata, None)
-        with self.assertRaises(IntegrityError):
-            SourceSuricata.objects.create(uri="https://sslbl.abuse.ch/blacklist/sslblacklist.rules")
         source_misp = SourceSuricata.objects.create(method=MethodUpload.get_by_name("MISP"),
                                                     scheduled_rules_deployment_enabled=False,
                                                     scheduled_deploy=False,
                                                     data_type=DataTypeUpload.get_by_name("one file not compressed"))
-        self.assertIn(source_misp.upload_misp(), 'ET TROJAN Observed Malicious SSL Cert')
+        self.assertIn('File uploaded successfully : ', source_misp.upload_misp())
+        conf = CoreConfiguration.objects.get(key="MISP_HOST")
+        conf.value = ""
+        conf.save()
+        with self.assertRaisesMessage(Exception, 'Missing MISP Configuration'):
+            source_misp.upload_misp()
+        with self.assertRaises(IntegrityError):
+            SourceSuricata.objects.create(uri="https://sslbl.abuse.ch/blacklist/sslblacklist.rules")
 
 
 class AppLayerTypeTest(TestCase):

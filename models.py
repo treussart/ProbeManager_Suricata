@@ -468,12 +468,20 @@ class SourceSuricata(Source):
 
     def upload_misp(self, rulesets=None):
         if CoreConfiguration.get_value("MISP_HOST") and CoreConfiguration.get_value("MISP_API_KEY"):
-            misp = PyMISP(CoreConfiguration.get_value("MISP_HOST"), CoreConfiguration.get_value("MISP_API_KEY"), False)
+            count_created = 0
+            count_updated = 0
+            misp = PyMISP(CoreConfiguration.get_value("MISP_HOST"), CoreConfiguration.get_value("MISP_API_KEY"), True)
             with self.get_tmp_dir(self.pk) as tmp_dir:
-                with open(tmp_dir + 'misp.rules', 'w', encoding='utf_8') as f:
+                with open(tmp_dir + 'misp.rules', 'w+', encoding='utf_8') as f:
                     f.write(misp.download_all_suricata().text)
-                    response = self.upload_file(tmp_dir + 'misp.rules', rulesets=rulesets)
-            return response
+                    for line in f.readlines():
+                        rule_created, rule_updated = SignatureSuricata.extract_attributs(line, rulesets)
+                        if rule_created:
+                            count_created += 1
+                        if rule_updated:
+                            count_updated += 1
+                    return 'File uploaded successfully : ' + str(count_created) + ' signatures created and ' + str(
+                        count_updated) + ' signatures updated.'
         else:
             logger.error('Missing MISP Configuration')
             raise Exception('Missing MISP Configuration')

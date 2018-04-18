@@ -284,14 +284,7 @@ class SignatureSuricata(Rule):
                    '-S', rule_file,
                    '-c', settings.SURICATA_CONFIG
                    ]
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            outdata, errdata = process.communicate()
-            logger.debug("outdata : " + str(outdata), "errdata : " + str(errdata))
-        # if success ok
-        if process.returncode == 0:
-            return {'status': True}
-        # if not -> return error
-        return {'status': False, 'errors': errdata}
+            return process_cmd(cmd, tmp_dir)
 
     def test_pcap(self):
         with self.get_tmp_dir("test_pcap") as tmp_dir:

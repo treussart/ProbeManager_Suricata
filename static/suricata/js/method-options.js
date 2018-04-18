@@ -31,7 +31,7 @@ function wraper() {
     }else if(django.jQuery( "#id_method option:selected" ).text() === "Upload file"){
         fadeFile();
     }else if(django.jQuery( "#id_method option:selected" ).text() === "MISP"){
-        fadeMisp()
+        fadeMisp();
     }else{
         fadeElse();
     }

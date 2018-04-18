@@ -15,6 +15,7 @@ from django.utils import timezone
 from string import Template
 from pymisp import PyMISP
 
+from core.utils import process_cmd
 from core.models import Probe, ProbeConfiguration
 from core.models import Configuration as CoreConfiguration
 from core.modelsmixins import CommonMixin
@@ -172,15 +173,7 @@ logging:
                    '--set', 'classification-file=' + settings.BASE_DIR + '/suricata/tests/data/classification.config',
                    '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
                    ]
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            outdata, errdata = process.communicate()
-            logger.debug("outdata : " + str(outdata), "errdata : " + str(errdata))
-
-        # if success ok
-        if process.returncode == 0:
-            return {'status': True}
-        # if not -> return error
-        return {'status': False, 'errors': errdata}
+            return process_cmd(cmd, tmp_dir)
 
 
 class SignatureSuricata(Rule):

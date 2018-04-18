@@ -472,8 +472,9 @@ class SourceSuricata(Source):
             count_updated = 0
             misp = PyMISP(CoreConfiguration.get_value("MISP_HOST"), CoreConfiguration.get_value("MISP_API_KEY"), True)
             with self.get_tmp_dir(self.pk) as tmp_dir:
-                with open(tmp_dir + 'misp.rules', 'w+', encoding='utf_8') as f:
+                with open(tmp_dir + 'misp.rules', 'w', encoding='utf_8') as f:
                     f.write(misp.download_all_suricata().text)
+                with open(tmp_dir + 'misp.rules', 'r', encoding='utf_8') as f:
                     for line in f.readlines():
                         rule_created, rule_updated = SignatureSuricata.extract_attributs(line, rulesets)
                         if rule_created:

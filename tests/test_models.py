@@ -31,7 +31,7 @@ class SourceSuricataTest(TestCase):
                                                     scheduled_rules_deployment_enabled=False,
                                                     scheduled_deploy=False,
                                                     data_type=DataTypeUpload.get_by_name("one file not compressed"))
-        self.assertIn('File uploaded successfully : ', source_misp.upload_misp())
+        self.assertEqual('File uploaded successfully : 1 signatures created and 0 signatures updated.', source_misp.upload_misp())
         conf = CoreConfiguration.objects.get(key="MISP_HOST")
         conf.value = ""
         conf.save()

@@ -13,9 +13,9 @@ from django_celery_beat.models import PeriodicTask, CrontabSchedule
 from django.utils.safestring import mark_safe
 
 from core.utils import generic_import_csv
-from .tasks import upload_url_http, upload_misp
+from .tasks import download_from_http, download_from_misp
 from core.utils import create_deploy_rules_task,  add_1_hour, create_check_task
-from .utils import create_upload_task, create_conf, convert_conf
+from .utils import create_download_from_http_task, create_conf, convert_conf
 from .forms import SuricataChangeForm
 from .models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, Configuration, \
     SourceSuricata, BlackList, Md5, IPReputation, CategoryReputation
@@ -240,7 +240,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
     def delete_source(self, request, obj):
         for source in obj:
             try:
-                periodic_task = PeriodicTask.objects.get(name=source.uri + '_upload_task')
+                periodic_task = PeriodicTask.objects.get(name=source.uri + '_download_from_http_task')
                 periodic_task.delete()
                 logger.debug(str(periodic_task) + " deleted")
             except PeriodicTask.DoesNotExist:
@@ -286,7 +286,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
             if obj.method.name == "URL HTTP":
                 obj.save()
                 if obj.scheduled_rules_deployment_enabled and obj.scheduled_rules_deployment_crontab:
-                    create_upload_task(obj)
+                    create_download_from_http_task(obj)
                     if obj.scheduled_deploy:
                         if rulesets:
                             for ruleset in rulesets:
@@ -304,14 +304,19 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                         create_deploy_rules_task(probe, schedule, obj)
                                 except Exception as e:  # pragma: no cover
                                     logger.exception(str(e))
-                upload_url_http.delay(obj.uri, rulesets_id=rulesets_id)
+                download_from_http.delay(obj.uri, rulesets_id=rulesets_id)
                 messages.add_message(request, messages.SUCCESS, mark_safe("Upload source in progress. " +
                                      "<a href='/admin/core/job/'>View Job</a>"))
             # Upload file
             elif obj.method.name == "Upload file":
                 obj.uri = str(time.time()) + "_to_delete"
                 obj.save()
-                message = obj.upload_file(request.FILES['file'].name, rulesets)
+                count_signature_created, count_signature_updated, count_script_created, count_script_updated = \
+                    obj.download_from_file(request.FILES['file'].name, rulesets)
+                message = 'File uploaded successfully : ' + str(count_signature_created) + \
+                          ' signature(s) created and ' + str(count_signature_updated) + \
+                          ' signature(s) updated -  ' + str(count_script_created) + \
+                          ' script(s) created and ' + str(count_script_updated) + ' script(s) updated'
                 logger.debug("Upload file: " + str(message))
                 messages.add_message(request, messages.SUCCESS, message)
             # MISP
@@ -319,7 +324,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                 obj.uri = CoreConfiguration.get_value("MISP_HOST")
                 obj.save()
                 logger.debug("Uploading rules from MISP")
-                upload_misp.delay(obj.uri, rulesets_id=rulesets_id)
+                download_from_misp.delay(obj.uri, rulesets_id=rulesets_id)
                 messages.add_message(request, messages.SUCCESS,
                                      mark_safe("Upload source in progress. " +
                                                "<a href='/admin/core/job/'>View Job</a>"))

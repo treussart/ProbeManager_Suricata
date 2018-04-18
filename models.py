@@ -358,7 +358,7 @@ class ScriptSuricata(Rule):
     Stores a script Suricata compatible.
     see : http://suricata.readthedocs.io/en/latest/rules/rule-lua-scripting.html
     """
-    name = models.CharField(max_length=100, unique=True, db_index=True)
+    name = models.CharField(max_length=1000, unique=True, db_index=True)
 
     def __str__(self):
         return self.name
@@ -382,17 +382,17 @@ class ScriptSuricata(Rule):
         """ A script by file """
         rule_created = False
         rule_updated = False
-        if not cls.get_by_name(file.name):
+        if not cls.get_by_name(os.path.basename(file.name)):
             rule_created = True
             script = ScriptSuricata()
-            script.name = file.name
+            script.name = os.path.basename(file.name)
             script.created_date = timezone.now()
             script.rev = 0
-            script.rule_full = file.readlines()
+            script.rule_full = file.read()
         else:
             rule_updated = True
             script = cls.get_by_name(file.name)
-            script.rule_full = file.readlines()
+            script.rule_full = file.read()
             script.rev = script.rev + 1
             script.updated_date = timezone.now()
         script.save()
@@ -400,7 +400,6 @@ class ScriptSuricata(Rule):
             for ruleset in rulesets:
                 ruleset.scripts.add(script)
                 ruleset.save()
-
         return rule_created, rule_updated
 
 
@@ -440,9 +439,28 @@ class SourceSuricata(Source):
         super().__init__(*args, **kwargs)
         self.type = self.__class__.__name__
 
+    @staticmethod
+    def find_rules(file, file_name, rulesets):
+        count_signature_created = 0
+        count_signature_updated = 0
+        count_script_created = 0
+        count_script_updated = 0
+        if os.path.splitext(file_name)[1] == '.rules':
+            for line in file.readlines():
+                rule_created, rule_updated = SignatureSuricata.extract_attributs(line, rulesets)
+                if rule_created:
+                    count_signature_created += 1
+                if rule_updated:
+                    count_signature_updated += 1
+        elif os.path.splitext(file_name)[1] == '.lua':
+            rule_created, rule_updated = ScriptSuricata.extract_attributs(file, rulesets)
+            if rule_created:
+                count_script_created += 1
+            if rule_updated:
+                count_script_updated += 1
+        return count_signature_created, count_signature_updated, count_script_created, count_script_updated
+
     def extract_files(self, file_dowloaded, rulesets=None):
-        count_created = 0
-        count_updated = 0
         with self.get_tmp_dir(self.pk) as tmp_dir:
             with open(tmp_dir + "temp.tar.gz", 'wb') as f:
                 f.write(file_dowloaded)
@@ -450,54 +468,26 @@ class SourceSuricata(Source):
                 for member in tar.getmembers():
                     if member.isfile():
                         file = tar.extractfile(member)
-                        if os.path.splitext(member.name)[1] == '.rules':
-                            for line in file.readlines():
-                                line = line.decode('utf-8')
-                                rule_created, rule_updated = SignatureSuricata.extract_attributs(line, rulesets)
-                                if rule_created:
-                                    count_created += 1
-                                if rule_updated:
-                                    count_updated += 1
-                        elif os.path.splitext(member.name)[1] == '.lua':
-                            rule_created, rule_updated = ScriptSuricata.extract_attributs(file, rulesets)
-                            if rule_created:
-                                count_created += 1
-                            if rule_updated:
-                                count_updated += 1
-        return count_created, count_updated
+                        return self.find_rules(file, member.name, rulesets)
 
-    def upload_misp(self, rulesets=None):
+    def download_from_misp(self, rulesets=None):
         if CoreConfiguration.get_value("MISP_HOST") and CoreConfiguration.get_value("MISP_API_KEY"):
-            count_created = 0
-            count_updated = 0
             misp = PyMISP(CoreConfiguration.get_value("MISP_HOST"), CoreConfiguration.get_value("MISP_API_KEY"), True)
             with self.get_tmp_dir(self.pk) as tmp_dir:
                 with open(tmp_dir + 'misp.rules', 'w', encoding='utf_8') as f:
                     f.write(misp.download_all_suricata().text)
                 with open(tmp_dir + 'misp.rules', 'r', encoding='utf_8') as f:
-                    for line in f.readlines():
-                        rule_created, rule_updated = SignatureSuricata.extract_attributs(line, rulesets)
-                        if rule_created:
-                            count_created += 1
-                        if rule_updated:
-                            count_updated += 1
-                    return 'File uploaded successfully : ' + str(count_created) + ' signatures created and ' + str(
-                        count_updated) + ' signatures updated.'
+                    return self.find_rules(f, 'misp.rules', rulesets)
         else:
             logger.error('Missing MISP Configuration')
             raise Exception('Missing MISP Configuration')
 
-    def upload_file(self, file_name, rulesets=None):
-        count_created = 0
-        count_updated = 0
+    def download_from_file(self, file_name, rulesets=None):
         # Upload file - multiple files in compressed file
         if self.data_type.name == "multiple files in compressed file":
             logger.debug('multiple files in compressed file')
             file_dowloaded = self.file.read()
-            count_created, count_updated = self.extract_files(file_dowloaded, rulesets)
-            logger.debug('signatures : created : ' + str(count_created) + ' updated : ' + str(count_updated))
-            return 'File uploaded successfully : ' + str(count_created) + ' signatures created and ' + str(
-                count_updated) + ' signatures updated.'
+            return self.extract_files(file_dowloaded, rulesets)
         # Upload file - one file not compressed
         elif self.data_type.name == "one file not compressed":
             logger.debug('one file not compressed')
@@ -505,28 +495,12 @@ class SourceSuricata(Source):
                 with open(tmp_dir + "temp.rules", 'wb') as f:
                     f.write(self.file.read())
                 with open(tmp_dir + "temp.rules", 'r', encoding='utf_8') as f:
-                    if os.path.splitext(file_name)[1] == '.rules':
-                        for line in f.readlines():
-                            rule_created, rule_updated = SignatureSuricata.extract_attributs(line, rulesets)
-                            if rule_created:
-                                count_created += 1
-                            if rule_updated:
-                                count_updated += 1
-                    elif os.path.splitext(file_name)[1] == '.lua':
-                        rule_created, rule_updated = ScriptSuricata.extract_attributs(f, rulesets)
-                        if rule_created:
-                            count_created += 1
-                        if rule_updated:
-                            count_updated += 1
-            return 'File uploaded successfully : ' + str(count_created) + ' signatures created and ' + str(
-                count_updated) + ' signatures updated.'
+                    return self.find_rules(f, file_name, rulesets)
         else:
             logger.error('Data type upload unknown: ' + self.data_type.name)
             raise Exception('Data type upload unknown : ' + self.data_type.name)
 
-    def upload(self, rulesets=None):
-        count_created = 0
-        count_updated = 0
+    def download_from_http(self, rulesets=None):
         context = ssl._create_unverified_context()
         response = urllib.request.urlopen(self.uri, context=context)
         file_dowloaded = response.read()
@@ -535,11 +509,7 @@ class SourceSuricata(Source):
             logger.debug("multiple files in compressed file")
             if response.info()['Content-type'] == 'application/x-gzip' or \
                response.info()['Content-type'] == 'application/x-tar':
-                count_created, count_updated = self.extract_files(file_dowloaded, rulesets)
-                logger.debug('File uploaded successfully : ' + str(count_created) + ' signatures created and ' + str(
-                    count_updated) + ' signatures updated.')
-                return 'File uploaded successfully : ' + str(
-                    count_created) + ' signatures created and ' + str(count_updated) + ' signatures updated.'
+                return self.extract_files(file_dowloaded, rulesets)
             else:
                 logger.error('Compression format unknown : ' + str(response.info()['Content-type']))
                 raise Exception('Compression format unknown : ' + str(response.info()['Content-type']))
@@ -551,23 +521,7 @@ class SourceSuricata(Source):
                     with open(tmp_dir + "temp.rules", 'wb') as f:
                         f.write(file_dowloaded)
                     with open(tmp_dir + "temp.rules", 'r', encoding='utf_8') as f:
-                        if os.path.splitext(self.uri)[1] == '.rules':
-                            for line in f.readlines():
-                                rule_created, rule_updated = SignatureSuricata.extract_attributs(line, rulesets)
-                                if rule_created:
-                                    count_created += 1
-                                if rule_updated:
-                                    count_updated += 1
-                        elif os.path.splitext(self.uri)[1] == '.lua':
-                            rule_created, rule_updated = ScriptSuricata.extract_attributs(f, rulesets)
-                            if rule_created:
-                                count_created += 1
-                            if rule_updated:
-                                count_updated += 1
-                logger.debug('signatures : created : ' + str(count_created) + ' updated : ' + str(count_updated))
-                return 'File uploaded successfully : ' + str(
-                    count_created) + ' signatures created and ' + str(
-                    count_updated) + ' signatures updated.'
+                        return self.find_rules(f, 'temp.rules', rulesets)
             else:
                 logger.error('Compression format unknown : ' + str(response.info()['Content-type']))
                 raise Exception('Compression format unknown : ' + str(response.info()['Content-type']))

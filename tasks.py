@@ -12,8 +12,8 @@ logger = get_task_logger(__name__)
 
 
 @task
-def upload_url_http(source_uri, rulesets_id=None):
-    job = Job.create_job('upload_url_http', source_uri)
+def download_from_http(source_uri, rulesets_id=None):
+    job = Job.create_job('download_from_http', source_uri)
     rulesets = list()
     if rulesets_id:
         for ruleset_id in rulesets_id:
@@ -30,9 +30,9 @@ def upload_url_http(source_uri, rulesets_id=None):
         job.update_job(str(e), 'Error')
         return {"message": "Error for source to upload", "exception": str(e)}
     try:
-        message = source.upload(rulesets)
+        message = source.download_from_http(rulesets)
         job.update_job(message, 'Completed')
-        logger.info("task - upload_url_http : " + str(source_uri) + " - " + str(message))
+        logger.info("task - download_from_http : " + str(source_uri) + " - " + str(message))
     except Exception as e:
         logger.exception("Error for source to upload")
         job.update_job(str(e), 'Error')
@@ -72,8 +72,8 @@ def deploy_reputation_list(probe_name):
 
 
 @task
-def upload_misp(source_uri, rulesets_id=None):
-    job = Job.create_job('upload_misp', source_uri)
+def download_from_misp(source_uri, rulesets_id=None):
+    job = Job.create_job('download_from_misp', source_uri)
     rulesets = list()
     if rulesets_id:
         for ruleset_id in rulesets_id:
@@ -90,12 +90,12 @@ def upload_misp(source_uri, rulesets_id=None):
         job.update_job(str(e), 'Error')
         return {"message": "Error for source to upload", "exception": str(e)}
     try:
-        message = source.upload_misp(rulesets)
+        message = source.download_from_misp(rulesets)
         job.update_job(message, 'Completed')
-        logger.info("task - upload_misp : " + str(source_uri) + " - " + str(message))
+        logger.info("task - download_from_misp : " + str(source_uri) + " - " + str(message))
     except Exception as e:
         logger.exception("Error for source to upload")
         job.update_job(str(e), 'Error')
         send_notification("Error for source " + str(source.uri), str(e))
-        return {"message": "Error for source " + str(source.uri) + " to upload", "exception": str(e)}
+        return {"message": "Error for source " + str(source.uri) + " to download", "exception": str(e)}
     return {"message": "Source " + str(source.uri) + " uploaded successfully by MISP", "upload_message": message}

@@ -31,12 +31,47 @@ class SourceSuricataTest(TestCase):
                                                     scheduled_rules_deployment_enabled=False,
                                                     scheduled_deploy=False,
                                                     data_type=DataTypeUpload.get_by_name("one file not compressed"))
-        self.assertEqual('File uploaded successfully : 1 signatures created and 0 signatures updated.', source_misp.upload_misp())
+        self.assertEqual((1, 0, 0, 0), source_misp.download_from_misp())
         conf = CoreConfiguration.objects.get(key="MISP_HOST")
         conf.value = ""
         conf.save()
         with self.assertRaisesMessage(Exception, 'Missing MISP Configuration'):
-            source_misp.upload_misp()
+            source_misp.download_from_misp()
+
+        SourceSuricata.get_by_uri('https://sslbl.abuse.ch/blacklist/sslblacklist.rules').delete()
+        source = SourceSuricata.objects.create(method=MethodUpload.get_by_name("Upload file"),
+                                               uri='https://sslbl.abuse.ch/blacklist/sslblacklist.rules',
+                                               scheduled_rules_deployment_enabled=False,
+                                               scheduled_deploy=False,
+                                               data_type=DataTypeUpload.get_by_name("one file not compressed"))
+        self.assertGreater(source.download_from_http()[0], 2000)
+        self.assertGreater(source.download_from_http()[1], 2000)
+
+        with open(settings.BASE_DIR + '/suricata/tests/data/test.rules', encoding='utf_8') as fp:
+            source = SourceSuricata.objects.create(method=MethodUpload.get_by_name("Upload file"),
+                                                   uri="test_signature",
+                                                   file=fp.name,
+                                                   scheduled_rules_deployment_enabled=False,
+                                                   scheduled_deploy=False,
+                                                   data_type=DataTypeUpload.get_by_name("one file not compressed"))
+            self.assertEqual((2, 0, 0, 0), source.download_from_file(fp.name))
+        with open(settings.BASE_DIR + '/suricata/tests/data/error.rules', encoding='utf_8') as fp:
+            source = SourceSuricata.objects.create(method=MethodUpload.get_by_name("Upload file"),
+                                                   uri="test_signature_error",
+                                                   file=fp.name,
+                                                   scheduled_rules_deployment_enabled=False,
+                                                   scheduled_deploy=False,
+                                                   data_type=DataTypeUpload.get_by_name("one file not compressed"))
+            self.assertEqual((8, 0, 0, 0), source.download_from_file(fp.name))
+        with open(settings.BASE_DIR + '/suricata/tests/data/test-script.lua', encoding='utf_8') as fp:
+            source = SourceSuricata.objects.create(method=MethodUpload.get_by_name("Upload file"),
+                                                   uri="test_script",
+                                                   file=fp.name,
+                                                   scheduled_rules_deployment_enabled=False,
+                                                   scheduled_deploy=False,
+                                                   data_type=DataTypeUpload.get_by_name("one file not compressed"))
+            self.assertEqual((0, 0, 1, 0), source.download_from_file(fp.name))
+
         with self.assertRaises(IntegrityError):
             SourceSuricata.objects.create(uri="https://sslbl.abuse.ch/blacklist/sslblacklist.rules")
 

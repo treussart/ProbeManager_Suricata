@@ -136,17 +136,18 @@ class ViewsSourceAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('File uploaded successfully :', str(response.content))
 
-    # def test_source_script_file_one_file(self):
-    #     with open(settings.BASE_DIR + '/suricata/tests/data/test-script.lua', encoding='utf_8') as fp:
-    #             response = self.client.post('/admin/suricata/sourcesuricata/add/', {
-    #                                         'method': MethodUpload.get_by_name("Upload file").id,
-    #                                         'file': fp,
-    #                                         'scheduled_rules_deployment_enabled': 'False',
-    #                                         'scheduled_deploy': 'False',
-    #                                         'data_type': DataTypeUpload.get_by_name("one file not compressed").id
-    #                                         }, follow=True)
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertEqual('File uploaded successfully :', str(response.content))
+    def test_source_script_file_one_file(self):
+        with open(settings.BASE_DIR + '/suricata/tests/data/test-script.lua', encoding='utf_8') as fp:
+                response = self.client.post('/admin/suricata/sourcesuricata/add/', {
+                                            'method': MethodUpload.get_by_name("Upload file").id,
+                                            'file': fp,
+                                            'scheduled_rules_deployment_enabled': 'False',
+                                            'scheduled_deploy': 'False',
+                                            'data_type': DataTypeUpload.get_by_name("one file not compressed").id
+                                            }, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('File uploaded successfully : 0 signature(s) created and 0 signature(s) updated -  1 script(s) '
+                      'created and 0 script(s) updated', str(response.content))
 
     def test_source_signature_file_multiple_files(self):
         with open(settings.BASE_DIR + '/suricata/tests/data/emerging.rules.tar.gz', 'rb') as fp:

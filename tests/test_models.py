@@ -25,10 +25,13 @@ class SourceSuricataTest(TestCase):
         self.assertEqual(str(source_suricata), "https://sslbl.abuse.ch/blacklist/sslblacklist.rules")
         source_suricata = SourceSuricata.get_by_id(99)
         self.assertEqual(source_suricata, None)
-        with self.assertRaises(AttributeError):
-            source_suricata.method
         with self.assertRaises(IntegrityError):
             SourceSuricata.objects.create(uri="https://sslbl.abuse.ch/blacklist/sslblacklist.rules")
+        source_misp = SourceSuricata.objects.create(method=MethodUpload.get_by_name("MISP"),
+                                                    scheduled_rules_deployment_enabled=False,
+                                                    scheduled_deploy=False,
+                                                    data_type=DataTypeUpload.get_by_name("one file not compressed"))
+        self.assertIn(source_misp.upload_misp(), 'ET TROJAN Observed Malicious SSL Cert')
 
 
 class AppLayerTypeTest(TestCase):
@@ -46,8 +49,6 @@ class AppLayerTypeTest(TestCase):
         self.assertEqual(str(app_layer_type), "no")
         app_layer_type = AppLayerType.get_by_id(99)
         self.assertEqual(app_layer_type, None)
-        with self.assertRaises(AttributeError):
-            app_layer_type.name
         with self.assertRaises(IntegrityError):
             AppLayerType.objects.create(name="no")
 
@@ -71,8 +72,6 @@ class ConfigurationTest(TestCase):
         self.assertEqual(str(conf_suricata), "configuration1")
         conf_suricata = Configuration.get_by_id(99)
         self.assertEqual(conf_suricata, None)
-        with self.assertRaises(AttributeError):
-            conf_suricata.name
         with self.assertRaises(IntegrityError):
             Configuration.objects.create(name="configuration1")
 
@@ -93,8 +92,6 @@ class RuleSetSuricataTest(TestCase):
         self.assertEqual(str(ruleset_suricata), "ruleset1")
         ruleset_suricata = RuleSetSuricata.get_by_id(99)
         self.assertEqual(ruleset_suricata, None)
-        with self.assertRaises(AttributeError):
-            ruleset_suricata.name
         with self.assertRaises(IntegrityError):
             RuleSetSuricata.objects.create(name="ruleset1",
                                            description="",
@@ -124,8 +121,6 @@ class ScriptSuricataTest(TestCase):
         script_suricata = ScriptSuricata.get_by_id(99)
         self.assertEqual(script_suricata, None)
         self.assertEqual(ScriptSuricata.get_by_name('does not exist'), None)
-        with self.assertRaises(AttributeError):
-            script_suricata.name
         with self.assertRaises(IntegrityError):
             ScriptSuricata.objects.create(name="test.lua",
                                           rev=0,
@@ -162,8 +157,6 @@ class SignatureSuricataTest(TestCase):
                          str(signature_suricata.sid) + " : " + "ET DROP Dshield Block Listed Source group 1")
         signature_suricata = SignatureSuricata.get_by_id(99)
         self.assertEqual(signature_suricata, None)
-        with self.assertRaises(AttributeError):
-            signature_suricata.sid
         with self.assertRaises(IntegrityError):
             SignatureSuricata.objects.create(sid=20402000,
                                              rev=0,
@@ -192,8 +185,6 @@ class SuricataTest(TestCase):
         self.assertEqual(str(suricata), "suricata1  test")
         suricata = Suricata.get_by_id(99)
         self.assertEqual(suricata, None)
-        with self.assertRaises(AttributeError):
-            suricata.name
         with self.assertRaises(IntegrityError):
             Suricata.objects.create(name="suricata1")
 
@@ -244,8 +235,6 @@ class ReputationTest(TestCase):
         CategoryReputation.get_by_id(3).delete()
         cat_rep = CategoryReputation.get_by_id(99)
         self.assertEqual(cat_rep, None)
-        with self.assertRaises(AttributeError):
-            cat_rep.short_name
         with self.assertRaises(IntegrityError):
             CategoryReputation.objects.create(short_name="Google", description="test")
 
@@ -265,7 +254,5 @@ class ReputationTest(TestCase):
         IPReputation.get_by_ip('1.2.3.4').delete()
         ip_rep = IPReputation.get_by_id(99)
         self.assertEqual(ip_rep, None)
-        with self.assertRaises(AttributeError):
-            ip_rep.ip
         with self.assertRaises(IntegrityError):
             IPReputation.objects.create(ip="8.8.8.8", category=CategoryReputation.get_by_id(1), reputation_score=0)

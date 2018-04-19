@@ -2,15 +2,12 @@ import yaml
 import json
 from django_celery_beat.models import PeriodicTask
 from django.conf import settings
-from django.shortcuts import render
-from django.contrib import messages
-from core.utils import get_tmp_dir
 
 
-def create_upload_task(source):
+def create_download_from_http_task(source):
     PeriodicTask.objects.create(crontab=source.scheduled_rules_deployment_crontab,
-                                name=str(source.uri) + "_upload_task",
-                                task='suricata.tasks.upload_url_http',
+                                name=str(source.uri) + "_download_from_http",
+                                task='suricata.tasks.download_from_http',
                                 args=json.dumps([source.uri, ])
                                 )
 
@@ -89,24 +86,3 @@ def create_conf(configuration):
 """
     configuration.conf_advanced_text += yaml.dump(conf, default_flow_style=False)
     return configuration
-
-
-def generic_import_csv(cls, request):
-    if request.method == 'GET':
-        return render(request, 'import_csv.html')
-    elif request.method == 'POST':
-        if request.FILES['file']:
-            try:
-                with get_tmp_dir('csv') as tmp_dir:
-                    with open(tmp_dir + 'imported.csv', 'wb+') as destination:
-                        for chunk in request.FILES['file'].chunks():
-                            destination.write(chunk)
-                    cls.import_from_csv(tmp_dir + 'imported.csv')
-            except Exception as e:
-                messages.add_message(request, messages.ERROR, 'Error during the import : ' + str(e))
-                return render(request, 'import_csv.html')
-            messages.add_message(request, messages.SUCCESS, 'CSV file imported successfully !')
-            return render(request, 'import_csv.html')
-        else:  # pragma: no cover
-            messages.add_message(request, messages.ERROR, 'No file submitted')
-            return render(request, 'import_csv.html')

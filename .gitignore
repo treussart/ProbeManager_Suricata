@@ -96,7 +96,6 @@ ENV/
 
 # specific
 .idea
-fixtures/test-suricata-probe.json
 version.txt
 settings.py
 /migrations/0*.py

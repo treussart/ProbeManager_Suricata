@@ -6,16 +6,19 @@ import ssl
 import subprocess
 import tarfile
 import urllib.request
-from collections import OrderedDict
+import io
 
 import select2.fields
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
-from jinja2 import Template
+from string import Template
+from pymisp import PyMISP
 
+from core.utils import process_cmd
 from core.models import Probe, ProbeConfiguration
+from core.models import Configuration as CoreConfiguration
 from core.modelsmixins import CommonMixin
 from core.notifications import send_notification
 from core.ssh import execute, execute_copy
@@ -46,10 +49,13 @@ class AppLayerType(CommonMixin, models.Model):
         return self.name
 
 
-class ConfSuricata(ProbeConfiguration):
+class Configuration(ProbeConfiguration):
     """
     Configuration for Suricata IDS, Allows you to reuse the configuration.
     """
+    probeconfiguration = models.OneToOneField(ProbeConfiguration, parent_link=True,
+                                              related_name='suricata_configuration',
+                                              on_delete=models.CASCADE, editable=False)
     with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
         CONF_FULL_DEFAULT = f.read()
     conf_rules_directory = models.CharField(max_length=400, default="/etc/suricata/rules")
@@ -168,14 +174,7 @@ logging:
                    '--set', 'classification-file=' + settings.BASE_DIR + '/suricata/tests/data/classification.config',
                    '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
                    ]
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (outdata, errdata) = process.communicate()
-            logger.debug(str(outdata))
-        # if success ok
-        if process.returncode == 0:
-            return {'status': True}
-        # if not -> return error
-        return {'status': False, 'errors': errdata}
+            return process_cmd(cmd, tmp_dir)
 
 
 class SignatureSuricata(Rule):
@@ -208,7 +207,7 @@ class SignatureSuricata(Rule):
         return cls.objects.filter(rule_full__contains=pattern)
 
     @classmethod
-    def extract_signature_attributs(cls, line, rulesets=None):  # TODO -> too complex
+    def extract_attributs(cls, line, rulesets=None):  # TODO -> too complex
         rule_created = False
         rule_updated = False
         getsid = re.compile("sid *: *(\d+)")
@@ -286,14 +285,7 @@ class SignatureSuricata(Rule):
                    '-S', rule_file,
                    '-c', settings.SURICATA_CONFIG
                    ]
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (outdata, errdata) = process.communicate()
-            logger.debug(outdata)
-        # if success ok
-        if process.returncode == 0:
-            return {'status': True}
-        # if not -> return error
-        return {'status': False, 'errors': errdata}
+            return process_cmd(cmd, tmp_dir)
 
     def test_pcap(self):
         with self.get_tmp_dir("test_pcap") as tmp_dir:
@@ -329,7 +321,7 @@ logging:
                    '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
                    ]
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (outdata, errdata) = process.communicate()
+            outdata, errdata = process.communicate()
             logger.debug("outdata : " + str(outdata), "errdata : " + str(errdata))
             # test if alert is generated :
             test = False
@@ -367,7 +359,7 @@ class ScriptSuricata(Rule):
     Stores a script Suricata compatible.
     see : http://suricata.readthedocs.io/en/latest/rules/rule-lua-scripting.html
     """
-    name = models.CharField(max_length=100, unique=True, db_index=True)
+    name = models.CharField(max_length=1000, unique=True, db_index=True)
 
     def __str__(self):
         return self.name
@@ -387,21 +379,21 @@ class ScriptSuricata(Rule):
         return cls.objects.filter(rule_full__contains=pattern)
 
     @classmethod
-    def extract_script_attributs(cls, file, rulesets=None):
+    def extract_attributs(cls, file, rulesets=None):
         """ A script by file """
         rule_created = False
         rule_updated = False
-        if not cls.get_by_name(file.name):
+        if not cls.get_by_name(os.path.basename(file.name)):
             rule_created = True
             script = ScriptSuricata()
-            script.name = file.name
+            script.name = os.path.basename(file.name)
             script.created_date = timezone.now()
             script.rev = 0
-            script.rule_full = file.readlines()
+            script.rule_full = file.read()
         else:
             rule_updated = True
             script = cls.get_by_name(file.name)
-            script.rule_full = file.readlines()
+            script.rule_full = file.read()
             script.rev = script.rev + 1
             script.updated_date = timezone.now()
         script.save()
@@ -409,7 +401,6 @@ class ScriptSuricata(Rule):
             for ruleset in rulesets:
                 ruleset.scripts.add(script)
                 ruleset.save()
-
         return rule_created, rule_updated
 
 
@@ -449,44 +440,57 @@ class SourceSuricata(Source):
         super().__init__(*args, **kwargs)
         self.type = self.__class__.__name__
 
-    def extract_files(self, file_dowloaded, rulesets=None):
-        count_created = 0
-        count_updated = 0
+    @staticmethod
+    def find_rules(file, file_name, rulesets):
+        count_signature_created = 0
+        count_signature_updated = 0
+        count_script_created = 0
+        count_script_updated = 0
+        if os.path.splitext(file_name)[1] == '.rules':
+            for line in file.readlines():
+                rule_created, rule_updated = SignatureSuricata.extract_attributs(line, rulesets)
+                if rule_created:
+                    count_signature_created += 1
+                if rule_updated:
+                    count_signature_updated += 1
+        elif os.path.splitext(file_name)[1] == '.lua':
+            rule_created, rule_updated = ScriptSuricata.extract_attributs(file, rulesets)
+            if rule_created:
+                count_script_created += 1
+            if rule_updated:
+                count_script_updated += 1
+        return count_signature_created, count_signature_updated, count_script_created, count_script_updated
+
+    def extract_files(self, file_downloaded, rulesets=None):
+        count = (0, 0, 0, 0)
         with self.get_tmp_dir(self.pk) as tmp_dir:
             with open(tmp_dir + "temp.tar.gz", 'wb') as f:
-                f.write(file_dowloaded)
+                f.write(file_downloaded)
             with tarfile.open(tmp_dir + "temp.tar.gz", encoding='utf_8') as tar:
                 for member in tar.getmembers():
                     if member.isfile():
-                        file = tar.extractfile(member)
-                        if os.path.splitext(member.name)[1] == '.rules':
-                            for line in file.readlines():
-                                line = line.decode('utf-8')
-                                rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line,
-                                                                                                           rulesets)
-                                if rule_created:
-                                    count_created += 1
-                                if rule_updated:
-                                    count_updated += 1
-                        elif os.path.splitext(member.name)[1] == '.lua':
-                            rule_created, rule_updated = ScriptSuricata.extract_script_attributs(file, rulesets)
-                            if rule_created:
-                                count_created += 1
-                            if rule_updated:
-                                count_updated += 1
-        return count_created, count_updated
+                        file = io.TextIOWrapper(tar.extractfile(member))
+                        count = tuple(map(sum, zip(count, self.find_rules(file, member.name, rulesets))))
+                return count
 
-    def upload_file(self, file_name, rulesets=None):
-        count_created = 0
-        count_updated = 0
+    def download_from_misp(self, rulesets=None):
+        if CoreConfiguration.get_value("MISP_HOST") and CoreConfiguration.get_value("MISP_API_KEY"):
+            misp = PyMISP(CoreConfiguration.get_value("MISP_HOST"), CoreConfiguration.get_value("MISP_API_KEY"), True)
+            with self.get_tmp_dir(self.pk) as tmp_dir:
+                with open(tmp_dir + 'misp.rules', 'w', encoding='utf_8') as f:
+                    f.write(misp.download_all_suricata().text)
+                with open(tmp_dir + 'misp.rules', 'r', encoding='utf_8') as f:
+                    return self.find_rules(f, 'misp.rules', rulesets)
+        else:
+            logger.error('Missing MISP Configuration')
+            raise Exception('Missing MISP Configuration')
+
+    def download_from_file(self, file_name, rulesets=None):
         # Upload file - multiple files in compressed file
         if self.data_type.name == "multiple files in compressed file":
             logger.debug('multiple files in compressed file')
-            file_dowloaded = self.file.read()
-            count_created, count_updated = self.extract_files(file_dowloaded, rulesets)
-            logger.debug('signatures : created : ' + str(count_created) + ' updated : ' + str(count_updated))
-            return 'File uploaded successfully : ' + str(count_created) + ' signatures created and ' + str(
-                count_updated) + ' signatures updated.'
+            file_downloaded = self.file.read()
+            return self.extract_files(file_downloaded, rulesets)
         # Upload file - one file not compressed
         elif self.data_type.name == "one file not compressed":
             logger.debug('one file not compressed')
@@ -494,28 +498,12 @@ class SourceSuricata(Source):
                 with open(tmp_dir + "temp.rules", 'wb') as f:
                     f.write(self.file.read())
                 with open(tmp_dir + "temp.rules", 'r', encoding='utf_8') as f:
-                    if os.path.splitext(file_name)[1] == '.rules':
-                        for line in f.readlines():
-                            rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line, rulesets)
-                            if rule_created:
-                                count_created += 1
-                            if rule_updated:
-                                count_updated += 1
-                    elif os.path.splitext(file_name)[1] == '.lua':
-                        rule_created, rule_updated = ScriptSuricata.extract_script_attributs(f, rulesets)
-                        if rule_created:
-                            count_created += 1
-                        if rule_updated:
-                            count_updated += 1
-            return 'File uploaded successfully : ' + str(count_created) + ' signatures created and ' + str(
-                count_updated) + ' signatures updated.'
+                    return self.find_rules(f, file_name, rulesets)
         else:
             logger.error('Data type upload unknown: ' + self.data_type.name)
             raise Exception('Data type upload unknown : ' + self.data_type.name)
 
-    def upload(self, rulesets=None):
-        count_created = 0
-        count_updated = 0
+    def download_from_http(self, rulesets=None):
         context = ssl._create_unverified_context()
         response = urllib.request.urlopen(self.uri, context=context)
         file_dowloaded = response.read()
@@ -524,11 +512,7 @@ class SourceSuricata(Source):
             logger.debug("multiple files in compressed file")
             if response.info()['Content-type'] == 'application/x-gzip' or \
                response.info()['Content-type'] == 'application/x-tar':
-                count_created, count_updated = self.extract_files(file_dowloaded, rulesets)
-                logger.debug('File uploaded successfully : ' + str(count_created) + ' signatures created and ' + str(
-                    count_updated) + ' signatures updated.')
-                return 'File uploaded successfully : ' + str(
-                    count_created) + ' signatures created and ' + str(count_updated) + ' signatures updated.'
+                return self.extract_files(file_dowloaded, rulesets)
             else:
                 logger.error('Compression format unknown : ' + str(response.info()['Content-type']))
                 raise Exception('Compression format unknown : ' + str(response.info()['Content-type']))
@@ -540,24 +524,7 @@ class SourceSuricata(Source):
                     with open(tmp_dir + "temp.rules", 'wb') as f:
                         f.write(file_dowloaded)
                     with open(tmp_dir + "temp.rules", 'r', encoding='utf_8') as f:
-                        if os.path.splitext(self.uri)[1] == '.rules':
-                            for line in f.readlines():
-                                rule_created, rule_updated = SignatureSuricata.extract_signature_attributs(line,
-                                                                                                           rulesets)
-                                if rule_created:
-                                    count_created += 1
-                                if rule_updated:
-                                    count_updated += 1
-                        elif os.path.splitext(self.uri)[1] == '.lua':
-                            rule_created, rule_updated = ScriptSuricata.extract_script_attributs(f, rulesets)
-                            if rule_created:
-                                count_created += 1
-                            if rule_updated:
-                                count_updated += 1
-                logger.debug('signatures : created : ' + str(count_created) + ' updated : ' + str(count_updated))
-                return 'File uploaded successfully : ' + str(
-                    count_created) + ' signatures created and ' + str(
-                    count_updated) + ' signatures updated.'
+                        return self.find_rules(f, 'temp.rules', rulesets)
             else:
                 logger.error('Compression format unknown : ' + str(response.info()['Content-type']))
                 raise Exception('Compression format unknown : ' + str(response.info()['Content-type']))
@@ -571,7 +538,7 @@ class Suricata(Probe):
     Stores an instance of Suricata IDS software.
     """
     rulesets = models.ManyToManyField(RuleSetSuricata, blank=True)
-    configuration = models.ForeignKey(ConfSuricata, on_delete=models.CASCADE)
+    configuration = models.ForeignKey(Configuration, on_delete=models.CASCADE)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -580,31 +547,43 @@ class Suricata(Probe):
     def __str__(self):
         return self.name + "  " + self.description
 
-    def install(self):
+    def install(self, version=settings.SURICATA_VERSION):
         if self.server.os.name == 'debian':
-            command1 = "echo 'deb http://http.debian.net/debian stretch-backports main' | sudo tee -a " \
-                       "/etc/apt/sources.list.d/stretch-backports.list"
-            command2 = "apt update"
-            command3 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower()
-            command4 = "mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep " \
-                       "&& touch /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list"
-            command5 = "sudo chown -R $(whoami) /etc/suricata"
+            install_script = """
+            if ! type suricata ; then
+                echo 'deb http://http.debian.net/debian stretch-backports main' | \
+                sudo tee -a /etc/apt/sources.list.d/stretch-backports.list
+                apt update
+                apt -y -t stretch-backports install suricata
+                mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep && touch \
+                /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list
+                chown -R $(whoami) /etc/suricata
+                exit 0
+            else
+                echo "Already installed"
+                exit 0
+            fi
+            """
         elif self.server.os.name == 'ubuntu':
-            command1 = "add-apt-repository -y ppa:oisf/suricata-stable"
-            command2 = "apt update"
-            command3 = "apt -y install " + self.__class__.__name__.lower()
-            command4 = "mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep " \
-                       "&& touch /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list"
-            command5 = "sudo chown -R $(whoami) /etc/suricata"
+            install_script = """
+            if ! type suricata ; then
+                add-apt-repository -y ppa:oisf/suricata-stable
+                apt update
+                apt -y install suricata
+                mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep
+                touch /etc/suricata/iprep/reputation.list && touch /etc/suricata/iprep/categories.txt
+                chown -R $(whoami) /etc/suricata
+                exit 0
+            else
+                echo "Already installed"
+                exit 0
+            fi
+            """
         else:
             raise Exception("Not yet implemented")
-        tasks_unordered = {"1_add_repo": command1,
-                           "2_update_repo": command2,
-                           "3_install": command3,
-                           "4_create_dir": command4,
-                           "5_change_rights": command5}
-
-        tasks = OrderedDict(sorted(tasks_unordered.items(), key=lambda t: t[0]))
+        t = Template(install_script)
+        command = "sh -c '" + t.substitute(version=version) + "'"
+        tasks = {"install": command}
         try:
             response = execute(self.server, tasks, become=True)
             self.installed = True
@@ -615,27 +594,8 @@ class Suricata(Probe):
         logger.debug("output : " + str(response))
         return {'status': True}
 
-    def update(self):
-        if self.server.os.name == 'debian':
-            command1 = "apt update"
-            command2 = "apt -y -t stretch-backports install " + self.__class__.__name__.lower()
-        elif self.server.os.name == 'ubuntu':
-            command1 = "apt update"
-            command2 = "apt -y install " + self.__class__.__name__.lower()
-        else:
-            raise Exception("Not yet implemented")
-        tasks_unordered = {"1_update_repo": command1,
-                           "2_upgrade": command2}
-        tasks = OrderedDict(sorted(tasks_unordered.items(), key=lambda t: t[0]))
-        try:
-            response = execute(self.server, tasks, become=True)
-            self.installed = True
-            self.save()
-        except Exception as e:
-            logger.exception('update failed')
-            return {'status': False, 'errors': str(e)}
-        logger.debug("output : " + str(response))
-        return {'status': True}
+    def update(self, version=settings.SURICATA_VERSION):
+        return self.install(version=version)
 
     def reload(self):
         if self.server.os.name == 'debian' or self.server.os.name == 'ubuntu':
@@ -654,8 +614,8 @@ class Suricata(Probe):
     def test_rules(self):
         # Set blacklists file
         value = ""
-        for md5 in Md5Suricata.get_all():
-            value += md5.value + os.linesep
+        for md5 in Md5.get_all():
+            value += md5.value + '\n'
         if not os.path.exists(settings.SURICATA_RULES):
             os.mkdir(settings.SURICATA_RULES)
         with open(settings.SURICATA_RULES + '/md5-blacklist', 'w', encoding='utf_8') as f:
@@ -735,7 +695,7 @@ class Suricata(Probe):
         for ruleset in self.rulesets.all():
             for signature in ruleset.signatures.all():
                 if signature.enabled:
-                    value += signature.rule_full + os.linesep
+                    value += signature.rule_full + '\n'
         with self.get_tmp_dir(self.pk) as tmp_dir:
             with open(tmp_dir + "temp.rules", 'w', encoding='utf_8') as f:
                 f.write(value)
@@ -750,8 +710,8 @@ class Suricata(Probe):
 
             # Blacklists MD5
             value = ""
-            for md5 in Md5Suricata.get_all():
-                value += md5.value + os.linesep
+            for md5 in Md5.get_all():
+                value += md5.value + '\n'
             with open(tmp_dir + "md5-blacklist", 'w', encoding='utf_8') as f:
                 f.write(value)
             try:
@@ -808,14 +768,14 @@ class Suricata(Probe):
 
 
 def increment_sid():
-    last_sid = BlackListSuricata.objects.all().order_by('id').last()
+    last_sid = BlackList.objects.all().order_by('id').last()
     if not last_sid:
         return 41000000
     else:
         return last_sid.sid + 1
 
 
-class Md5Suricata(models.Model):
+class Md5(models.Model):
     value = models.CharField(max_length=600, unique=True, null=False, blank=False)
     signature = models.ForeignKey(SignatureSuricata, editable=False, on_delete=models.CASCADE)
 
@@ -833,7 +793,7 @@ class Md5Suricata(models.Model):
         return obj
 
 
-class BlackListSuricata(CommonMixin, models.Model):
+class BlackList(CommonMixin, models.Model):
     """
     Stores an instance of a pattern in blacklist.
     """
@@ -862,12 +822,12 @@ class BlackListSuricata(CommonMixin, models.Model):
 
     def create_signature(self, t):
         if not self.comment:
-            self.comment = self.type + " " + self.value + " in BlackList"
-        rule_created = t.render(value=self.value,
-                                type=self.type,
-                                comment=self.comment,
-                                sid=self.sid
-                                )
+            self.comment = str(self.type) + " " + str(self.value) + " in BlackList"
+        rule_created = t.safe_substitute(value=self.value,
+                                         type=self.type,
+                                         comment=self.comment,
+                                         sid=self.sid
+                                         )
         if self.type == "MD5":
             signature = SignatureSuricata(sid=self.sid,
                                           classtype=ClassType.get_by_name("misc-attack"),
@@ -882,7 +842,7 @@ class BlackListSuricata(CommonMixin, models.Model):
                                           classtype=ClassType.get_by_name("misc-attack"),
                                           msg=self.comment,
                                           rev=1,
-                                          reference=self.type + "," + self.value,
+                                          reference=str(self.type) + "," + str(self.value),
                                           rule_full=rule_created,
                                           enabled=True,
                                           created_date=timezone.now(),
@@ -890,13 +850,13 @@ class BlackListSuricata(CommonMixin, models.Model):
         return signature
 
     def create_blacklist(self):
-        rule_ip_template = "alert ip $HOME_NET any -> {{ value }} any (msg:\"{{ comment }}\"; " \
-                           "classtype:misc-attack; target:src_ip; sid:{{ sid }}; rev:1;)\n"
+        rule_ip_template = "alert ip $HOME_NET any -> ${value} any (msg:\"${comment}\"; " \
+                           "classtype:misc-attack; target:src_ip; sid:${sid}; rev:1;)\n"
         rule_md5_template = "alert ip $HOME_NET any -> any any (msg:\"MD5 in blacklist\"; " \
-                            "filemd5:md5-blacklist; classtype:misc-attack; sid:{{ sid }}; rev:1;)\n"
-        rule_host_template = "alert http $HOME_NET any -> any any (msg:\"{{ comment }}\"; " \
-                             "content:\"{{ value }}\"; http_host; classtype:misc-attack; target:src_ip; " \
-                             "sid:{{ sid }}; rev:1;)\n"
+                            "filemd5:md5-blacklist; classtype:misc-attack; sid:${sid}; rev:1;)\n"
+        rule_host_template = "alert http $HOME_NET any -> any any (msg:\"${comment}\"; " \
+                             "content:\"${value}\"; http_host; classtype:misc-attack; target:src_ip; " \
+                             "sid:${sid}; rev:1;)\n"
         if self.type == "IP":
             signature = self.create_signature(Template(rule_ip_template))
             signature.save()
@@ -909,7 +869,7 @@ class BlackListSuricata(CommonMixin, models.Model):
             if not signature:
                 signature = self.create_signature(Template(rule_md5_template))
                 signature.save()
-            md5_suricata = Md5Suricata(value=self.value, signature=signature)
+            md5_suricata = Md5(value=self.value, signature=signature)
             md5_suricata.save()
         else:  # pragma: no cover
             raise Exception("Blacklist type unknown")
@@ -918,7 +878,7 @@ class BlackListSuricata(CommonMixin, models.Model):
             ruleset.save()
 
 
-class CategoryReputationSuricata(CommonMixin, models.Model):
+class CategoryReputation(CommonMixin, models.Model):
     """
     Store an instance of a reputation category.
     """
@@ -985,12 +945,12 @@ class CategoryReputationSuricata(CommonMixin, models.Model):
                     cls.objects.create(id=row['id'], short_name=row['short name'], description=row['description'])
 
 
-class IPReputationSuricata(CommonMixin, models.Model):
+class IPReputation(CommonMixin, models.Model):
     """
     Store an instance of a reputation IP.
     """
     ip = models.GenericIPAddressField(unique=True, null=False, blank=False)
-    category = models.ForeignKey(CategoryReputationSuricata, on_delete=models.CASCADE)
+    category = models.ForeignKey(CategoryReputation, on_delete=models.CASCADE)
     reputation_score = models.IntegerField(null=False, default=0, verbose_name='reputation score : a number between '
                                                                                '1 and 127 (0 means no data)')
 
@@ -1044,9 +1004,9 @@ class IPReputationSuricata(CommonMixin, models.Model):
                 same_ip = cls.get_by_ip(row['ip'])
                 if same_ip:
                     cls.objects.filter(id=same_ip.id).update(
-                        category=CategoryReputationSuricata.get_by_id(row['category']),
+                        category=CategoryReputation.get_by_id(row['category']),
                         reputation_score=row['reputation score'])
                 else:
                     cls.objects.create(ip=row['ip'],
-                                       category=CategoryReputationSuricata.get_by_id(row['category']),
+                                       category=CategoryReputation.get_by_id(row['category']),
                                        reputation_score=row['reputation score'])

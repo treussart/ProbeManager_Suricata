@@ -1,6 +1,6 @@
 from django.forms import ModelForm
 
-from suricata.models import Suricata
+from .models import Suricata
 
 
 class SuricataChangeForm(ModelForm):

@@ -12,14 +12,15 @@ from django.http import HttpResponseRedirect
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
 from django.utils.safestring import mark_safe
 
-from .utils import generic_import_csv
-from suricata.tasks import upload_url_http
+from core.utils import generic_import_csv
+from .tasks import download_from_http, download_from_misp
 from core.utils import create_deploy_rules_task,  add_1_hour, create_check_task
-from suricata.utils import create_upload_task
-from suricata.forms import SuricataChangeForm
-from suricata.models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, ConfSuricata, \
-    SourceSuricata, BlackListSuricata, Md5Suricata, IPReputationSuricata, CategoryReputationSuricata
-from suricata.utils import create_conf, convert_conf
+from .utils import create_download_from_http_task, create_conf, convert_conf
+from .forms import SuricataChangeForm
+from .models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, Configuration, \
+    SourceSuricata, BlackList, Md5, IPReputation, CategoryReputation
+from core.models import Configuration as CoreConfiguration
+
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +92,7 @@ class SuricataAdmin(admin.ModelAdmin):
             return SuricataChangeForm
 
     def save_model(self, request, obj, form, change):
-        logger.debug("create scheduled")
+        logger.debug("create scheduled for " + str(obj))
         create_deploy_rules_task(obj)
         create_check_task(obj)
         super().save_model(request, obj, form, change)
@@ -125,7 +126,7 @@ class SuricataAdmin(admin.ModelAdmin):
     actions = [delete_suricata, test_signatures]
 
 
-class ConfSuricataAdmin(admin.ModelAdmin):
+class ConfigurationAdmin(admin.ModelAdmin):
     class Media:
         js = (
             'suricata/js/mask-advanced-fields.js',
@@ -239,7 +240,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
     def delete_source(self, request, obj):
         for source in obj:
             try:
-                periodic_task = PeriodicTask.objects.get(name=source.uri + '_upload_task')
+                periodic_task = PeriodicTask.objects.get(name=source.uri + '_download_from_http_task')
                 periodic_task.delete()
                 logger.debug(str(periodic_task) + " deleted")
             except PeriodicTask.DoesNotExist:
@@ -285,7 +286,7 @@ class SourceSuricataAdmin(admin.ModelAdmin):
             if obj.method.name == "URL HTTP":
                 obj.save()
                 if obj.scheduled_rules_deployment_enabled and obj.scheduled_rules_deployment_crontab:
-                    create_upload_task(obj)
+                    create_download_from_http_task(obj)
                     if obj.scheduled_deploy:
                         if rulesets:
                             for ruleset in rulesets:
@@ -303,16 +304,30 @@ class SourceSuricataAdmin(admin.ModelAdmin):
                                         create_deploy_rules_task(probe, schedule, obj)
                                 except Exception as e:  # pragma: no cover
                                     logger.exception(str(e))
-                upload_url_http.delay(obj.uri, rulesets_id=rulesets_id)
+                download_from_http.delay(obj.uri, rulesets_id=rulesets_id)
                 messages.add_message(request, messages.SUCCESS, mark_safe("Upload source in progress. " +
                                      "<a href='/admin/core/job/'>View Job</a>"))
             # Upload file
             elif obj.method.name == "Upload file":
                 obj.uri = str(time.time()) + "_to_delete"
                 obj.save()
-                message = obj.upload_file(request.FILES['file'].name, rulesets)
+                count_signature_created, count_signature_updated, count_script_created, count_script_updated = \
+                    obj.download_from_file(request.FILES['file'].name, rulesets)
+                message = 'File uploaded successfully : ' + str(count_signature_created) + \
+                          ' signature(s) created and ' + str(count_signature_updated) + \
+                          ' signature(s) updated -  ' + str(count_script_created) + \
+                          ' script(s) created and ' + str(count_script_updated) + ' script(s) updated'
                 logger.debug("Upload file: " + str(message))
                 messages.add_message(request, messages.SUCCESS, message)
+            # MISP
+            elif obj.method.name == "MISP":
+                obj.uri = CoreConfiguration.get_value("MISP_HOST")
+                obj.save()
+                logger.debug("Uploading rules from MISP")
+                download_from_misp.delay(obj.uri, rulesets_id=rulesets_id)
+                messages.add_message(request, messages.SUCCESS,
+                                     mark_safe("Upload source in progress. " +
+                                               "<a href='/admin/core/job/'>View Job</a>"))
             else:  # pragma: no cover
                 logger.error('Upload method unknown : ' + obj.method.name)
                 messages.add_message(request, messages.ERROR, 'Upload method unknown : ' + obj.method.name)
@@ -330,14 +345,14 @@ class SourceSuricataAdmin(admin.ModelAdmin):
         )
 
 
-class BlackListSuricataAdmin(admin.ModelAdmin):
+class BlackListAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.save()
         obj.create_blacklist()
 
     def get_actions(self, request):
-        actions = super(BlackListSuricataAdmin, self).get_actions(request)
+        actions = super(BlackListAdmin, self).get_actions(request)
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
@@ -345,8 +360,8 @@ class BlackListSuricataAdmin(admin.ModelAdmin):
     def delete_blacklist(self, request, obj):
         for blacklist in obj:
             if blacklist.type == "MD5":
-                if Md5Suricata.get_by_value(blacklist.value):
-                    md5_suricata = Md5Suricata.get_by_value(blacklist.value)
+                if Md5.get_by_value(blacklist.value):
+                    md5_suricata = Md5.get_by_value(blacklist.value)
                     md5_suricata.delete()
             else:
                 if SignatureSuricata.get_by_sid(blacklist.sid):
@@ -360,34 +375,34 @@ class BlackListSuricataAdmin(admin.ModelAdmin):
     actions = [delete_blacklist]
 
 
-class IPReputationSuricataAdmin(admin.ModelAdmin):
+class IPReputationAdmin(admin.ModelAdmin):
 
     def get_urls(self):
-        urls = super(IPReputationSuricataAdmin, self).get_urls()
-        my_urls = [url(r'^import_csv/$', self.import_csv, name="import_csv"), ]
+        urls = super().get_urls()
+        my_urls = [url(r'^import_csv/$', self.import_csv, name="import_csv_ip_rep"), ]
         return my_urls + urls
 
     def import_csv(self, request):
-        return generic_import_csv(IPReputationSuricata, request)
+        return generic_import_csv(IPReputation, request)
 
 
-class CategoryReputationSuricataAdmin(admin.ModelAdmin):
+class CategoryReputationAdmin(admin.ModelAdmin):
 
     def get_urls(self):
-        urls = super(CategoryReputationSuricataAdmin, self).get_urls()
+        urls = super().get_urls()
         my_urls = [url(r'^import_csv/$', self.import_csv, name="import_csv_cat_rep"), ]
         return my_urls + urls
 
     def import_csv(self, request):
-        return generic_import_csv(CategoryReputationSuricata, request)
+        return generic_import_csv(CategoryReputation, request)
 
 
 admin.site.register(Suricata, SuricataAdmin)
 admin.site.register(SignatureSuricata, SignatureSuricataAdmin)
 admin.site.register(ScriptSuricata, ScriptSuricataAdmin)
 admin.site.register(RuleSetSuricata, RuleSetSuricataAdmin)
-admin.site.register(ConfSuricata, ConfSuricataAdmin)
+admin.site.register(Configuration, ConfigurationAdmin)
 admin.site.register(SourceSuricata, SourceSuricataAdmin)
-admin.site.register(BlackListSuricata, BlackListSuricataAdmin)
-admin.site.register(IPReputationSuricata, IPReputationSuricataAdmin)
-admin.site.register(CategoryReputationSuricata, CategoryReputationSuricataAdmin)
+admin.site.register(BlackList, BlackListAdmin)
+admin.site.register(IPReputation, IPReputationAdmin)
+admin.site.register(CategoryReputation, CategoryReputationAdmin)

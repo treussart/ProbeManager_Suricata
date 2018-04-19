@@ -3,18 +3,18 @@
     "model": "core.probeconfiguration",
     "pk": 1,
     "fields": {
-      "name": "confSuricata1"
+      "name": "configuration1"
     }
   },
   {
     "model": "core.probeconfiguration",
     "pk": 2,
     "fields": {
-      "name": "confSuricata2"
+      "name": "configuration2"
     }
   },
   {
-    "model": "suricata.confsuricata",
+    "model": "suricata.configuration",
     "pk": 1,
     "fields": {
       "conf_rules_directory": "/etc/suricata/rules",
@@ -71,7 +71,7 @@
     }
   },
   {
-    "model": "suricata.confsuricata",
+    "model": "suricata.configuration",
     "pk": 2,
     "fields": {
       "conf_rules_directory": "/etc/suricata/rules",

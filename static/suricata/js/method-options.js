@@ -15,6 +15,12 @@ function fadeFile() {
     django.jQuery(".field-file").fadeIn("slow");
     fade();
 }
+function fadeMisp() {
+     django.jQuery(".field-scheduled_rules_deployment_enabled").fadeIn("slow");
+     django.jQuery(".field-file").fadeOut("fast");
+     django.jQuery(".field-data_type").fadeOut("fast");
+     django.jQuery(".field-data_type select").val("1");
+}
 function fadeElse() {
     django.jQuery(".field-file").fadeOut("fast");
     fade();
@@ -24,6 +30,8 @@ function wraper() {
         fadeHttp();
     }else if(django.jQuery( "#id_method option:selected" ).text() === "Upload file"){
         fadeFile();
+    }else if(django.jQuery( "#id_method option:selected" ).text() === "MISP"){
+        fadeMisp();
     }else{
         fadeElse();
     }

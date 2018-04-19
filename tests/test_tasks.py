@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.conf import settings
 
 from core.tasks import reload_probe, deploy_rules
-from suricata.tasks import upload_url_http
+from suricata.tasks import download_from_http
 from suricata.models import Suricata, SourceSuricata
 
 
@@ -27,13 +27,13 @@ class TasksSuricataTest(TestCase):
         self.assertEqual(response.get()['message'], 'Probe suricata1 reloaded successfully')
         self.assertTrue(response.successful())
 
-    def test_upload_url_http(self):
+    def test_download_from_http(self):
         source = SourceSuricata.get_by_id(1)
-        response = upload_url_http.delay(source.uri)
+        response = download_from_http.delay(source.uri)
         self.assertEqual(response.get()['message'], 'Source https://sslbl.abuse.ch/blacklist/sslblacklist.rules uploaded successfully by HTTP')
         self.assertTrue(response.successful())
 
         source = SourceSuricata.get_by_id(2)
-        response = upload_url_http.delay(source.uri)
+        response = download_from_http.delay(source.uri)
         self.assertEqual(response.get()['message'], 'Source https://rules.emergingthreats.net/open/suricata-3.3.1/emerging.rules.tar.gz uploaded successfully by HTTP')
         self.assertTrue(response.successful())

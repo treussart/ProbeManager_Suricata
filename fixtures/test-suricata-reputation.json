@@ -1,6 +1,6 @@
 [
 {
-    "model": "suricata.categoryreputationsuricata",
+    "model": "suricata.categoryreputation",
     "pk": 1,
     "fields": {
         "short_name": "Google",
@@ -8,7 +8,7 @@
     }
 },
 {
-    "model": "suricata.ipreputationsuricata",
+    "model": "suricata.ipreputation",
     "pk": 1,
     "fields": {
         "ip": "8.8.8.8",

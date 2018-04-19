@@ -4,9 +4,11 @@ from django.test import TestCase
 from django.utils import timezone
 from django.conf import settings
 
+from rules.models import DataTypeUpload, MethodUpload
 from rules.models import ClassType
-from suricata.models import AppLayerType, ConfSuricata, Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, \
-    SourceSuricata, IPReputationSuricata, CategoryReputationSuricata
+from core.models import Configuration as CoreConfiguration
+from suricata.models import AppLayerType, Configuration, Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, \
+    SourceSuricata, IPReputation, CategoryReputation
 
 
 class SourceSuricataTest(TestCase):
@@ -25,8 +27,60 @@ class SourceSuricataTest(TestCase):
         self.assertEqual(str(source_suricata), "https://sslbl.abuse.ch/blacklist/sslblacklist.rules")
         source_suricata = SourceSuricata.get_by_id(99)
         self.assertEqual(source_suricata, None)
-        with self.assertRaises(AttributeError):
-            source_suricata.method
+        source_misp = SourceSuricata.objects.create(method=MethodUpload.get_by_name("MISP"),
+                                                    scheduled_rules_deployment_enabled=False,
+                                                    scheduled_deploy=False,
+                                                    data_type=DataTypeUpload.get_by_name("one file not compressed"))
+        self.assertEqual((1, 0, 0, 0), source_misp.download_from_misp())
+        conf = CoreConfiguration.objects.get(key="MISP_HOST")
+        conf.value = ""
+        conf.save()
+        with self.assertRaisesMessage(Exception, 'Missing MISP Configuration'):
+            source_misp.download_from_misp()
+
+        SourceSuricata.get_by_uri('https://sslbl.abuse.ch/blacklist/sslblacklist.rules').delete()
+        source = SourceSuricata.objects.create(method=MethodUpload.get_by_name("URL HTTP"),
+                                               uri='https://sslbl.abuse.ch/blacklist/sslblacklist.rules',
+                                               scheduled_rules_deployment_enabled=False,
+                                               scheduled_deploy=False,
+                                               data_type=DataTypeUpload.get_by_name("one file not compressed"))
+        self.assertGreater(source.download_from_http()[0], 2000)
+        self.assertGreater(source.download_from_http()[1], 2000)
+
+        SourceSuricata.get_by_uri('https://rules.emergingthreats.net/open/suricata-3.3.1/emerging.rules.tar.gz').delete()
+        source = SourceSuricata.objects.create(method=MethodUpload.get_by_name("URL HTTP"),
+                                               uri='https://rules.emergingthreats.net/open/suricata-3.3.1/emerging.rules.tar.gz',
+                                               scheduled_rules_deployment_enabled=False,
+                                               scheduled_deploy=False,
+                                               data_type=DataTypeUpload.get_by_name("multiple files in compressed file"))
+        self.assertGreater(source.download_from_http()[0], 2000)
+        self.assertGreater(source.download_from_http()[1], 2000)
+
+        with open(settings.BASE_DIR + '/suricata/tests/data/test.rules', encoding='utf_8') as fp:
+            source = SourceSuricata.objects.create(method=MethodUpload.get_by_name("Upload file"),
+                                                   uri="test_signature",
+                                                   file=fp.name,
+                                                   scheduled_rules_deployment_enabled=False,
+                                                   scheduled_deploy=False,
+                                                   data_type=DataTypeUpload.get_by_name("one file not compressed"))
+            self.assertEqual((2, 0, 0, 0), source.download_from_file(fp.name))
+        with open(settings.BASE_DIR + '/suricata/tests/data/error.rules', encoding='utf_8') as fp:
+            source = SourceSuricata.objects.create(method=MethodUpload.get_by_name("Upload file"),
+                                                   uri="test_signature_error",
+                                                   file=fp.name,
+                                                   scheduled_rules_deployment_enabled=False,
+                                                   scheduled_deploy=False,
+                                                   data_type=DataTypeUpload.get_by_name("one file not compressed"))
+            self.assertEqual((0, 8, 0, 0), source.download_from_file(fp.name))
+        with open(settings.BASE_DIR + '/suricata/tests/data/test-script.lua', encoding='utf_8') as fp:
+            source = SourceSuricata.objects.create(method=MethodUpload.get_by_name("Upload file"),
+                                                   uri="test_script",
+                                                   file=fp.name,
+                                                   scheduled_rules_deployment_enabled=False,
+                                                   scheduled_deploy=False,
+                                                   data_type=DataTypeUpload.get_by_name("one file not compressed"))
+            self.assertEqual((0, 0, 1, 0), source.download_from_file(fp.name))
+
         with self.assertRaises(IntegrityError):
             SourceSuricata.objects.create(uri="https://sslbl.abuse.ch/blacklist/sslblacklist.rules")
 
@@ -46,13 +100,11 @@ class AppLayerTypeTest(TestCase):
         self.assertEqual(str(app_layer_type), "no")
         app_layer_type = AppLayerType.get_by_id(99)
         self.assertEqual(app_layer_type, None)
-        with self.assertRaises(AttributeError):
-            app_layer_type.name
         with self.assertRaises(IntegrityError):
             AppLayerType.objects.create(name="no")
 
 
-class ConfSuricataTest(TestCase):
+class ConfigurationTest(TestCase):
     fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-conf']
 
     @classmethod
@@ -60,21 +112,19 @@ class ConfSuricataTest(TestCase):
         pass
 
     def test_conf_suricata(self):
-        all_conf_suricata = ConfSuricata.get_all()
-        conf_suricata = ConfSuricata.get_by_id(1)
+        all_conf_suricata = Configuration.get_all()
+        conf_suricata = Configuration.get_by_id(1)
         self.assertEqual(len(all_conf_suricata), 2)
-        self.assertEqual(conf_suricata.name, "confSuricata1")
+        self.assertEqual(conf_suricata.name, "configuration1")
         self.assertEqual(conf_suricata.conf_rules_directory, "/etc/suricata/rules")
         self.assertEqual(conf_suricata.conf_script_directory, "/etc/suricata/lua")
         self.assertEqual(conf_suricata.conf_file, "/etc/suricata/suricata.yaml")
         self.assertTrue(conf_suricata.conf_advanced)
-        self.assertEqual(str(conf_suricata), "confSuricata1")
-        conf_suricata = ConfSuricata.get_by_id(99)
+        self.assertEqual(str(conf_suricata), "configuration1")
+        conf_suricata = Configuration.get_by_id(99)
         self.assertEqual(conf_suricata, None)
-        with self.assertRaises(AttributeError):
-            conf_suricata.name
         with self.assertRaises(IntegrityError):
-            ConfSuricata.objects.create(name="confSuricata1")
+            Configuration.objects.create(name="configuration1")
 
 
 class RuleSetSuricataTest(TestCase):
@@ -93,8 +143,6 @@ class RuleSetSuricataTest(TestCase):
         self.assertEqual(str(ruleset_suricata), "ruleset1")
         ruleset_suricata = RuleSetSuricata.get_by_id(99)
         self.assertEqual(ruleset_suricata, None)
-        with self.assertRaises(AttributeError):
-            ruleset_suricata.name
         with self.assertRaises(IntegrityError):
             RuleSetSuricata.objects.create(name="ruleset1",
                                            description="",
@@ -124,8 +172,6 @@ class ScriptSuricataTest(TestCase):
         script_suricata = ScriptSuricata.get_by_id(99)
         self.assertEqual(script_suricata, None)
         self.assertEqual(ScriptSuricata.get_by_name('does not exist'), None)
-        with self.assertRaises(AttributeError):
-            script_suricata.name
         with self.assertRaises(IntegrityError):
             ScriptSuricata.objects.create(name="test.lua",
                                           rev=0,
@@ -162,8 +208,6 @@ class SignatureSuricataTest(TestCase):
                          str(signature_suricata.sid) + " : " + "ET DROP Dshield Block Listed Source group 1")
         signature_suricata = SignatureSuricata.get_by_id(99)
         self.assertEqual(signature_suricata, None)
-        with self.assertRaises(AttributeError):
-            signature_suricata.sid
         with self.assertRaises(IntegrityError):
             SignatureSuricata.objects.create(sid=20402000,
                                              rev=0,
@@ -192,8 +236,6 @@ class SuricataTest(TestCase):
         self.assertEqual(str(suricata), "suricata1  test")
         suricata = Suricata.get_by_id(99)
         self.assertEqual(suricata, None)
-        with self.assertRaises(AttributeError):
-            suricata.name
         with self.assertRaises(IntegrityError):
             Suricata.objects.create(name="suricata1")
 
@@ -229,43 +271,39 @@ class ReputationTest(TestCase):
         pass
 
     def test_cat_rep(self):
-        all_cat_rep = CategoryReputationSuricata.get_all()
-        cat_rep = CategoryReputationSuricata.get_by_id(1)
+        all_cat_rep = CategoryReputation.get_all()
+        cat_rep = CategoryReputation.get_by_id(1)
         self.assertEqual(len(all_cat_rep), 1)
         self.assertEqual(cat_rep.short_name, "Google")
         self.assertEqual(str(cat_rep), "Google")
-        with CategoryReputationSuricata.get_tmp_dir() as tmp_dir:
-            self.assertEqual(CategoryReputationSuricata.store(tmp_dir), tmp_dir + "categories.txt")
-        self.assertEqual(str(CategoryReputationSuricata.get_by_short_name("Google")), "Google")
-        self.assertEqual(CategoryReputationSuricata.deploy(Suricata.get_by_id(1)), {'status': True})
-        CategoryReputationSuricata.import_from_csv(settings.BASE_DIR + '/suricata/tests/data/cat-rep.csv')
-        self.assertEqual(str(CategoryReputationSuricata.get_by_short_name('Pam')), 'Pam')
-        CategoryReputationSuricata.get_by_id(2).delete()
-        CategoryReputationSuricata.get_by_id(3).delete()
-        cat_rep = CategoryReputationSuricata.get_by_id(99)
+        with CategoryReputation.get_tmp_dir() as tmp_dir:
+            self.assertEqual(CategoryReputation.store(tmp_dir), tmp_dir + "categories.txt")
+        self.assertEqual(str(CategoryReputation.get_by_short_name("Google")), "Google")
+        self.assertEqual(CategoryReputation.deploy(Suricata.get_by_id(1)), {'status': True})
+        CategoryReputation.import_from_csv(settings.BASE_DIR + '/suricata/tests/data/cat-rep.csv')
+        self.assertEqual(str(CategoryReputation.get_by_short_name('Pam')), 'Pam')
+        CategoryReputation.get_by_id(2).delete()
+        CategoryReputation.get_by_id(3).delete()
+        cat_rep = CategoryReputation.get_by_id(99)
         self.assertEqual(cat_rep, None)
-        with self.assertRaises(AttributeError):
-            cat_rep.short_name
         with self.assertRaises(IntegrityError):
-            CategoryReputationSuricata.objects.create(short_name="Google", description="test")
+            CategoryReputation.objects.create(short_name="Google", description="test")
 
     def test_ip_rep(self):
-        all_ip_rep = IPReputationSuricata.get_all()
-        ip_rep = IPReputationSuricata.get_by_id(1)
+        all_ip_rep = IPReputation.get_all()
+        ip_rep = IPReputation.get_by_id(1)
         self.assertEqual(len(all_ip_rep), 1)
         self.assertEqual(ip_rep.ip, "8.8.8.8")
         self.assertEqual(str(ip_rep), "8.8.8.8")
-        with IPReputationSuricata.get_tmp_dir() as tmp_dir:
-            self.assertEqual(IPReputationSuricata.store(tmp_dir), tmp_dir + "reputation.list")
-        self.assertEqual(str(IPReputationSuricata.get_by_ip('8.8.8.8')), '8.8.8.8')
-        self.assertEqual(IPReputationSuricata.deploy(Suricata.get_by_id(1)), {'status': True})
-        IPReputationSuricata.import_from_csv(settings.BASE_DIR + '/suricata/tests/data/ip-rep.csv')
-        self.assertEqual(str(IPReputationSuricata.get_by_ip('9.9.9.9')), '9.9.9.9')
-        IPReputationSuricata.get_by_ip('9.9.9.9').delete()
-        IPReputationSuricata.get_by_ip('1.2.3.4').delete()
-        ip_rep = IPReputationSuricata.get_by_id(99)
+        with IPReputation.get_tmp_dir() as tmp_dir:
+            self.assertEqual(IPReputation.store(tmp_dir), tmp_dir + "reputation.list")
+        self.assertEqual(str(IPReputation.get_by_ip('8.8.8.8')), '8.8.8.8')
+        self.assertEqual(IPReputation.deploy(Suricata.get_by_id(1)), {'status': True})
+        IPReputation.import_from_csv(settings.BASE_DIR + '/suricata/tests/data/ip-rep.csv')
+        self.assertEqual(str(IPReputation.get_by_ip('9.9.9.9')), '9.9.9.9')
+        IPReputation.get_by_ip('9.9.9.9').delete()
+        IPReputation.get_by_ip('1.2.3.4').delete()
+        ip_rep = IPReputation.get_by_id(99)
         self.assertEqual(ip_rep, None)
-        with self.assertRaises(AttributeError):
-            ip_rep.ip
         with self.assertRaises(IntegrityError):
-            IPReputationSuricata.objects.create(ip="8.8.8.8", category=CategoryReputationSuricata.get_by_id(1), reputation_score=0)
+            IPReputation.objects.create(ip="8.8.8.8", category=CategoryReputation.get_by_id(1), reputation_score=0)

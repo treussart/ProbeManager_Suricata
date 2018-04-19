@@ -101,7 +101,6 @@ class ViewsSuricataTest(TestCase):
         response = self.client.get('/suricata/update/99')
         self.assertEqual(response.status_code, 404)
 
-
     def test_admin_index(self):
         # index
         response = self.client.get('/admin/suricata/', follow=True)

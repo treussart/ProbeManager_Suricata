@@ -77,8 +77,8 @@
     "model": "django_celery_beat.periodictask",
     "pk": 2,
     "fields": {
-      "name": "https://sslbl.abuse.ch/blacklist/sslblacklist.rules_upload_task",
-      "task": "core.tasks.upload_url_http",
+      "name": "https://sslbl.abuse.ch/blacklist/sslblacklist.rules_download_from_http_task",
+      "task": "core.tasks.download_from_http",
       "interval": null,
       "crontab": 1,
       "args": "[\"https://sslbl.abuse.ch/blacklist/sslblacklist.rules\"]",

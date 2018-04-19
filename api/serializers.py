@@ -1,12 +1,12 @@
 from rest_framework import serializers
 
-from suricata.models import ConfSuricata, Suricata, SignatureSuricata, ScriptSuricata, SourceSuricata, \
+from suricata.models import Configuration, Suricata, SignatureSuricata, ScriptSuricata, SourceSuricata, \
     RuleSetSuricata, AppLayerType
 
 
-class ConfSuricataSerializer(serializers.ModelSerializer):
+class ConfigurationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ConfSuricata
+        model = Configuration
         fields = "__all__"
 
 

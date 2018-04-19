@@ -6,6 +6,7 @@ import ssl
 import subprocess
 import tarfile
 import urllib.request
+import io
 
 import select2.fields
 from django.conf import settings
@@ -460,15 +461,17 @@ class SourceSuricata(Source):
                 count_script_updated += 1
         return count_signature_created, count_signature_updated, count_script_created, count_script_updated
 
-    def extract_files(self, file_dowloaded, rulesets=None):
+    def extract_files(self, file_downloaded, rulesets=None):
+        count = (0, 0, 0, 0)
         with self.get_tmp_dir(self.pk) as tmp_dir:
             with open(tmp_dir + "temp.tar.gz", 'wb') as f:
-                f.write(file_dowloaded)
+                f.write(file_downloaded)
             with tarfile.open(tmp_dir + "temp.tar.gz", encoding='utf_8') as tar:
                 for member in tar.getmembers():
                     if member.isfile():
-                        file = tar.extractfile(member)
-                        return self.find_rules(file, member.name, rulesets)
+                        file = io.TextIOWrapper(tar.extractfile(member))
+                        count = tuple(map(sum, zip(count, self.find_rules(file, member.name, rulesets))))
+                return count
 
     def download_from_misp(self, rulesets=None):
         if CoreConfiguration.get_value("MISP_HOST") and CoreConfiguration.get_value("MISP_API_KEY"):
@@ -486,8 +489,8 @@ class SourceSuricata(Source):
         # Upload file - multiple files in compressed file
         if self.data_type.name == "multiple files in compressed file":
             logger.debug('multiple files in compressed file')
-            file_dowloaded = self.file.read()
-            return self.extract_files(file_dowloaded, rulesets)
+            file_downloaded = self.file.read()
+            return self.extract_files(file_downloaded, rulesets)
         # Upload file - one file not compressed
         elif self.data_type.name == "one file not compressed":
             logger.debug('one file not compressed')

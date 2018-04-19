@@ -39,11 +39,20 @@ class SourceSuricataTest(TestCase):
             source_misp.download_from_misp()
 
         SourceSuricata.get_by_uri('https://sslbl.abuse.ch/blacklist/sslblacklist.rules').delete()
-        source = SourceSuricata.objects.create(method=MethodUpload.get_by_name("Upload file"),
+        source = SourceSuricata.objects.create(method=MethodUpload.get_by_name("URL HTTP"),
                                                uri='https://sslbl.abuse.ch/blacklist/sslblacklist.rules',
                                                scheduled_rules_deployment_enabled=False,
                                                scheduled_deploy=False,
                                                data_type=DataTypeUpload.get_by_name("one file not compressed"))
+        self.assertGreater(source.download_from_http()[0], 2000)
+        self.assertGreater(source.download_from_http()[1], 2000)
+
+        SourceSuricata.get_by_uri('https://rules.emergingthreats.net/open/suricata-3.3.1/emerging.rules.tar.gz').delete()
+        source = SourceSuricata.objects.create(method=MethodUpload.get_by_name("URL HTTP"),
+                                               uri='https://rules.emergingthreats.net/open/suricata-3.3.1/emerging.rules.tar.gz',
+                                               scheduled_rules_deployment_enabled=False,
+                                               scheduled_deploy=False,
+                                               data_type=DataTypeUpload.get_by_name("multiple files in compressed file"))
         self.assertGreater(source.download_from_http()[0], 2000)
         self.assertGreater(source.download_from_http()[1], 2000)
 
@@ -62,7 +71,7 @@ class SourceSuricataTest(TestCase):
                                                    scheduled_rules_deployment_enabled=False,
                                                    scheduled_deploy=False,
                                                    data_type=DataTypeUpload.get_by_name("one file not compressed"))
-            self.assertEqual((8, 0, 0, 0), source.download_from_file(fp.name))
+            self.assertEqual((0, 8, 0, 0), source.download_from_file(fp.name))
         with open(settings.BASE_DIR + '/suricata/tests/data/test-script.lua', encoding='utf_8') as fp:
             source = SourceSuricata.objects.create(method=MethodUpload.get_by_name("Upload file"),
                                                    uri="test_script",

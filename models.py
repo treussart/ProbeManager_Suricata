@@ -580,7 +580,7 @@ class Suricata(Probe):
             fi
             """
         else:
-            raise Exception("Not yet implemented")
+            raise NotImplementedError
         t = Template(install_script)
         command = "sh -c '" + t.substitute(version=version) + "'"
         tasks = {"install": command}
@@ -601,7 +601,7 @@ class Suricata(Probe):
         if self.server.os.name == 'debian' or self.server.os.name == 'ubuntu':
             command = "kill -USR2 $( pidof suricata )"
         else:
-            raise Exception("Not yet implemented")
+            raise NotImplementedError
         tasks = {"reload": command}
         try:
             response = execute(self.server, tasks, become=True)

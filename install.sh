@@ -17,7 +17,6 @@ if [[ $OSTYPE = *"darwin"* ]]; then
         if ! brew list | grep -qw suricata ; then
             brew install suricata
         fi
-        which suricata
         config="/usr/local/etc/suricata/suricata.yaml"
         rules="/usr/local/etc/suricata/rules"
     fi
@@ -31,15 +30,13 @@ elif [ -f /etc/debian_version ]; then
         tar -xzf suricata-"$SURICATA_VERSION".tar.gz
         (cd suricata-"$SURICATA_VERSION" && ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var && make && sudo make install && sudo make install-conf)
     fi
-    which suricata
     config="/etc/suricata/suricata.yaml"
     rules="/etc/suricata/rules"
     if [[ "$arg" = 'prod' ]]; then
-        sudo touch /var/log/suricata/suricata.log
-        sudo chmod a+rw  /var/log/suricata/suricata.log
-        sudo chown -R $(whoami) /etc/suricata
+        sudo chown -R www-data:$(whoami) /var/log/suricata
+        sudo chown -R www-data:$(whoami) /etc/suricata
         if [ -f $( which suricata ) ]; then
-            sudo chown $(whoami) $( which suricata )
+            sudo chown www-data:$(whoami) $( which suricata )
         fi
         if [ ! -d /etc/suricata/rules ]; then
             mkdir /etc/suricata/rules
@@ -47,8 +44,13 @@ elif [ -f /etc/debian_version ]; then
         if [ -f /etc/suricata/suricata-debian.yaml ]; then
             mv /etc/suricata/suricata-debian.yaml /etc/suricata/suricata.yaml
         fi
-        which suricata
-        suricata -V
+        sudo chown -R www-data:$(whoami) /etc/suricata
+    else
+        if [ ! -d /etc/suricata/rules ]; then
+            sudo mkdir /etc/suricata/rules
+        fi
+        sudo chown -R $(whoami) /etc/suricata
+        sudo chown $(whoami) $( which suricata )
     fi
 fi
 if ! type suricata ; then
@@ -58,3 +60,6 @@ echo "SURICATA_BINARY = '$( which suricata )'" > "$destfull"probemanager/suricat
 echo "SURICATA_CONFIG = '$config'" >> "$destfull"probemanager/suricata/settings.py
 echo "SURICATA_RULES = '$rules'" >> "$destfull"probemanager/suricata/settings.py
 echo "SURICATA_VERSION = '$SURICATA_VERSION'" >> "$destfull"probemanager/suricata/settings.py
+which suricata
+suricata -V
+exit 0

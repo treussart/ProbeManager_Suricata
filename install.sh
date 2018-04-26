@@ -33,11 +33,10 @@ elif [ -f /etc/debian_version ]; then
     config="/etc/suricata/suricata.yaml"
     rules="/etc/suricata/rules"
     if [[ "$arg" = 'prod' ]]; then
-        sudo touch /var/log/suricata/suricata.log
-        sudo chmod a+rw  /var/log/suricata/suricata.log
-        sudo chown -R $(whoami) /etc/suricata
+        sudo chown -R www-data:$(whoami) /var/log/suricata
+        sudo chown -R www-data:$(whoami) /etc/suricata
         if [ -f $( which suricata ) ]; then
-            sudo chown $(whoami) $( which suricata )
+            sudo chown www-data:$(whoami) $( which suricata )
         fi
         if [ ! -d /etc/suricata/rules ]; then
             mkdir /etc/suricata/rules
@@ -45,6 +44,13 @@ elif [ -f /etc/debian_version ]; then
         if [ -f /etc/suricata/suricata-debian.yaml ]; then
             mv /etc/suricata/suricata-debian.yaml /etc/suricata/suricata.yaml
         fi
+        sudo chown -R www-data:$(whoami) /etc/suricata
+    else
+        if [ ! -d /etc/suricata/rules ]; then
+            sudo mkdir /etc/suricata/rules
+        fi
+        sudo chown -R $(whoami) /etc/suricata
+        sudo chown $(whoami) $( which suricata )
     fi
 fi
 if ! type suricata ; then

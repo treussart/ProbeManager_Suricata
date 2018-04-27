@@ -42,8 +42,8 @@ elif [ -f /etc/debian_version ]; then
         sudo chown "$SERVER_USER":"$CURRENT_USER" $( which suricata )
         sudo chown -R "$SERVER_USER":"$CURRENT_USER" /var/log/suricata
         sudo chown -R "$SERVER_USER":"$CURRENT_USER" /etc/suricata
-        sudo chmod -R 750 /var/log/suricata
-        sudo chmod -R 750 /etc/suricata
+        sudo chmod -R 770 /var/log/suricata
+        sudo chmod -R 770 /etc/suricata
     else
         if [ ! -d /etc/suricata/rules ]; then
             sudo mkdir /etc/suricata/rules

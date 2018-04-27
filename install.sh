@@ -35,6 +35,8 @@ elif [ -f /etc/debian_version ]; then
     if [[ "$arg" = 'prod' ]]; then
         sudo chown -R "$SERVER_USER":"$CURRENT_USER" /var/log/suricata
         sudo chown -R "$SERVER_USER":"$CURRENT_USER" /etc/suricata
+        sudo chmod -R 750 /var/log/suricata
+        sudo chmod -R 750 /etc/suricata
         if [ -f $( which suricata ) ]; then
             sudo chown "$SERVER_USER":"$CURRENT_USER" $( which suricata )
         fi

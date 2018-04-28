@@ -166,7 +166,7 @@ logging:
       level: info
 """
             with open(conf_file, 'w', encoding='utf_8') as f:
-                f.write(config)
+                f.write(str(config))
             cmd = [settings.SURICATA_BINARY, '-T',
                    '-l', tmp_dir,
                    '-S', rule_file,

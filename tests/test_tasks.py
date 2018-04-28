@@ -8,7 +8,8 @@ from suricata.models import Suricata, SourceSuricata
 
 
 class TasksSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature',
+                'test-suricata-script', 'test-suricata-ruleset',
                 'test-suricata-source', 'test-suricata-conf', 'test-suricata-suricata']
 
     @classmethod
@@ -30,10 +31,13 @@ class TasksSuricataTest(TestCase):
     def test_download_from_http(self):
         source = SourceSuricata.get_by_id(1)
         response = download_from_http.delay(source.uri)
-        self.assertEqual(response.get()['message'], 'Source https://sslbl.abuse.ch/blacklist/sslblacklist.rules uploaded successfully by HTTP')
+        self.assertEqual(response.get()['message'],
+                         'Source https://sslbl.abuse.ch/blacklist/sslblacklist.rules uploaded successfully by HTTP')
         self.assertTrue(response.successful())
 
         source = SourceSuricata.get_by_id(2)
         response = download_from_http.delay(source.uri)
-        self.assertEqual(response.get()['message'], 'Source https://rules.emergingthreats.net/open/suricata-3.3.1/emerging.rules.tar.gz uploaded successfully by HTTP')
+        self.assertEqual(response.get()['message'],
+                         'Source https://rules.emergingthreats.net/open/suricata-3.3.1/emerging.rules.tar.gz '
+                         'uploaded successfully by HTTP')
         self.assertTrue(response.successful())

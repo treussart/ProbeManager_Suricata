@@ -28,17 +28,17 @@ class ViewsConfAdminTest(TestCase):
 
         self.assertEqual(len(IPReputation.get_all()), 1)
         response = self.client.post('/admin/suricata/ipreputation/add/', {'ip': '1.1.1.1',
-                                                                                  'category': '1',
-                                                                                  'reputation_score': '10',
-                                                                                  },
+                                                                          'category': '1',
+                                                                          'reputation_score': '10',
+                                                                          },
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('was added successfully.', str(response.content))
         self.assertEqual(len(IPReputation.get_all()), 2)
         response = self.client.post('/admin/suricata/ipreputation/add/', {'ip': '1.1.1.1',
-                                                                                  'category': '1',
-                                                                                  'reputation_score': '10',
-                                                                                  },
+                                                                          'category': '1',
+                                                                          'reputation_score': '10',
+                                                                          },
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Ip reputation with this Ip already exists.', str(response.content))
@@ -58,16 +58,16 @@ class ViewsConfAdminTest(TestCase):
 
         self.assertEqual(len(CategoryReputation.get_all()), 1)
         response = self.client.post('/admin/suricata/categoryreputation/add/', {'short_name': 'test',
-                                                                                        'description': 'super test',
-                                                                                        },
+                                                                                'description': 'super test',
+                                                                                },
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('was added successfully.',
                       str(response.content))
         self.assertEqual(len(CategoryReputation.get_all()), 2)
         response = self.client.post('/admin/suricata/categoryreputation/add/', {'short_name': 'test',
-                                                                                        'description': 'super test',
-                                                                                        },
+                                                                                'description': 'super test',
+                                                                                },
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Category reputation with this Short name already exists.', str(response.content))

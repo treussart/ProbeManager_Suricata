@@ -26,10 +26,10 @@ class ViewsBlacklistAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(BlackList.get_all()), 0)
         response = self.client.post('/admin/suricata/blacklist/add/', {'type': 'IP',
-                                                                               'value': '192.168.0.1',
-                                                                               'comment': 'test',
-                                                                               'rulesets': [1, ]
-                                                                               },
+                                                                       'value': '192.168.0.1',
+                                                                       'comment': 'test',
+                                                                       'rulesets': [1, ]
+                                                                       },
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(' was added successfully.', str(response.content))
@@ -42,10 +42,10 @@ class ViewsBlacklistAdminTest(TestCase):
         self.assertIn('Blacklists deleted', str(response.content))
         self.assertEqual(len(BlackList.get_all()), 0)
         response = self.client.post('/admin/suricata/blacklist/add/', {'type': 'HOST',
-                                                                               'value': 'test.com',
-                                                                               'comment': 'test',
-                                                                               'rulesets': [1, ]
-                                                                               },
+                                                                       'value': 'test.com',
+                                                                       'comment': 'test',
+                                                                       'rulesets': [1, ]
+                                                                       },
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(' was added successfully.', str(response.content))

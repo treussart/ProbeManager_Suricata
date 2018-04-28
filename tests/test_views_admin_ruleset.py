@@ -61,4 +61,3 @@ class ViewsRuleSetAdminTest(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Successfully deleted 1 ', str(response.content))
-

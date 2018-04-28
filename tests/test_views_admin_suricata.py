@@ -25,7 +25,7 @@ class ViewsSuricataAdminTest(TestCase):
         response = self.client.get('/admin/suricata/suricata/', follow=True)
         self.assertEqual(response.status_code, 200)
         response = self.client.post('/admin/suricata/suricata/', {'action': 'test_signatures',
-                                                                         '_selected_action': '1'},
+                                                                  '_selected_action': '1'},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Test signatures OK', str(response.content))
@@ -47,21 +47,22 @@ class ViewsSuricataAdminTest(TestCase):
         response = self.client.get('/admin/suricata/suricata/add/', follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(Suricata.get_all()), 1)
-        response = self.client.post('/admin/suricata/suricata/add/', {'name': 'test',
-                                                                      'secure_deployment': True,
-                                                                      'scheduled_rules_deployment_enabled': True,
-                                                                      'scheduled_rules_deployment_crontab': 4,
-                                                                      'scheduled_check_enabled': True,
-                                                                      'scheduled_check_crontab': 3,
-                                                                      'server': 1,
-                                                                      'rulesets': str(RuleSetSuricata.get_by_name('test_signatures').id),
-                                                                      'configuration': 1,
-                                                                      'installed': True}, follow=True)
+        response = self.client.post('/admin/suricata/suricata/add/',
+                                    {'name': 'test',
+                                     'secure_deployment': True,
+                                     'scheduled_rules_deployment_enabled': True,
+                                     'scheduled_rules_deployment_crontab': 4,
+                                     'scheduled_check_enabled': True,
+                                     'scheduled_check_crontab': 3,
+                                     'server': 1,
+                                     'rulesets': str(RuleSetSuricata.get_by_name('test_signatures').id),
+                                     'configuration': 1,
+                                     'installed': True}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(' was added successfully', str(response.content))
         self.assertEqual(len(Suricata.get_all()), 2)
         response = self.client.post('/admin/suricata/suricata/', {'action': 'test_signatures',
-                                                                         '_selected_action': '2'},
+                                                                  '_selected_action': '2'},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Test signatures failed !', str(response.content))
@@ -106,4 +107,3 @@ class ViewsSuricataAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Suricata instance test deleted", str(response.content))
         self.assertEqual(len(Suricata.get_all()), 1)
-

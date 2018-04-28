@@ -12,7 +12,8 @@ from suricata.models import AppLayerType, Configuration, Suricata, SignatureSuri
 
 
 class SourceSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature',
+                'test-suricata-script', 'test-suricata-ruleset',
                 'test-suricata-source', 'test-suricata-conf', 'test-suricata-suricata']
 
     @classmethod
@@ -47,12 +48,15 @@ class SourceSuricataTest(TestCase):
         self.assertGreater(source.download_from_http()[0], 2000)
         self.assertGreater(source.download_from_http()[1], 2000)
 
-        SourceSuricata.get_by_uri('https://rules.emergingthreats.net/open/suricata-3.3.1/emerging.rules.tar.gz').delete()
+        SourceSuricata.get_by_uri('https://rules.emergingthreats.net/open/'
+                                  'suricata-3.3.1/emerging.rules.tar.gz').delete()
         source = SourceSuricata.objects.create(method=MethodUpload.get_by_name("URL HTTP"),
-                                               uri='https://rules.emergingthreats.net/open/suricata-3.3.1/emerging.rules.tar.gz',
+                                               uri='https://rules.emergingthreats.net/open/'
+                                                   'suricata-3.3.1/emerging.rules.tar.gz',
                                                scheduled_rules_deployment_enabled=False,
                                                scheduled_deploy=False,
-                                               data_type=DataTypeUpload.get_by_name("multiple files in compressed file"))
+                                               data_type=DataTypeUpload.get_by_name("multiple files in compressed file")
+                                               )
         self.assertGreater(source.download_from_http()[0], 2000)
         self.assertGreater(source.download_from_http()[1], 2000)
 
@@ -128,7 +132,8 @@ class ConfigurationTest(TestCase):
 
 
 class RuleSetSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset']
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-signature',
+                'test-suricata-script', 'test-suricata-ruleset']
 
     @classmethod
     def setUpTestData(cls):
@@ -176,11 +181,12 @@ class ScriptSuricataTest(TestCase):
             ScriptSuricata.objects.create(name="test.lua",
                                           rev=0,
                                           reference="http://doc.emergingthreats.net/2000026",
-                                          rule_full="""alert dns any any -> any any (msg:"SURICATA DNS flow memcap reached"; flow:to_server; app-layer-event:dns.state_memcap_reached; sid:2240008; rev:2;)""",
+                                          rule_full="alert dns any any -> any any (msg:\"SURICATA DNS flow "
+                                                    "memcap reached\"; flow:to_server; "
+                                                    "app-layer-event:dns.state_memcap_reached; sid:2240008; rev:2;)",
                                           enabled=True,
                                           created_date=self.date_now
                                           )
-
 
 
 class SignatureSuricataTest(TestCase):
@@ -214,14 +220,17 @@ class SignatureSuricataTest(TestCase):
                                              msg="HTTP attack",
                                              reference="http://doc.emergingthreats.net/2000026",
                                              classtype=ClassType.get_by_id(1),
-                                             rule_full="""alert dns any any -> any any (msg:"SURICATA DNS flow memcap reached"; flow:to_server; app-layer-event:dns.state_memcap_reached; sid:2240008; rev:2;)""",
+                                             rule_full="alert dns any any -> any any (msg:\"SURICATA DNS flow "
+                                                       "memcap reached\"; flow:to_server; "
+                                                       "app-layer-event:dns.state_memcap_reached; sid:2240008; rev:2;)",
                                              enabled=True,
                                              created_date=self.date_now
                                              )
 
 
 class SuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature',
+                'test-suricata-script', 'test-suricata-ruleset',
                 'test-suricata-source', 'test-suricata-conf', 'test-suricata-suricata']
 
     @classmethod
@@ -263,7 +272,8 @@ class SuricataTest(TestCase):
 
 
 class ReputationTest(TestCase):
-    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature', 'test-suricata-script', 'test-suricata-ruleset',
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-core-secrets', 'test-suricata-signature',
+                'test-suricata-script', 'test-suricata-ruleset',
                 'test-suricata-source', 'test-suricata-conf', 'test-suricata-suricata', 'test-suricata-reputation']
 
     @classmethod

@@ -16,6 +16,12 @@ class SuricataSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class SuricataUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Suricata
+        fields = 'name', 'description', 'installed', 'secure_deployment', 'server', 'rulesets', 'configuration'
+
+
 class SignatureSuricataSerializer(serializers.ModelSerializer):
     class Meta:
         model = SignatureSuricata

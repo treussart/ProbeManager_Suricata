@@ -19,7 +19,7 @@ class SuricataSerializer(serializers.ModelSerializer):
 class SuricataUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Suricata
-        fields = 'name', 'description', 'installed', 'secure_deployment', 'server', 'rulesets', 'configuration'
+        fields = 'description', 'installed', 'secure_deployment', 'server', 'rulesets', 'configuration'
 
 
 class SignatureSuricataSerializer(serializers.ModelSerializer):

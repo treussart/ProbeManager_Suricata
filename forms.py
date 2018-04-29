@@ -6,7 +6,7 @@ from .models import Suricata
 class SuricataChangeForm(ModelForm):
     class Meta:
         model = Suricata
-        fields = ('name',
+        fields = (
                   'description',
                   'installed',
                   'secure_deployment',

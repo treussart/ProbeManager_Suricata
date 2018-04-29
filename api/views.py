@@ -19,8 +19,7 @@ class ConfigurationViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ConfigurationSerializer
 
 
-class SuricataViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
-                      viewsets.GenericViewSet):
+class SuricataViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     queryset = Suricata.objects.all()
     serializer_class = serializers.SuricataSerializer
 
@@ -53,21 +52,21 @@ class SuricataViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.U
         suricata.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
-class SuricataUpdateViewSet(viewsets.GenericViewSet):
-    queryset = Suricata.objects.all()
-    serializer_class = serializers.SuricataUpdateSerializer
-
     def update(self, request, pk=None):
-        bro = self.get_object()
-        serializer = serializers.SuricataUpdateSerializer(bro, data=request.data)
+        suricata = self.get_object()
+        serializer = serializers.SuricataUpdateSerializer(suricata, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def partial_update(self, request, pk=None):
-        return self.update(request)
+        suricata = self.get_object()
+        serializer = serializers.SuricataUpdateSerializer(suricata, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SignatureSuricataViewSet(viewsets.ModelViewSet):

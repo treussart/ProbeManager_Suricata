@@ -8,4 +8,7 @@ urls_to_register = [
     (r'^suricata/script', views.ScriptSuricataViewSet),
     (r'^suricata/source', views.SourceSuricataViewSet),
     (r'^suricata/ruleset', views.RuleSetSuricataViewSet),
+    (r'^suricata/blacklist', views.BlackListViewSet),
+    (r'^suricata/ipreputation', views.IPReputationViewSet),
+    (r'^suricata/categoryreputation', views.CategoryReputationViewSet),
 ]

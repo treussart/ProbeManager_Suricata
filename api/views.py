@@ -5,26 +5,21 @@ from rest_framework.response import Response
 from core.utils import create_deploy_rules_task, create_check_task
 import logging
 
-from django_celery_beat.models import PeriodicTask, CrontabSchedule
+from django_celery_beat.models import PeriodicTask
 
 from suricata.api import serializers
-from suricata.models import Suricata, Configuration, SignatureSuricata, ScriptSuricata, SourceSuricata, RuleSetSuricata
+from suricata.models import Suricata, Configuration, SignatureSuricata, ScriptSuricata, SourceSuricata, \
+    RuleSetSuricata, BlackList, IPReputation, CategoryReputation, Md5
 
 logger = logging.getLogger(__name__)
 
 
 class ConfigurationViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows groups to be viewed or edited.
-    """
     queryset = Configuration.objects.all()
     serializer_class = serializers.ConfigurationSerializer
 
 
 class SuricataViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-    """
-    API endpoint that allows groups to be viewed or edited.
-    """
     queryset = Suricata.objects.all()
     serializer_class = serializers.SuricataSerializer
 
@@ -59,9 +54,6 @@ class SuricataViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
 
 
 class SuricataUpdateViewSet(viewsets.GenericViewSet):
-    """
-    API endpoint that allows groups to be viewed or edited.
-    """
     queryset = Suricata.objects.all()
     serializer_class = serializers.SuricataUpdateSerializer
 
@@ -75,32 +67,58 @@ class SuricataUpdateViewSet(viewsets.GenericViewSet):
 
 
 class SignatureSuricataViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows groups to be viewed or edited.
-    """
     queryset = SignatureSuricata.objects.all()
     serializer_class = serializers.SignatureSuricataSerializer
 
 
 class ScriptSuricataViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows groups to be viewed or edited.
-    """
     queryset = ScriptSuricata.objects.all()
     serializer_class = serializers.ScriptSuricataSerializer
 
 
 class SourceSuricataViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-    """
-    API endpoint that allows groups to be viewed or edited.
-    """
     queryset = SourceSuricata.objects.all()
     serializer_class = serializers.SourceSuricataSerializer
 
 
 class RuleSetSuricataViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows groups to be viewed or edited.
-    """
     queryset = RuleSetSuricata.objects.all()
     serializer_class = serializers.RuleSetSuricataSerializer
+
+
+class BlackListViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    queryset = BlackList.objects.all()
+    serializer_class = serializers.BlackListSerializer
+
+    def create(self, request):
+        serializer = serializers.BlackListSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            blacklist = BlackList.get_by_value(request.data['value'])
+            logger.debug("create blacklist for " + str(blacklist))
+            blacklist.create_blacklist()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        blacklist = self.get_object()
+        if blacklist.type == "MD5":
+            if Md5.get_by_value(blacklist.value):
+                md5_suricata = Md5.get_by_value(blacklist.value)
+                md5_suricata.delete()
+        else:
+            if SignatureSuricata.get_by_sid(blacklist.sid):
+                signature = SignatureSuricata.get_by_sid(blacklist.sid)
+                signature.delete()
+        blacklist.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class IPReputationViewSet(viewsets.ModelViewSet):
+    queryset = IPReputation.objects.all()
+    serializer_class = serializers.IPReputationSerializer
+
+
+class CategoryReputationViewSet(viewsets.ModelViewSet):
+    queryset = CategoryReputation.objects.all()
+    serializer_class = serializers.CategoryReputationSerializer

@@ -35,7 +35,7 @@ class ViewsBlacklistAdminTest(TestCase):
         self.assertIn(' was added successfully.', str(response.content))
         self.assertEqual(len(BlackList.get_all()), 1)
         response = self.client.post('/admin/suricata/blacklist/',
-                                    {'action': 'delete_blacklist',
+                                    {'action': 'delete_selected',
                                      '_selected_action': BlackList.get_by_value('192.168.0.1').id},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
@@ -51,7 +51,7 @@ class ViewsBlacklistAdminTest(TestCase):
         self.assertIn(' was added successfully.', str(response.content))
         self.assertEqual(len(BlackList.get_all()), 1)
         response = self.client.post('/admin/suricata/blacklist/',
-                                    {'action': 'delete_blacklist',
+                                    {'action': 'delete_selected',
                                      '_selected_action': BlackList.get_by_value('test.com').id},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
@@ -68,7 +68,7 @@ class ViewsBlacklistAdminTest(TestCase):
         self.assertIn(' was added successfully.', str(response.content))
         self.assertEqual(len(BlackList.get_all()), 1)
         response = self.client.post('/admin/suricata/blacklist/',
-                                    {'action': 'delete_blacklist',
+                                    {'action': 'delete_selected',
                                      '_selected_action': BlackList.
                                      get_by_value('e41c0631f6f2c138a417b59bcb880fce').id},
                                     follow=True)

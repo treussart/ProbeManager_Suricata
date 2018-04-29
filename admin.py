@@ -106,15 +106,9 @@ class SuricataAdmin(admin.ModelAdmin):
     def delete_model(self, request, obj):
         self.delete(request, obj)
 
-    def delete_suricata(self, request, obj):
+    def delete_selected(self, request, obj):
         for probe in obj:
             self.delete(request, obj, probe=probe)
-
-    def get_actions(self, request):
-        actions = super(SuricataAdmin, self).get_actions(request)
-        if 'delete_selected' in actions:
-            del actions['delete_selected']
-        return actions
 
     def test_signatures(self, request, obj):
         test = True
@@ -129,7 +123,7 @@ class SuricataAdmin(admin.ModelAdmin):
         else:
             messages.add_message(request, messages.ERROR, "Test signatures failed ! " + str(errors))
 
-    actions = [delete_suricata, test_signatures]
+    actions = [delete_selected, test_signatures]
 
 
 class ConfigurationAdmin(admin.ModelAdmin):
@@ -357,13 +351,7 @@ class BlackListAdmin(admin.ModelAdmin):
         obj.save()
         obj.create_blacklist()
 
-    def get_actions(self, request):
-        actions = super(BlackListAdmin, self).get_actions(request)
-        if 'delete_selected' in actions:
-            del actions['delete_selected']
-        return actions
-
-    def delete_blacklist(self, request, obj):
+    def delete_selected(self, request, obj):
         for blacklist in obj:
             if blacklist.type == "MD5":
                 if Md5.get_by_value(blacklist.value):
@@ -378,7 +366,7 @@ class BlackListAdmin(admin.ModelAdmin):
 
     list_display = ('__str__',)
     list_display_links = None
-    actions = [delete_blacklist]
+    actions = [delete_selected]
 
 
 class IPReputationAdmin(admin.ModelAdmin):

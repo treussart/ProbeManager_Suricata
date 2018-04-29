@@ -1,12 +1,12 @@
+import logging
+
+from django_celery_beat.models import PeriodicTask
 from rest_framework import mixins
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
+
 from core.utils import create_deploy_rules_task, create_check_task
-import logging
-
-from django_celery_beat.models import PeriodicTask
-
 from suricata.api import serializers
 from suricata.models import Suricata, Configuration, SignatureSuricata, ScriptSuricata, SourceSuricata, \
     RuleSetSuricata, BlackList, IPReputation, CategoryReputation, Md5
@@ -19,7 +19,8 @@ class ConfigurationViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ConfigurationSerializer
 
 
-class SuricataViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
+class SuricataViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
+                      viewsets.GenericViewSet):
     queryset = Suricata.objects.all()
     serializer_class = serializers.SuricataSerializer
 

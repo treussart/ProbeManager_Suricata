@@ -9,18 +9,17 @@ from django.contrib import admin
 from django.contrib import messages
 from django.contrib.admin.helpers import ActionForm
 from django.http import HttpResponseRedirect
-from django_celery_beat.models import PeriodicTask, CrontabSchedule
 from django.utils.safestring import mark_safe
+from django_celery_beat.models import PeriodicTask, CrontabSchedule
 
+from core.models import Configuration as CoreConfiguration
+from core.utils import create_deploy_rules_task, add_1_hour, create_check_task
 from core.utils import generic_import_csv
-from .tasks import download_from_http, download_from_misp
-from core.utils import create_deploy_rules_task,  add_1_hour, create_check_task
-from .utils import create_download_from_http_task, create_conf, convert_conf
 from .forms import SuricataChangeForm
 from .models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, Configuration, \
     SourceSuricata, BlackList, Md5, IPReputation, CategoryReputation
-from core.models import Configuration as CoreConfiguration
-
+from .tasks import download_from_http, download_from_misp
+from .utils import create_download_from_http_task, create_conf, convert_conf
 
 logger = logging.getLogger(__name__)
 

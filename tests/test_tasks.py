@@ -1,10 +1,10 @@
 """ venv/bin/python probemanager/manage.py test suricata.tests.test_tasks --settings=probemanager.settings.dev """
-from django.test import TestCase
 from django.conf import settings
+from django.test import TestCase
 
 from core.tasks import reload_probe, deploy_rules
-from suricata.tasks import download_from_http
 from suricata.models import Suricata, SourceSuricata
+from suricata.tasks import download_from_http
 
 
 class TasksSuricataTest(TestCase):

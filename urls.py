@@ -2,6 +2,7 @@ from django.conf.urls import url
 
 from core.views import probe_index, start, stop, restart, reload, status, install, update, deploy_conf, deploy_rules
 from .views import deploy_reputation_list
+
 app_name = 'suricata'
 
 urlpatterns = [

@@ -1,7 +1,8 @@
-import yaml
 import json
-from django_celery_beat.models import PeriodicTask
+
+import yaml
 from django.conf import settings
+from django_celery_beat.models import PeriodicTask
 
 
 def create_download_from_http_task(source):

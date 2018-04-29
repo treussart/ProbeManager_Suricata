@@ -1,12 +1,12 @@
 """ venv/bin/python probemanager/manage.py test suricata.tests.test_models --settings=probemanager.settings.dev """
+from django.conf import settings
 from django.db.utils import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
-from django.conf import settings
 
-from rules.models import DataTypeUpload, MethodUpload
-from rules.models import ClassType
 from core.models import Configuration as CoreConfiguration
+from rules.models import ClassType
+from rules.models import DataTypeUpload, MethodUpload
 from suricata.models import AppLayerType, Configuration, Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, \
     SourceSuricata, IPReputation, CategoryReputation
 

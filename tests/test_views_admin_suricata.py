@@ -80,7 +80,7 @@ class ViewsSuricataAdminTest(TestCase):
                                                                            'installed': False}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Suricata.get_by_id(2).installed, False)
-        response = self.client.post('/admin/suricata/suricata/', {'action': 'delete_suricata', '_selected_action': '2'},
+        response = self.client.post('/admin/suricata/suricata/', {'action': 'delete_selected', '_selected_action': '2'},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn("Suricata instance test deleted", str(response.content))

@@ -1,12 +1,12 @@
 import importlib
 
+from celery import task
+from celery.utils.log import get_task_logger
+
 from core.models import Job, Probe
 from core.notifications import send_notification
 from rules.models import Source
 from suricata.models import RuleSetSuricata, IPReputation, CategoryReputation
-
-from celery import task
-from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
 

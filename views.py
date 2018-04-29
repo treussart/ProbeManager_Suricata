@@ -6,8 +6,8 @@ from django.http import HttpResponseNotFound
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
-from .tasks import deploy_reputation_list as task_deploy_reputation_list
 from .models import Suricata
+from .tasks import deploy_reputation_list as task_deploy_reputation_list
 
 logger = logging.getLogger(__name__)
 

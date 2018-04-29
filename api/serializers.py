@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from suricata.models import Configuration, Suricata, SignatureSuricata, ScriptSuricata, SourceSuricata, \
-    RuleSetSuricata, AppLayerType
+    RuleSetSuricata, AppLayerType, BlackList, IPReputation, CategoryReputation
 
 
 class ConfigurationSerializer(serializers.ModelSerializer):
@@ -14,6 +14,12 @@ class SuricataSerializer(serializers.ModelSerializer):
     class Meta:
         model = Suricata
         fields = "__all__"
+
+
+class SuricataUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Suricata
+        fields = 'description', 'installed', 'secure_deployment', 'server', 'rulesets', 'configuration'
 
 
 class SignatureSuricataSerializer(serializers.ModelSerializer):
@@ -43,4 +49,22 @@ class RuleSetSuricataSerializer(serializers.ModelSerializer):
 class AppLayerTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = AppLayerType
+        fields = "__all__"
+
+
+class BlackListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BlackList
+        fields = "__all__"
+
+
+class IPReputationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IPReputation
+        fields = "__all__"
+
+
+class CategoryReputationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoryReputation
         fields = "__all__"

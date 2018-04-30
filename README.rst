@@ -66,8 +66,8 @@ Administration Page of the module :
 |Admin page|
 
 
-Page to add a Bro IDS instance :
---------------------------------
+Page to add a Suricata IDS instance :
+-------------------------------------
 
 |Admin page for add a suricata instance|
 
@@ -91,3 +91,15 @@ Page to add a reputation on an IP :
 
 |Admin page for add a ipreputation|
 
+
+Page of an instance :
+---------------------
+
+|Instance page|
+
+ * Uptime indicate the time elapsed since the last time the application was started.
+ * 'Refresh Instance Status' is a button to know the status of the application. (running or not)
+ * Update instance, you need to edit the conf file to change the version number you want.
+ * Deploy configuration, copy configuration files to the remote server, and reload the Bro instance.
+ * Deploy rules, copy rules (signatures and scripts) files to the remote server, and reload the Bro instance.
+ * Deploy reputation list, copy the IP and Category reputation files to the remote server.

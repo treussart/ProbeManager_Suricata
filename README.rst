@@ -1,6 +1,6 @@
-==========================
+**************************
 Suricata for Probe Manager
-==========================
+**************************
 
 
 |Licence| |Version|
@@ -19,19 +19,19 @@ Suricata for Probe Manager
 
 
 Presentation
-~~~~~~~~~~~~
+============
 
 Module for `Suricata IDS <https://suricata-ids.org/>`_
 
 
 Compatible version
-==================
+------------------
 
  * Suricata version 4.0.4 RELEASE
 
 
 Features
-========
+--------
 
  * Install and update Suricata NIDS on a remote server.
  * Configure the settings and test the configuration.
@@ -45,6 +45,6 @@ Features
  * Implements IP reputation.
 
 Installation
-~~~~~~~~~~~~
+============
 
 Install with `ProbeManager <https://github.com/treussart/ProbeManager/>`_

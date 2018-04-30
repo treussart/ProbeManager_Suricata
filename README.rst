@@ -136,8 +136,8 @@ Allows to modify and create new `Classtype <http://suricata.readthedocs.io/en/la
   :width: 60%
 
 * Name: (IP, MD5, HOST). For IP and HOST, a signature is created automatically, for `MD5 <http://suricata.readthedocs.io/en/latest/rules/file-keywords.html?highlight=MD5#filemd5>`_, it store a text file with a single md5 per line.
-* Description: The value for this type.
-* Security Level:
+* Description: A description for the classtype.
+* Security Level: A priority of 1 (high) is the most severe and 4 (very low) is the least severe.
 
 Page of an instance :
 ---------------------

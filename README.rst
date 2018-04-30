@@ -133,7 +133,7 @@ Allows to modify and create new `Classtype <http://suricata.readthedocs.io/en/la
 
 .. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-classtype-add.png
   :align: center
-  :width: 80%
+  :width: 60%
 
 * Name: (IP, MD5, HOST). For IP and HOST, a signature is created automatically, for `MD5 <http://suricata.readthedocs.io/en/latest/rules/file-keywords.html?highlight=MD5#filemd5>`_, it store a text file with a single md5 per line.
 * Description: The value for this type.

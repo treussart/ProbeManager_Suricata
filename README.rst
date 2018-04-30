@@ -76,14 +76,14 @@ Page to add a Suricata IDS instance :
     :align: center
     :width: 80%
 
-* Give a unique name for this instance, example: server-tap1_suricata.
-* Specify if you want rules to be verified at each deployment.
-* Enable scheduled deployment of rules.
-* Enable instance monitoring. (Check if the probe is active)
-* Specify the server for the probe.
-* Specify if the probe is already installed.
-* Choose the sets of rules that will be deployed on this probe.
-* Give the configuration of the probe.
+* Name: Give a unique name for this instance, example: server-tap1_suricata.
+* Secure deployment: Specify if you want rules to be verified at each deployment.
+* Scheduled rules deployment enabled: Enable scheduled deployment of rules.
+* Scheduled check enabled: Enable instance monitoring. (Check if the probe is active)
+* Server: Specify the server for the probe.
+* Probe already installed: Specify if the probe is already installed.
+* Rulesets: Choose the sets of rules that will be deployed on this probe.
+* Configuration: Give the configuration of the probe.
 
 
 Page to add a configuration :
@@ -141,9 +141,9 @@ Page of an instance :
   :align: center
   :width: 80%
 
-* Uptime indicate the time elapsed since the last time the application was started.
-* 'Refresh Instance Status' is a button to know the status of the application. (running or not)
-* Update instance, you need to edit the conf file to change the version number you want.
-* Deploy configuration, copy configuration files to the remote server, and reload the Suricata instance.
-* Deploy rules, copy rules (signatures and scripts) files to the remote server, and reload the Suricata instance.
-* Deploy reputation list, copy the `IP and Category reputation <http://suricata.readthedocs.io/en/latest/reputation/index.html>`_ files to the remote server. The probe is not reloaded, because if categories change, Suricata should be restarted. And Restarting can result in packet loss, which is why it is up to the user to intentionally restart.
+* 'Uptime', indicate the time elapsed since the last time the application was started.
+* 'Refresh Instance Status', is a button to know the status of the application. (running or not)
+* 'Update' instance, you need to edit the conf file to change the version number you want.
+* 'Deploy configuration', copy configuration files to the remote server, and reload the Suricata instance.
+* 'Deploy rules', copy rules (signatures and scripts) files to the remote server, and reload the Suricata instance.
+* 'Deploy reputation list', copy the `IP and Category reputation <http://suricata.readthedocs.io/en/latest/reputation/index.html>`_ files to the remote server. The probe is not reloaded, because if categories change, Suricata should be restarted. And Restarting can result in packet loss, which is why it is up to the user to intentionally restart.

@@ -33,16 +33,16 @@ Compatible version
 Features
 --------
 
- * Install and update Suricata NIDS on a remote server.
- * Configure the settings and test the configuration.
- * Add, Delete, Update scripts and signatures.
- * Tests signatures compliance.
- * Tests signatures if generates alert via Pcap.
- * Adding rules via HTTP or via upload file.
- * Scheduling rules update via HTTP (EmergingThreat ...)
- * Grouping rules into groups and assign this to probes.
- * Possibility to add into blacklist an IP, Domain or MD5.
- * Implements IP reputation.
+* Install and update Suricata NIDS on a remote server.
+* Configure the settings and test the configuration.
+* Add, Delete, Update scripts and signatures.
+* Tests signatures compliance.
+* Tests signatures if generates alert via Pcap.
+* Adding rules via HTTP or via upload file.
+* Scheduling rules update via HTTP (EmergingThreat ...)
+* Grouping rules into groups and assign this to probes.
+* Possibility to add into blacklist an IP, Domain or MD5.
+* Implements IP reputation.
 
 Installation
 ============
@@ -55,6 +55,7 @@ Usage
 .. |Admin page| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-index.png
 .. |Admin page for add a suricata instance| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-suricata-add.png
 .. |Admin page for add a conf| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-conf-add.png
+.. |Admin page for add an advanced conf| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-conf-add-advanced.png
 .. |Admin page for add a blacklist| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-blacklist-add.png
 .. |Admin page for add a ipreputation| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-ipreputation-add.png
 .. |Instance page| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/instance-index.png
@@ -63,43 +64,86 @@ Usage
 Administration Page of the module :
 -----------------------------------
 
-|Admin page|
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-index.png
+  :align: center
+  :width: 80%
 
 
 Page to add a Suricata IDS instance :
 -------------------------------------
 
-|Admin page for add a suricata instance|
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-suricata-add.png
+    :align: center
+    :width: 80%
 
- * Give a unique name for this instance, example: server-tap1_suricata.
+* Give a unique name for this instance, example: server-tap1_suricata.
+* Specify if you want rules to be verified at each deployment.
+* Enable scheduled deployment of rules.
+* Enable instance monitoring. (Check if the probe is active)
+* Specify the server for the probe.
+* Specify if the probe is already installed.
+* Choose the sets of rules that will be deployed on this probe.
+* Give the configuration of the probe.
 
 
 Page to add a configuration :
 -----------------------------
 
-|Admin page for add a conf|
+Allows you to modify the `Suricata configuration <http://suricata.readthedocs.io/en/latest/configuration/index.html>`_.
 
+Simple
+^^^^^^
+
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-conf-add.png
+  :align: center
+  :width: 70%
+
+* Under 'Conf advanced', there is the most important settings of Suricata, for simplify the configuration. The application will generate the YAML file.
+
+Advanced
+^^^^^^^^
+
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-conf-add-advanced.png
+  :align: center
+  :width: 90%
+
+* 'Conf advanced', Allows to edit directly the YAML file.
 
 Page to add a value in Blacklist :
 ----------------------------------
 
-|Admin page for add a blacklist|
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-blacklist-add.png
+  :align: center
+  :width: 80%
 
+* Type: (IP, MD5, HOST). For IP and HOST, a signature is created automatically, for `MD5 <http://suricata.readthedocs.io/en/latest/rules/file-keywords.html?highlight=MD5#filemd5>`_, it store a text file with a single md5 per line.
+* Value: The value for this type.
+* Comment: For to keep track information.
+* Rulesets: Choose the sets of rules that will contain this blacklist.
 
 Page to add a reputation on an IP :
 -----------------------------------
 
-|Admin page for add a ipreputation|
+Allows you to use the `IP Reputation of Suricata <http://suricata.readthedocs.io/en/latest/reputation/index.html>`_.
 
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-ipreputation-add.png
+  :align: center
+  :width: 55%
+
+* Ip: Specify an IP address.
+* Category: Specify an Category (short name, and long description).
+* Reputation score: The reputation score is the confidence that this IP is in the specified category, represented by a number between 1 and 127 (0 means no data).
 
 Page of an instance :
 ---------------------
 
-|Instance page|
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/instance-index.png
+  :align: center
+  :width: 80%
 
- * Uptime indicate the time elapsed since the last time the application was started.
- * 'Refresh Instance Status' is a button to know the status of the application. (running or not)
- * Update instance, you need to edit the conf file to change the version number you want.
- * Deploy configuration, copy configuration files to the remote server, and reload the Bro instance.
- * Deploy rules, copy rules (signatures and scripts) files to the remote server, and reload the Bro instance.
- * Deploy reputation list, copy the IP and Category reputation files to the remote server.
+* Uptime indicate the time elapsed since the last time the application was started.
+* 'Refresh Instance Status' is a button to know the status of the application. (running or not)
+* Update instance, you need to edit the conf file to change the version number you want.
+* Deploy configuration, copy configuration files to the remote server, and reload the Suricata instance.
+* Deploy rules, copy rules (signatures and scripts) files to the remote server, and reload the Suricata instance.
+* Deploy reputation list, copy the `IP and Category reputation <http://suricata.readthedocs.io/en/latest/reputation/index.html>`_ files to the remote server. The probe is not reloaded, because if categories change, Suricata should be restarted. And Restarting can result in packet loss, which is why it is up to the user to intentionally restart.

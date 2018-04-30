@@ -43,6 +43,7 @@ Features
 * Grouping rules into groups and assign this to probes.
 * Possibility to add into blacklist an IP, Domain or MD5.
 * Implements IP reputation.
+* Modify and create ClassType.
 
 Installation
 ============
@@ -51,15 +52,6 @@ Install with `ProbeManager <https://github.com/treussart/ProbeManager/>`_
 
 Usage
 =====
-
-.. |Admin page| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-index.png
-.. |Admin page for add a suricata instance| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-suricata-add.png
-.. |Admin page for add a conf| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-conf-add.png
-.. |Admin page for add an advanced conf| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-conf-add-advanced.png
-.. |Admin page for add a blacklist| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-blacklist-add.png
-.. |Admin page for add a ipreputation| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-ipreputation-add.png
-.. |Instance page| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/instance-index.png
-
 
 Administration Page of the module :
 -----------------------------------
@@ -133,6 +125,19 @@ Allows you to use the `IP Reputation of Suricata <http://suricata.readthedocs.io
 * Ip: Specify an IP address.
 * Category: Specify an Category (short name, and long description).
 * Reputation score: The reputation score is the confidence that this IP is in the specified category, represented by a number between 1 and 127 (0 means no data).
+
+Page to add a value in Classtype :
+----------------------------------
+
+Allows to modify and create new `Classtype <http://suricata.readthedocs.io/en/latest/rules/meta.html?#classtype>`_
+
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-classtype-add.png
+  :align: center
+  :width: 80%
+
+* Name: (IP, MD5, HOST). For IP and HOST, a signature is created automatically, for `MD5 <http://suricata.readthedocs.io/en/latest/rules/file-keywords.html?highlight=MD5#filemd5>`_, it store a text file with a single md5 per line.
+* Description: The value for this type.
+* Security Level:
 
 Page of an instance :
 ---------------------

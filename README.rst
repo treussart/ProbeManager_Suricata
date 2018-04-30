@@ -48,3 +48,46 @@ Installation
 ============
 
 Install with `ProbeManager <https://github.com/treussart/ProbeManager/>`_
+
+Usage
+=====
+
+.. |Admin page| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-index.png
+.. |Admin page for add a suricata instance| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-suricata-add.png
+.. |Admin page for add a conf| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-conf-add.png
+.. |Admin page for add a blacklist| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-blacklist-add.png
+.. |Admin page for add a ipreputation| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-ipreputation-add.png
+.. |Instance page| image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/instance-index.png
+
+
+Administration Page of the module :
+-----------------------------------
+
+|Admin page|
+
+
+Page to add a Bro IDS instance :
+--------------------------------
+
+|Admin page for add a suricata instance|
+
+ * Give a unique name for this instance, example: server-tap1_suricata.
+
+
+Page to add a configuration :
+-----------------------------
+
+|Admin page for add a conf|
+
+
+Page to add a value in Blacklist :
+----------------------------------
+
+|Admin page for add a blacklist|
+
+
+Page to add a reputation on an IP :
+-----------------------------------
+
+|Admin page for add a ipreputation|
+

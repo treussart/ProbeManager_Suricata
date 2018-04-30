@@ -24,11 +24,6 @@ class ClassTypeTest(TestCase):
         self.assertEqual(class_type.name, "unknown")
         self.assertEqual(str(class_type), "unknown")
 
-        class_type = ClassType.get_by_name("unknown")
-        self.assertEqual(class_type.name, "unknown")
-        with self.assertLogs('rules.models', level='DEBUG'):
-            ClassType.get_by_name("https")
-
         class_type = ClassType.get_by_id(99)
         self.assertEqual(class_type, None)
         with self.assertRaises(AttributeError):

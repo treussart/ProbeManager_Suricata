@@ -5,10 +5,31 @@ from django.test import TestCase
 from django.utils import timezone
 
 from core.models import Configuration as CoreConfiguration
-from rules.models import ClassType
 from rules.models import DataTypeUpload, MethodUpload
 from suricata.models import AppLayerType, Configuration, Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, \
-    SourceSuricata, IPReputation, CategoryReputation
+    SourceSuricata, IPReputation, CategoryReputation, ClassType
+
+
+class ClassTypeTest(TestCase):
+    fixtures = ['init', 'crontab', 'init-suricata']
+
+    @classmethod
+    def setUpTestData(cls):
+        pass
+
+    def test_class_type(self):
+        all_class_type = ClassType.get_all()
+        class_type = ClassType.get_by_id(1)
+        self.assertEqual(len(all_class_type), 34)
+        self.assertEqual(class_type.name, "unknown")
+        self.assertEqual(str(class_type), "unknown")
+
+        class_type = ClassType.get_by_id(99)
+        self.assertEqual(class_type, None)
+        with self.assertRaises(AttributeError):
+            class_type.name
+        with self.assertRaises(IntegrityError):
+            ClassType.objects.create(name="unknown")
 
 
 class SourceSuricataTest(TestCase):

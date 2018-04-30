@@ -1,7 +1,13 @@
 from rest_framework import serializers
 
 from suricata.models import Configuration, Suricata, SignatureSuricata, ScriptSuricata, SourceSuricata, \
-    RuleSetSuricata, AppLayerType, BlackList, IPReputation, CategoryReputation
+    RuleSetSuricata, AppLayerType, BlackList, IPReputation, CategoryReputation, ClassType
+
+
+class ClassTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClassType
+        fields = "__all__"
 
 
 class ConfigurationSerializer(serializers.ModelSerializer):

@@ -17,7 +17,7 @@ from core.utils import create_deploy_rules_task, add_1_hour, create_check_task
 from core.utils import generic_import_csv
 from .forms import SuricataChangeForm
 from .models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, Configuration, \
-    SourceSuricata, BlackList, Md5, IPReputation, CategoryReputation
+    SourceSuricata, BlackList, Md5, IPReputation, CategoryReputation, ClassType
 from .tasks import download_from_http, download_from_misp
 from .utils import create_download_from_http_task, create_conf, convert_conf
 
@@ -399,3 +399,4 @@ admin.site.register(SourceSuricata, SourceSuricataAdmin)
 admin.site.register(BlackList, BlackListAdmin)
 admin.site.register(IPReputation, IPReputationAdmin)
 admin.site.register(CategoryReputation, CategoryReputationAdmin)
+admin.site.register(ClassType)

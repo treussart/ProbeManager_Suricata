@@ -22,10 +22,32 @@ from core.modelsmixins import CommonMixin
 from core.notifications import send_notification
 from core.ssh import execute, execute_copy
 from core.utils import process_cmd
-from rules.models import RuleSet, Rule, ClassType, Source
+from rules.models import RuleSet, Rule, Source
 from .exceptions import RuleNotFoundParam
 
 logger = logging.getLogger('suricata')
+
+
+class ClassType(CommonMixin, models.Model):
+    """
+    Set of Classification for a signature.
+    The classtype keyword gives information about the classification of rules and alerts.
+    """
+    name = models.CharField(max_length=100, unique=True, db_index=True)
+    description = models.CharField(max_length=1000)
+    severity_level = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def get_by_name(cls, name):
+        try:
+            obj = cls.objects.get(name=name)
+        except cls.DoesNotExist as e:
+            logger.debug('Tries to access an object that does not exist : ' + str(e))
+            return None
+        return obj
 
 
 class ValidationType(CommonMixin, models.Model):

@@ -9,9 +9,17 @@ from rest_framework.response import Response
 from core.utils import create_deploy_rules_task, create_check_task
 from suricata.api import serializers
 from suricata.models import Suricata, Configuration, SignatureSuricata, ScriptSuricata, SourceSuricata, \
-    RuleSetSuricata, BlackList, IPReputation, CategoryReputation, Md5
+    RuleSetSuricata, BlackList, IPReputation, CategoryReputation, Md5, ClassType
 
 logger = logging.getLogger(__name__)
+
+
+class ClassTypeViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows class type to be viewed or edited. ex : Not Suspicious Traffic
+    """
+    queryset = ClassType.objects.all()
+    serializer_class = serializers.ClassTypeSerializer
 
 
 class ConfigurationViewSet(viewsets.ModelViewSet):

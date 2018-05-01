@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.contrib.admin.helpers import ActionForm
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
-from django_celery_beat.models import PeriodicTask, CrontabSchedule
+from django_celery_beat.models import CrontabSchedule
 
 from core.models import Configuration as CoreConfiguration
 from core.utils import create_deploy_rules_task, add_1_hour

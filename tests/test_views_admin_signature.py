@@ -71,17 +71,17 @@ class ViewsSignatureAdminTest(TestCase):
         self.assertIn('Test signature failed !', str(response.content))
         self.assertEqual(len(SignatureSuricata.get_all()), 3)
         response = self.client.post('/admin/suricata/signaturesuricata/',
-                                    {'action': 'test_signatures',
+                                    {'action': 'test',
                                      '_selected_action': SignatureSuricata.get_by_sid(2405001).id},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Test signatures OK', str(response.content))
+        self.assertIn('Test OK', str(response.content))
         response = self.client.post('/admin/suricata/signaturesuricata/',
-                                    {'action': 'test_signatures',
+                                    {'action': 'test',
                                      '_selected_action': SignatureSuricata.get_by_sid(666).id},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Test signatures failed !', str(response.content))
+        self.assertIn('Test failed !', str(response.content))
 
         response = self.client.post('/admin/suricata/signaturesuricata/',
                                     {'action': 'add_ruleset',
@@ -119,17 +119,17 @@ class ViewsSignatureAdminTest(TestCase):
                                          'sid': '667',
                                          'classtype': '29',
                                          'msg': 'Test Pcap match',
-                                         'pcap_success': f,
+                                         'file_test_success': f,
                                          }, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Test signature OK', str(response.content))
         self.assertEqual(len(SignatureSuricata.get_all()), 3)
         response = self.client.post('/admin/suricata/signaturesuricata/',
-                                    {'action': 'test_signatures',
+                                    {'action': 'test',
                                      '_selected_action': SignatureSuricata.get_by_sid(667).id},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Test signatures OK', str(response.content))
+        self.assertIn('Test OK', str(response.content))
         with open(settings.BASE_DIR + '/suricata/tests/data/test.pcap', 'rb') as f:
             response = self.client.post('/admin/suricata/signaturesuricata/add/',
                                         {'rev': '1',
@@ -139,7 +139,7 @@ class ViewsSignatureAdminTest(TestCase):
                                          'sid': '668',
                                          'classtype': '29',
                                          'msg': 'Test Pcap match',
-                                         'pcap_success': f,
+                                         'file_test_success': f,
                                          }, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Test signature failed !', str(response.content))

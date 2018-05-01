@@ -6,11 +6,14 @@ from django_celery_beat.models import PeriodicTask
 
 
 def create_download_from_http_task(source):
-    PeriodicTask.objects.create(crontab=source.scheduled_rules_deployment_crontab,
-                                name=str(source.uri) + "_download_from_http",
-                                task='suricata.tasks.download_from_http',
-                                args=json.dumps([source.uri, ])
-                                )
+    try:
+        PeriodicTask.objects.get(name=str(source.uri) + "_download_from_http")
+    except PeriodicTask.DoesNotExist:
+        PeriodicTask.objects.create(crontab=source.scheduled_rules_deployment_crontab,
+                                    name=str(source.uri) + "_download_from_http",
+                                    task='suricata.tasks.download_from_http',
+                                    args=json.dumps([source.uri, ])
+                                    )
 
 
 def convert_conf(configuration):

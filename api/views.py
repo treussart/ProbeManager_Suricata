@@ -1,15 +1,13 @@
 import logging
 
-from django_celery_beat.models import PeriodicTask
 from rest_framework import mixins
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
 
-from core.utils import create_deploy_rules_task, create_check_task
 from suricata.api import serializers
 from suricata.models import Suricata, Configuration, SignatureSuricata, ScriptSuricata, SourceSuricata, \
-    RuleSetSuricata, BlackList, IPReputation, CategoryReputation, Md5, ClassType
+    RuleSetSuricata, BlackList, IPReputation, CategoryReputation, ClassType
 
 logger = logging.getLogger(__name__)
 
@@ -27,38 +25,10 @@ class ConfigurationViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ConfigurationSerializer
 
 
-class SuricataViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class SuricataViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin,
+                      mixins.CreateModelMixin, viewsets.GenericViewSet):
     queryset = Suricata.objects.all()
     serializer_class = serializers.SuricataSerializer
-
-    def create(self, request):
-        serializer = serializers.SuricataSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            suricata = Suricata.get_by_name(request.data['name'])
-            logger.debug("create scheduled for " + str(suricata))
-            create_deploy_rules_task(suricata)
-            create_check_task(suricata)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, pk=None):
-        suricata = self.get_object()
-        try:
-            periodic_task = PeriodicTask.objects.get(
-                name=suricata.name + "_deploy_rules_" + str(suricata.scheduled_rules_deployment_crontab))
-            periodic_task.delete()
-            logger.debug(str(periodic_task) + " deleted")
-        except PeriodicTask.DoesNotExist:  # pragma: no cover
-            pass
-        try:
-            periodic_task = PeriodicTask.objects.get(name=suricata.name + "_check_task")
-            periodic_task.delete()
-            logger.debug(str(periodic_task) + " deleted")
-        except PeriodicTask.DoesNotExist:  # pragma: no cover
-            pass
-        suricata.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def update(self, request, pk=None):
         suricata = self.get_object()
@@ -97,32 +67,9 @@ class RuleSetSuricataViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.RuleSetSuricataSerializer
 
 
-class BlackListViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class BlackListViewSet(viewsets.ModelViewSet):
     queryset = BlackList.objects.all()
     serializer_class = serializers.BlackListSerializer
-
-    def create(self, request):
-        serializer = serializers.BlackListSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            blacklist = BlackList.get_by_value(request.data['value'])
-            logger.debug("create blacklist for " + str(blacklist))
-            blacklist.create_blacklist()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, pk=None):
-        blacklist = self.get_object()
-        if blacklist.type == "MD5":
-            if Md5.get_by_value(blacklist.value):
-                md5_suricata = Md5.get_by_value(blacklist.value)
-                md5_suricata.delete()
-        else:
-            if SignatureSuricata.get_by_sid(blacklist.sid):
-                signature = SignatureSuricata.get_by_sid(blacklist.sid)
-                signature.delete()
-        blacklist.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class IPReputationViewSet(viewsets.ModelViewSet):

@@ -14,6 +14,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from django_celery_beat.models import PeriodicTask
 from pymisp import PyMISP
 
 from core.models import Configuration as CoreConfiguration
@@ -21,7 +22,7 @@ from core.models import Probe, ProbeConfiguration
 from core.modelsmixins import CommonMixin
 from core.notifications import send_notification
 from core.ssh import execute, execute_copy
-from core.utils import process_cmd
+from core.utils import process_cmd, create_deploy_rules_task, create_check_task
 from rules.models import RuleSet, Rule, Source
 from .exceptions import RuleNotFoundParam
 
@@ -208,7 +209,6 @@ class SignatureSuricata(Rule):
                                         "href='http://doc.emergingthreats.net/bin/view/Main/SidAllocation'>help</a>")
     classtype = models.ForeignKey(ClassType, on_delete=models.CASCADE)
     msg = models.CharField(max_length=1000)
-    pcap_success = models.FileField(name='pcap_success', upload_to='pcap_success', blank=True)
 
     def __str__(self):
         return str(self.sid) + " : " + str(self.msg)
@@ -336,7 +336,7 @@ logging:
                    '-l', tmp_dir,
                    '-S', rule_file,
                    '-c', conf_file,
-                   '-r', settings.BASE_DIR + "/" + self.pcap_success.name,
+                   '-r', settings.BASE_DIR + "/" + self.file_test_success.name,
                    '--set', 'outputs.0.fast.enabled=yes',
                    '--set', 'classification-file=' + settings.BASE_DIR + '/suricata/tests/data/classification.config',
                    '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
@@ -364,7 +364,7 @@ logging:
         if not response['status']:
             test = False
             errors.append(str(self) + " : " + str(response['errors']))
-        if self.pcap_success:
+        if self.file_test_success:
             response_pcap = self.test_pcap()
             if not response_pcap['status']:
                 test = False
@@ -424,6 +424,38 @@ class ScriptSuricata(Rule):
                 ruleset.save()
         return rule_created, rule_updated
 
+    def test(self):
+        with self.get_tmp_dir("test_script") as tmp_dir:
+            rule_file = tmp_dir + str(self.id) + ".rules"
+            with open(rule_file, 'w', encoding='utf_8') as f:
+                f.write(self.rule_full)
+            cmd = [settings.SURICATA_BINARY, '-T',
+                   '-l', tmp_dir,
+                   '-S', rule_file,
+                   '-c', settings.SURICATA_CONFIG
+                   ]
+            return process_cmd(cmd, tmp_dir)
+
+    def test_pcap(self):  # TODO
+        return {'status': True}
+
+    def test_all(self):
+        test = True
+        errors = list()
+        response = self.test()
+        if not response['status']:
+            test = False
+            errors.append(str(self) + " : " + str(response['errors']))
+        if self.file_test_success:
+            response_pcap = self.test_pcap()
+            if not response_pcap['status']:
+                test = False
+                errors.append(str(self) + " : " + str(response_pcap['errors']))
+        if test:
+            return {'status': True}
+        else:
+            return {'status': False, 'errors': errors}
+
 
 class RuleSetSuricata(RuleSet):
     """
@@ -460,6 +492,24 @@ class SourceSuricata(Source):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.type = self.__class__.__name__
+
+    def delete(self, **kwargs):
+        try:
+            periodic_task = PeriodicTask.objects.get(name=self.uri + '_download_from_http_task')
+            periodic_task.delete()
+            logger.debug(str(periodic_task) + " deleted")
+        except PeriodicTask.DoesNotExist:
+            pass
+        try:
+            for ruleset in self.rulesets.all():
+                for probe in ruleset.suricata_set.all():
+                    periodic_task = PeriodicTask.objects.get(
+                        name__contains=probe.name + "_" + self.uri + "_deploy_rules_")
+                    periodic_task.delete()
+                    logger.debug(str(periodic_task) + " deleted")
+        except PeriodicTask.DoesNotExist:
+            pass
+        return super().delete(**kwargs)
 
     @staticmethod
     def find_rules(file, file_name, rulesets):
@@ -568,6 +618,27 @@ class Suricata(Probe):
     def __str__(self):
         return self.name + "  " + self.description
 
+    def save(self, **kwargs):
+        super().save(**kwargs)
+        create_deploy_rules_task(self)
+        create_check_task(self)
+
+    def delete(self, **kwargs):
+        try:
+            periodic_task = PeriodicTask.objects.get(
+                name=self.name + "_deploy_rules_" + str(self.scheduled_rules_deployment_crontab))
+            periodic_task.delete()
+            logger.debug(str(periodic_task) + " deleted")
+        except PeriodicTask.DoesNotExist:  # pragma: no cover
+            pass
+        try:
+            periodic_task = PeriodicTask.objects.get(name=self.name + "_check_task")
+            periodic_task.delete()
+            logger.debug(str(periodic_task) + " deleted")
+        except PeriodicTask.DoesNotExist:  # pragma: no cover
+            pass
+        return super().delete(**kwargs)
+
     def install(self, version=settings.SURICATA_VERSION):
         if self.server.os.name == 'debian':
             install_script = """
@@ -659,7 +730,7 @@ class Suricata(Probe):
         errors = list()
         for ruleset in self.rulesets.all():
             for signature in ruleset.signatures.all():
-                if signature.pcap_success:
+                if signature.file_test_success:
                     response_pcap_test = signature.test_pcap()
                     if not response_pcap_test['status']:
                         test = False
@@ -788,14 +859,6 @@ class Suricata(Probe):
             return {'status': deploy, 'errors': errors}
 
 
-def increment_sid():
-    last_sid = BlackList.objects.all().order_by('id').last()
-    if not last_sid:
-        return 41000000
-    else:
-        return last_sid.sid + 1
-
-
 class Md5(models.Model):
     value = models.CharField(max_length=600, unique=True, null=False, blank=False)
     signature = models.ForeignKey(SignatureSuricata, editable=False, on_delete=models.CASCADE)
@@ -814,6 +877,15 @@ class Md5(models.Model):
         return obj
 
 
+def increment_sid():
+    DEFAULT_LAST_ID = 41000000
+    last_sid = BlackList.objects.all().order_by('id').last()
+    if not last_sid:
+        return DEFAULT_LAST_ID
+    else:
+        return last_sid.sid + 1
+
+
 class BlackList(CommonMixin, models.Model):
     """
     Stores an instance of a pattern in blacklist.
@@ -830,7 +902,22 @@ class BlackList(CommonMixin, models.Model):
     rulesets = models.ManyToManyField(RuleSetSuricata, blank=True)
 
     def __str__(self):
-        return self.type + "  " + self.value
+        return str(self.type) + "  " + str(self.value)
+
+    def save(self, **kwargs):
+        super().save(**kwargs)
+        self.create_blacklist()
+
+    def delete(self, **kwargs):
+        if self.type == "MD5":
+            if Md5.get_by_value(self.value):
+                md5_suricata = Md5.get_by_value(self.value)
+                md5_suricata.delete()
+        else:
+            if SignatureSuricata.get_by_sid(self.sid):
+                signature = SignatureSuricata.get_by_sid(self.sid)
+                signature.delete()
+        return super().delete(**kwargs)
 
     @classmethod
     def get_by_value(cls, value):
@@ -849,6 +936,9 @@ class BlackList(CommonMixin, models.Model):
                                          comment=self.comment,
                                          sid=self.sid
                                          )
+        if SignatureSuricata.get_by_sid(self.sid):
+            signature = SignatureSuricata.get_by_sid(self.sid)
+            signature.delete()
         if self.type == "MD5":
             signature = SignatureSuricata(sid=self.sid,
                                           classtype=ClassType.get_by_name("misc-attack"),

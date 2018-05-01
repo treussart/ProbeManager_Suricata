@@ -10,21 +10,21 @@ from django.contrib import messages
 from django.contrib.admin.helpers import ActionForm
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
-from django_celery_beat.models import PeriodicTask, CrontabSchedule
+from django_celery_beat.models import CrontabSchedule
 
 from core.models import Configuration as CoreConfiguration
-from core.utils import create_deploy_rules_task, add_1_hour, create_check_task
+from core.utils import create_deploy_rules_task, add_1_hour
 from core.utils import generic_import_csv
 from .forms import SuricataChangeForm
 from .models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, Configuration, \
-    SourceSuricata, BlackList, Md5, IPReputation, CategoryReputation, ClassType
+    SourceSuricata, BlackList, IPReputation, CategoryReputation, ClassType
 from .tasks import download_from_http, download_from_misp
 from .utils import create_download_from_http_task, create_conf, convert_conf
 
 logger = logging.getLogger(__name__)
 
 
-class MarkedRuleMixin(admin.ModelAdmin):
+class RuleMixin(admin.ModelAdmin):
     def make_enabled(self, request, queryset):
         rows_updated = queryset.update(enabled=True)
         if rows_updated == 1:
@@ -44,9 +44,31 @@ class MarkedRuleMixin(admin.ModelAdmin):
     make_enabled.short_description = "Mark rule as enabled"
     make_disabled.short_description = "Mark rule as disabled"
 
+    class UpdateActionForm(ActionForm):
+        ruleset = forms.ModelChoiceField(queryset=RuleSetSuricata.get_all(), empty_label="Select a ruleset",
+                                         required=False)
+
+    class Media:
+        js = (
+            'suricata/js/add-link-reference.js',
+            'suricata/js/mask-ruleset-field.js',
+        )
+
+    def test(self, request, obj):
+        test = True
+        errors = list()
+        for rule in obj:
+            response = rule.test_all()
+            if not response['status']:
+                test = False
+                errors.append(str(rule) + " : " + str(response['errors']))
+        if test:
+            messages.add_message(request, messages.SUCCESS, "Test OK")
+        else:
+            messages.add_message(request, messages.ERROR, "Test failed ! " + str(errors))
+
 
 class RuleSetSuricataAdmin(admin.ModelAdmin):
-
     def test_signatures(self, request, obj):
         test = True
         errors = list()
@@ -70,44 +92,12 @@ class SuricataAdmin(admin.ModelAdmin):
             'suricata/js/mask-crontab.js',
         )
 
-    def delete(self, request, obj, probe=None):
-        if probe is None:
-            probe = obj
-        try:
-            periodic_task = PeriodicTask.objects.get(
-                name=probe.name + "_deploy_rules_" + str(probe.scheduled_rules_deployment_crontab))
-            periodic_task.delete()
-            logger.debug(str(periodic_task) + " deleted")
-        except PeriodicTask.DoesNotExist:  # pragma: no cover
-            pass
-        try:
-            periodic_task = PeriodicTask.objects.get(name=probe.name + "_check_task")
-            periodic_task.delete()
-            logger.debug(str(periodic_task) + " deleted")
-        except PeriodicTask.DoesNotExist:  # pragma: no cover
-            pass
-        messages.add_message(request, messages.SUCCESS, "Suricata instance " + probe.name + " deleted")
-        super().delete_model(request, obj)
-
     def get_form(self, request, obj=None, **kwargs):
         """A ModelAdmin that uses a different form class when adding an object."""
         if obj is None:
             return super(SuricataAdmin, self).get_form(request, obj, **kwargs)
         else:
             return SuricataChangeForm
-
-    def save_model(self, request, obj, form, change):
-        logger.debug("create scheduled for " + str(obj))
-        create_deploy_rules_task(obj)
-        create_check_task(obj)
-        super().save_model(request, obj, form, change)
-
-    def delete_model(self, request, obj):
-        self.delete(request, obj)
-
-    def delete_selected(self, request, obj):
-        for probe in obj:
-            self.delete(request, obj, probe=probe)
 
     def test_signatures(self, request, obj):
         test = True
@@ -122,7 +112,7 @@ class SuricataAdmin(admin.ModelAdmin):
         else:
             messages.add_message(request, messages.ERROR, "Test signatures failed ! " + str(errors))
 
-    actions = [delete_selected, test_signatures]
+    actions = [test_signatures]
 
 
 class ConfigurationAdmin(admin.ModelAdmin):
@@ -159,16 +149,37 @@ class ConfigurationAdmin(admin.ModelAdmin):
     actions = [test_configurations]
 
 
-class ScriptSuricataAdmin(MarkedRuleMixin, admin.ModelAdmin):
+class ScriptSuricataAdmin(RuleMixin, admin.ModelAdmin):
+    def add_ruleset(self, request, queryset):
+        ruleset_id = request.POST['ruleset']
+        if ruleset_id:
+            ruleset = RuleSetSuricata.get_by_id(ruleset_id)
+            for signature in queryset:
+                ruleset.scripts.add(signature)
+            ruleset.save()
+            messages.add_message(request, messages.SUCCESS, "Added to Ruleset "
+                                 + ruleset.name + " successfully !")
 
+    def remove_ruleset(self, request, queryset):
+        ruleset_id = request.POST['ruleset']
+        if ruleset_id:
+            ruleset = RuleSetSuricata.get_by_id(ruleset_id)
+            for signature in queryset:
+                ruleset.scripts.remove(signature)
+            ruleset.save()
+            messages.add_message(request, messages.SUCCESS, "Removed from Ruleset "
+                                 + ruleset.name + " successfully !")
+
+    add_ruleset.short_description = 'Add ruleset'
+    remove_ruleset.short_description = 'Remove ruleset'
     search_fields = ('rule_full',)
     list_filter = ('enabled', 'created_date', 'updated_date', 'rulesetsuricata__name')
     list_display = ('id', 'name', 'enabled')
-    actions = [MarkedRuleMixin.make_enabled, MarkedRuleMixin.make_disabled]
+    action_form = RuleMixin.UpdateActionForm
+    actions = [RuleMixin.make_enabled, RuleMixin.make_disabled, add_ruleset, remove_ruleset]
 
 
-class SignatureSuricataAdmin(MarkedRuleMixin, admin.ModelAdmin):
-
+class SignatureSuricataAdmin(RuleMixin, admin.ModelAdmin):
     def add_ruleset(self, request, queryset):
         ruleset_id = request.POST['ruleset']
         if ruleset_id:
@@ -176,8 +187,8 @@ class SignatureSuricataAdmin(MarkedRuleMixin, admin.ModelAdmin):
             for signature in queryset:
                 ruleset.signatures.add(signature)
             ruleset.save()
-
-    add_ruleset.short_description = 'Add ruleset'
+            messages.add_message(request, messages.SUCCESS, "Added to Ruleset "
+                                 + ruleset.name + " successfully !")
 
     def remove_ruleset(self, request, queryset):
         ruleset_id = request.POST['ruleset']
@@ -186,32 +197,18 @@ class SignatureSuricataAdmin(MarkedRuleMixin, admin.ModelAdmin):
             for signature in queryset:
                 ruleset.signatures.remove(signature)
             ruleset.save()
+            messages.add_message(request, messages.SUCCESS, "Removed from Ruleset "
+                                 + ruleset.name + " successfully !")
 
+    add_ruleset.short_description = 'Add ruleset'
     remove_ruleset.short_description = 'Remove ruleset'
-
-    class UpdateActionForm(ActionForm):
-        ruleset = forms.ModelChoiceField(queryset=RuleSetSuricata.get_all(), empty_label="Select a ruleset",
-                                         required=False)
-
-    def test_signatures(self, request, obj):
-        test = True
-        errors = list()
-        for signature in obj:
-            response = signature.test_all()
-            if not response['status']:
-                test = False
-                errors.append(str(signature) + " : " + str(response['errors']))
-        if test:
-            messages.add_message(request, messages.SUCCESS, "Test signatures OK")
-        else:
-            messages.add_message(request, messages.ERROR, "Test signatures failed ! " + str(errors))
-
+    RuleMixin.test.short_description = "Test Signature"
     search_fields = ('rule_full',)
     list_filter = ('enabled', 'created_date', 'updated_date', 'rulesetsuricata__name')
     list_display = ('sid', 'msg', 'enabled')
-    action_form = UpdateActionForm
-    actions = [MarkedRuleMixin.make_enabled, MarkedRuleMixin.make_disabled,
-               add_ruleset, remove_ruleset, test_signatures]
+    action_form = RuleMixin.UpdateActionForm
+    actions = [RuleMixin.make_enabled, RuleMixin.make_disabled,
+               add_ruleset, remove_ruleset, RuleMixin.test]
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
@@ -221,43 +218,8 @@ class SignatureSuricataAdmin(MarkedRuleMixin, admin.ModelAdmin):
         else:
             messages.add_message(request, messages.ERROR, "Test signature failed ! " + str(response['errors']))
 
-    class Media:
-        js = (
-            'suricata/js/add-link-reference.js',
-            'suricata/js/mask-ruleset-field.js',
-        )
-
 
 class SourceSuricataAdmin(admin.ModelAdmin):
-
-    def get_actions(self, request):
-        actions = super(SourceSuricataAdmin, self).get_actions(request)
-        if 'delete_selected' in actions:
-            del actions['delete_selected']
-        return actions
-
-    def delete_source(self, request, obj):
-        for source in obj:
-            try:
-                periodic_task = PeriodicTask.objects.get(name=source.uri + '_download_from_http_task')
-                periodic_task.delete()
-                logger.debug(str(periodic_task) + " deleted")
-            except PeriodicTask.DoesNotExist:
-                pass
-            try:
-                for ruleset in source.rulesets.all():
-                    for probe in ruleset.suricata_set.all():
-                        periodic_task = PeriodicTask.objects.get(
-                            name__contains=probe.name + "_" + source.uri + "_deploy_rules_")
-                        periodic_task.delete()
-                        logger.debug(str(periodic_task) + " deleted")
-            except PeriodicTask.DoesNotExist:
-                pass
-            source.delete()
-            logger.debug(str(source) + " deleted")
-            messages.add_message(request, messages.SUCCESS, str(source) + " deleted")
-
-    actions = [delete_source]
     list_display = ('__str__',)
     list_display_links = None
 
@@ -345,27 +307,8 @@ class SourceSuricataAdmin(admin.ModelAdmin):
 
 
 class BlackListAdmin(admin.ModelAdmin):
-
-    def save_model(self, request, obj, form, change):
-        obj.save()
-        obj.create_blacklist()
-
-    def delete_selected(self, request, obj):
-        for blacklist in obj:
-            if blacklist.type == "MD5":
-                if Md5.get_by_value(blacklist.value):
-                    md5_suricata = Md5.get_by_value(blacklist.value)
-                    md5_suricata.delete()
-            else:
-                if SignatureSuricata.get_by_sid(blacklist.sid):
-                    signature = SignatureSuricata.get_by_sid(blacklist.sid)
-                    signature.delete()
-        super().delete_model(request, obj)
-        messages.add_message(request, messages.SUCCESS, "Blacklists deleted")
-
     list_display = ('__str__',)
     list_display_links = None
-    actions = [delete_selected]
 
 
 class IPReputationAdmin(admin.ModelAdmin):

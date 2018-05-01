@@ -83,7 +83,14 @@ class ViewsSuricataAdminTest(TestCase):
         response = self.client.post('/admin/suricata/suricata/', {'action': 'delete_selected', '_selected_action': '2'},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Suricata instance test deleted", str(response.content))
+        self.assertIn('Are you sure you want to delete the selected ', str(response.content))
+        response = self.client.post('/admin/suricata/suricata/',
+                                    {'action': 'delete_selected',
+                                     '_selected_action': '2',
+                                     'post': 'yes'},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Successfully deleted 1 ', str(response.content))
         self.assertEqual(len(Suricata.get_all()), 1)
 
         response = self.client.post('/admin/suricata/suricata/add/', {'name': 'test',
@@ -105,5 +112,5 @@ class ViewsSuricataAdminTest(TestCase):
         response = self.client.post('/admin/suricata/suricata/' + str(Suricata.get_by_name('test').id) + '/delete/',
                                     {'post': 'yes'}, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Suricata instance test deleted", str(response.content))
+        self.assertIn("was deleted successfully.", str(response.content))
         self.assertEqual(len(Suricata.get_all()), 1)

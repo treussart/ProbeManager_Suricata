@@ -163,11 +163,18 @@ class ViewsSourceAdminTest(TestCase):
     def test_source_delete(self):
         self.assertEqual(len(SourceSuricata.get_all()), 2)
         for source in SourceSuricata.get_all():
-            response = self.client.post('/admin/suricata/sourcesuricata/', {'action': 'delete_source',
+            response = self.client.post('/admin/suricata/sourcesuricata/', {'action': 'delete_selected',
                                                                             '_selected_action': source.id},
                                         follow=True)
             self.assertEqual(response.status_code, 200)
-            self.assertIn('deleted', str(response.content))
+            self.assertIn('Are you sure you want to delete the selected ', str(response.content))
+            response = self.client.post('/admin/suricata/sourcesuricata/',
+                                        {'action': 'delete_selected',
+                                         '_selected_action': source.id,
+                                         'post': 'yes'},
+                                        follow=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn('Successfully deleted 1 ', str(response.content))
         self.assertEqual(len(SourceSuricata.get_all()), 0)
         response = self.client.post('/admin/suricata/sourcesuricata/add/',
                                     {'method': MethodUpload.get_by_name("URL HTTP").id,
@@ -182,11 +189,18 @@ class ViewsSourceAdminTest(TestCase):
         self.assertIn('Upload source in progress.', str(response.content))
         self.assertEqual(len(SourceSuricata.get_all()), 1)
         response = self.client.post('/admin/suricata/sourcesuricata/',
-                                    {'action': 'delete_source',
+                                    {'action': 'delete_selected',
                                      '_selected_action': SourceSuricata.get_all()[0].id},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Https://sslbl.abuse.ch/blacklist/sslblacklist.rules deleted', str(response.content))
+        self.assertIn('Are you sure you want to delete the selected ', str(response.content))
+        response = self.client.post('/admin/suricata/sourcesuricata/',
+                                    {'action': 'delete_selected',
+                                     '_selected_action': SourceSuricata.get_all()[0].id,
+                                     'post': 'yes'},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Successfully deleted 1 ', str(response.content))
         self.assertEqual(len(SourceSuricata.get_all()), 0)
 
     def test_raise_not_found_param(self):

@@ -38,9 +38,9 @@ Features
 * Add, Delete, Update scripts and signatures.
 * Tests signatures compliance.
 * Tests signatures if generates alert via Pcap.
-* Adding rules via HTTP or via upload file.
-* Scheduling rules update via HTTP (EmergingThreat ...)
-* Grouping rules into groups and assign this to probes.
+* Add rules via HTTP or via upload file.
+* Schedule rules update via HTTP (EmergingThreat ...)
+* Group rules into groups and assign this to probes.
 * Possibility to add into blacklist an IP, Domain or MD5.
 * Implements IP reputation.
 * Modify and create ClassType.
@@ -90,7 +90,7 @@ Simple
   :align: center
   :width: 70%
 
-* Under 'Conf advanced', there is the most important settings of Suricata, for simplify the configuration. The application will generate the YAML file.
+* Under 'Conf advanced': there are the most important settings of Suricata to simplify the configuration. This application will generate the YAML file.
 
 Advanced
 ^^^^^^^^
@@ -99,7 +99,7 @@ Advanced
   :align: center
   :width: 90%
 
-* 'Conf advanced', Allows to edit directly the YAML file.
+* 'Conf advanced': Allows to edit directly the YAML file.
 
 Page to add a value in Blacklist :
 ----------------------------------
@@ -108,9 +108,9 @@ Page to add a value in Blacklist :
   :align: center
   :width: 80%
 
-* Type: (IP, MD5, HOST). For IP and HOST, a signature is created automatically, for `MD5 <http://suricata.readthedocs.io/en/latest/rules/file-keywords.html?highlight=MD5#filemd5>`_, it store a text file with a single md5 per line.
+* Type: (IP, MD5, HOST). For IP and HOST, a signature is created automatically. For `MD5 <http://suricata.readthedocs.io/en/latest/rules/file-keywords.html?highlight=MD5#filemd5>`_, a text file is stored with a single md5 per line.
 * Value: The value for this type.
-* Comment: For to keep track information.
+* Comment: To keep track of information.
 * Rulesets: Choose the sets of rules that will contain this blacklist.
 
 Page to add a reputation on an IP :
@@ -123,7 +123,7 @@ Allows you to use the `IP Reputation of Suricata <http://suricata.readthedocs.io
   :width: 55%
 
 * Ip: Specify an IP address.
-* Category: Specify an Category (short name, and long description).
+* Category: Specify a Category (short name and long description).
 * Reputation score: The reputation score is the confidence that this IP is in the specified category, represented by a number between 1 and 127 (0 means no data).
 
 Page to add a value in Classtype :
@@ -136,7 +136,7 @@ Allows to modify and create new `Classtype <http://suricata.readthedocs.io/en/la
   :width: 60%
 
 * Name: (IP, MD5, HOST). For IP and HOST, a signature is created automatically, for `MD5 <http://suricata.readthedocs.io/en/latest/rules/file-keywords.html?highlight=MD5#filemd5>`_, it store a text file with a single md5 per line.
-* Description: A description for the classtype.
+* Description: A description for this classtype.
 * Security Level: A priority of 1 (high) is the most severe and 4 (very low) is the least severe.
 
 Page of an instance :
@@ -146,9 +146,9 @@ Page of an instance :
   :align: center
   :width: 80%
 
-* 'Uptime', indicate the time elapsed since the last time the application was started.
-* 'Refresh Instance Status', is a button to know the status of the application. (running or not)
-* 'Update' instance, you need to edit the conf file to change the version number you want.
-* 'Deploy configuration', copy configuration files to the remote server, and reload the Suricata instance.
-* 'Deploy rules', copy rules (signatures and scripts) files to the remote server, and reload the Suricata instance.
-* 'Deploy reputation list', copy the `IP and Category reputation <http://suricata.readthedocs.io/en/latest/reputation/index.html>`_ files to the remote server. The probe is not reloaded, because if categories change, Suricata should be restarted. And Restarting can result in packet loss, which is why it is up to the user to intentionally restart.
+* 'Uptime': indicate the time elapsed since the last time the application was started.
+* 'Refresh Instance Status': is a button to know the status of the application (running or not).
+* 'Update instance': you need to edit the configuration file to change the version number you want.
+* 'Deploy configuration': copy configuration files to the remote server, and reload the Suricata instance.
+* 'Deploy rules': copy rule (signatures and scripts) files to the remote server, and reload the Suricata instance.
+* 'Deploy reputation list': copy the `IP and Category reputation <http://suricata.readthedocs.io/en/latest/reputation/index.html>`_ files to the remote server. The probe is not reloaded because if categories change, Suricata should be restarted. And Restarting can result in packet loss, which is why it is up to the user to intentionally restart.

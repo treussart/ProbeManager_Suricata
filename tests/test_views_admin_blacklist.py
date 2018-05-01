@@ -90,5 +90,14 @@ class ViewsBlacklistAdminTest(TestCase):
                                      get_by_value('e41c0631f6f2c138a417b59bcb880fce').id},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Blacklists deleted', str(response.content))
+        self.assertIn('Are you sure you want to delete the selected ', str(response.content))
+        response = self.client.post('/admin/suricata/blacklist/',
+                                    {'action': 'delete_selected',
+                                     '_selected_action': BlackList.
+                                     get_by_value('e41c0631f6f2c138a417b59bcb880fce').id,
+                                     'post': 'yes'},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Successfully deleted 1 ', str(response.content))
+
         self.assertEqual(len(BlackList.get_all()), 0)

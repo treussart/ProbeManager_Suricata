@@ -823,20 +823,19 @@ class Md5(models.Model):
         return obj
 
 
+def increment_sid():
+    DEFAULT_LAST_ID = 41000000
+    last_sid = BlackList.objects.all().order_by('id').last()
+    if not last_sid:
+        return DEFAULT_LAST_ID
+    else:
+        return last_sid.sid + 1
+
+
 class BlackList(CommonMixin, models.Model):
     """
     Stores an instance of a pattern in blacklist.
     """
-    DEFAULT_LAST_ID = 41000000
-
-    @classmethod
-    def increment_sid(cls):
-        last_sid = cls.objects.all().order_by('id').last()
-        if not last_sid:
-            return cls.DEFAULT_LAST_ID
-        else:
-            return last_sid.sid + 1
-
     TYPE_CHOICES = (
         ('IP', 'IP'),
         ('MD5', 'MD5'),

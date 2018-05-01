@@ -14,6 +14,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from django_celery_beat.models import PeriodicTask
 from pymisp import PyMISP
 
 from core.models import Configuration as CoreConfiguration
@@ -568,6 +569,22 @@ class Suricata(Probe):
     def __str__(self):
         return self.name + "  " + self.description
 
+    def delete(self, **kwargs):
+        try:
+            periodic_task = PeriodicTask.objects.get(
+                name=self.name + "_deploy_rules_" + str(self.scheduled_rules_deployment_crontab))
+            periodic_task.delete()
+            logger.debug(str(periodic_task) + " deleted")
+        except PeriodicTask.DoesNotExist:  # pragma: no cover
+            pass
+        try:
+            periodic_task = PeriodicTask.objects.get(name=self.name + "_check_task")
+            periodic_task.delete()
+            logger.debug(str(periodic_task) + " deleted")
+        except PeriodicTask.DoesNotExist:  # pragma: no cover
+            pass
+        return super().delete(**kwargs)
+
     def install(self, version=settings.SURICATA_VERSION):
         if self.server.os.name == 'debian':
             install_script = """
@@ -788,14 +805,6 @@ class Suricata(Probe):
             return {'status': deploy, 'errors': errors}
 
 
-def increment_sid():
-    last_sid = BlackList.objects.all().order_by('id').last()
-    if not last_sid:
-        return 41000000
-    else:
-        return last_sid.sid + 1
-
-
 class Md5(models.Model):
     value = models.CharField(max_length=600, unique=True, null=False, blank=False)
     signature = models.ForeignKey(SignatureSuricata, editable=False, on_delete=models.CASCADE)
@@ -818,6 +827,16 @@ class BlackList(CommonMixin, models.Model):
     """
     Stores an instance of a pattern in blacklist.
     """
+    DEFAULT_LAST_ID = 41000000
+
+    @classmethod
+    def increment_sid(cls):
+        last_sid = cls.objects.all().order_by('id').last()
+        if not last_sid:
+            return cls.DEFAULT_LAST_ID
+        else:
+            return last_sid.sid + 1
+
     TYPE_CHOICES = (
         ('IP', 'IP'),
         ('MD5', 'MD5'),
@@ -830,7 +849,22 @@ class BlackList(CommonMixin, models.Model):
     rulesets = models.ManyToManyField(RuleSetSuricata, blank=True)
 
     def __str__(self):
-        return self.type + "  " + self.value
+        return str(self.type) + "  " + str(self.value)
+
+    def save(self, **kwargs):
+        super().save(**kwargs)
+        self.create_blacklist()
+
+    def delete(self, **kwargs):
+        if self.type == "MD5":
+            if Md5.get_by_value(self.value):
+                md5_suricata = Md5.get_by_value(self.value)
+                md5_suricata.delete()
+        else:
+            if SignatureSuricata.get_by_sid(self.sid):
+                signature = SignatureSuricata.get_by_sid(self.sid)
+                signature.delete()
+        return super().delete(**kwargs)
 
     @classmethod
     def get_by_value(cls, value):
@@ -849,6 +883,9 @@ class BlackList(CommonMixin, models.Model):
                                          comment=self.comment,
                                          sid=self.sid
                                          )
+        if SignatureSuricata.get_by_sid(self.sid):
+            signature = SignatureSuricata.get_by_sid(self.sid)
+            signature.delete()
         if self.type == "MD5":
             signature = SignatureSuricata(sid=self.sid,
                                           classtype=ClassType.get_by_name("misc-attack"),

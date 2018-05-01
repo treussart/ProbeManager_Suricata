@@ -17,7 +17,7 @@ from core.utils import create_deploy_rules_task, add_1_hour, create_check_task
 from core.utils import generic_import_csv
 from .forms import SuricataChangeForm
 from .models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, Configuration, \
-    SourceSuricata, BlackList, Md5, IPReputation, CategoryReputation, ClassType
+    SourceSuricata, BlackList, IPReputation, CategoryReputation, ClassType
 from .tasks import download_from_http, download_from_misp
 from .utils import create_download_from_http_task, create_conf, convert_conf
 
@@ -70,25 +70,6 @@ class SuricataAdmin(admin.ModelAdmin):
             'suricata/js/mask-crontab.js',
         )
 
-    def delete(self, request, obj, probe=None):
-        if probe is None:
-            probe = obj
-        try:
-            periodic_task = PeriodicTask.objects.get(
-                name=probe.name + "_deploy_rules_" + str(probe.scheduled_rules_deployment_crontab))
-            periodic_task.delete()
-            logger.debug(str(periodic_task) + " deleted")
-        except PeriodicTask.DoesNotExist:  # pragma: no cover
-            pass
-        try:
-            periodic_task = PeriodicTask.objects.get(name=probe.name + "_check_task")
-            periodic_task.delete()
-            logger.debug(str(periodic_task) + " deleted")
-        except PeriodicTask.DoesNotExist:  # pragma: no cover
-            pass
-        messages.add_message(request, messages.SUCCESS, "Suricata instance " + probe.name + " deleted")
-        super().delete_model(request, obj)
-
     def get_form(self, request, obj=None, **kwargs):
         """A ModelAdmin that uses a different form class when adding an object."""
         if obj is None:
@@ -101,13 +82,6 @@ class SuricataAdmin(admin.ModelAdmin):
         create_deploy_rules_task(obj)
         create_check_task(obj)
         super().save_model(request, obj, form, change)
-
-    def delete_model(self, request, obj):
-        self.delete(request, obj)
-
-    def delete_selected(self, request, obj):
-        for probe in obj:
-            self.delete(request, obj, probe=probe)
 
     def test_signatures(self, request, obj):
         test = True
@@ -122,7 +96,7 @@ class SuricataAdmin(admin.ModelAdmin):
         else:
             messages.add_message(request, messages.ERROR, "Test signatures failed ! " + str(errors))
 
-    actions = [delete_selected, test_signatures]
+    actions = [test_signatures]
 
 
 class ConfigurationAdmin(admin.ModelAdmin):
@@ -345,27 +319,8 @@ class SourceSuricataAdmin(admin.ModelAdmin):
 
 
 class BlackListAdmin(admin.ModelAdmin):
-
-    def save_model(self, request, obj, form, change):
-        obj.save()
-        obj.create_blacklist()
-
-    def delete_selected(self, request, obj):
-        for blacklist in obj:
-            if blacklist.type == "MD5":
-                if Md5.get_by_value(blacklist.value):
-                    md5_suricata = Md5.get_by_value(blacklist.value)
-                    md5_suricata.delete()
-            else:
-                if SignatureSuricata.get_by_sid(blacklist.sid):
-                    signature = SignatureSuricata.get_by_sid(blacklist.sid)
-                    signature.delete()
-        super().delete_model(request, obj)
-        messages.add_message(request, messages.SUCCESS, "Blacklists deleted")
-
     list_display = ('__str__',)
     list_display_links = None
-    actions = [delete_selected]
 
 
 class IPReputationAdmin(admin.ModelAdmin):

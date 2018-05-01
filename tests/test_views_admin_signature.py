@@ -119,7 +119,7 @@ class ViewsSignatureAdminTest(TestCase):
                                          'sid': '667',
                                          'classtype': '29',
                                          'msg': 'Test Pcap match',
-                                         'pcap_success': f,
+                                         'file_test_success': f,
                                          }, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Test signature OK', str(response.content))
@@ -139,7 +139,7 @@ class ViewsSignatureAdminTest(TestCase):
                                          'sid': '668',
                                          'classtype': '29',
                                          'msg': 'Test Pcap match',
-                                         'pcap_success': f,
+                                         'file_test_success': f,
                                          }, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Test signature failed !', str(response.content))

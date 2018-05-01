@@ -209,7 +209,6 @@ class SignatureSuricata(Rule):
                                         "href='http://doc.emergingthreats.net/bin/view/Main/SidAllocation'>help</a>")
     classtype = models.ForeignKey(ClassType, on_delete=models.CASCADE)
     msg = models.CharField(max_length=1000)
-    pcap_success = models.FileField(name='pcap_success', upload_to='pcap_success', blank=True)
 
     def __str__(self):
         return str(self.sid) + " : " + str(self.msg)
@@ -337,7 +336,7 @@ logging:
                    '-l', tmp_dir,
                    '-S', rule_file,
                    '-c', conf_file,
-                   '-r', settings.BASE_DIR + "/" + self.pcap_success.name,
+                   '-r', settings.BASE_DIR + "/" + self.file_test_success.name,
                    '--set', 'outputs.0.fast.enabled=yes',
                    '--set', 'classification-file=' + settings.BASE_DIR + '/suricata/tests/data/classification.config',
                    '--set', 'reference-config-file=' + settings.BASE_DIR + '/suricata/tests/data/reference.config',
@@ -365,7 +364,7 @@ logging:
         if not response['status']:
             test = False
             errors.append(str(self) + " : " + str(response['errors']))
-        if self.pcap_success:
+        if self.file_test_success:
             response_pcap = self.test_pcap()
             if not response_pcap['status']:
                 test = False
@@ -424,6 +423,38 @@ class ScriptSuricata(Rule):
                 ruleset.scripts.add(script)
                 ruleset.save()
         return rule_created, rule_updated
+
+    def test(self):
+        with self.get_tmp_dir("test_script") as tmp_dir:
+            rule_file = tmp_dir + str(self.id) + ".rules"
+            with open(rule_file, 'w', encoding='utf_8') as f:
+                f.write(self.rule_full)
+            cmd = [settings.SURICATA_BINARY, '-T',
+                   '-l', tmp_dir,
+                   '-S', rule_file,
+                   '-c', settings.SURICATA_CONFIG
+                   ]
+            return process_cmd(cmd, tmp_dir)
+
+    def test_pcap(self):  # TODO
+        pass
+
+    def test_all(self):
+        test = True
+        errors = list()
+        response = self.test()
+        if not response['status']:
+            test = False
+            errors.append(str(self) + " : " + str(response['errors']))
+        if self.file_test_success:
+            response_pcap = self.test_pcap()
+            if not response_pcap['status']:
+                test = False
+                errors.append(str(self) + " : " + str(response_pcap['errors']))
+        if test:
+            return {'status': True}
+        else:
+            return {'status': False, 'errors': errors}
 
 
 class RuleSetSuricata(RuleSet):
@@ -699,7 +730,7 @@ class Suricata(Probe):
         errors = list()
         for ruleset in self.rulesets.all():
             for signature in ruleset.signatures.all():
-                if signature.pcap_success:
+                if signature.file_test_success:
                     response_pcap_test = signature.test_pcap()
                     if not response_pcap_test['status']:
                         test = False

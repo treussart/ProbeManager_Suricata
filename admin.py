@@ -24,7 +24,7 @@ from .utils import create_download_from_http_task, create_conf, convert_conf
 logger = logging.getLogger(__name__)
 
 
-class MarkedRuleMixin(admin.ModelAdmin):
+class RuleMixin(admin.ModelAdmin):
     def make_enabled(self, request, queryset):
         rows_updated = queryset.update(enabled=True)
         if rows_updated == 1:
@@ -44,9 +44,54 @@ class MarkedRuleMixin(admin.ModelAdmin):
     make_enabled.short_description = "Mark rule as enabled"
     make_disabled.short_description = "Mark rule as disabled"
 
+    def add_ruleset(self, request, queryset):
+        ruleset_id = request.POST['ruleset']
+        if ruleset_id:
+            ruleset = RuleSetSuricata.get_by_id(ruleset_id)
+            for signature in queryset:
+                ruleset.signatures.add(signature)
+            ruleset.save()
+            messages.add_message(request, messages.SUCCESS, "Added to Ruleset "
+                                 + ruleset.name + " successfully !")
+
+    def remove_ruleset(self, request, queryset):
+        ruleset_id = request.POST['ruleset']
+        if ruleset_id:
+            ruleset = RuleSetSuricata.get_by_id(ruleset_id)
+            for signature in queryset:
+                ruleset.signatures.remove(signature)
+            ruleset.save()
+            messages.add_message(request, messages.SUCCESS, "Removed from Ruleset "
+                                 + ruleset.name + " successfully !")
+
+    add_ruleset.short_description = 'Add ruleset'
+    remove_ruleset.short_description = 'Remove ruleset'
+
+    class UpdateActionForm(ActionForm):
+        ruleset = forms.ModelChoiceField(queryset=RuleSetSuricata.get_all(), empty_label="Select a ruleset",
+                                         required=False)
+
+    class Media:
+        js = (
+            'suricata/js/add-link-reference.js',
+            'suricata/js/mask-ruleset-field.js',
+        )
+
+    def test(self, request, obj):
+        test = True
+        errors = list()
+        for rule in obj:
+            response = rule.test_all()
+            if not response['status']:
+                test = False
+                errors.append(str(rule) + " : " + str(response['errors']))
+        if test:
+            messages.add_message(request, messages.SUCCESS, "Test OK")
+        else:
+            messages.add_message(request, messages.ERROR, "Test failed ! " + str(errors))
+
 
 class RuleSetSuricataAdmin(admin.ModelAdmin):
-
     def test_signatures(self, request, obj):
         test = True
         errors = list()
@@ -127,59 +172,22 @@ class ConfigurationAdmin(admin.ModelAdmin):
     actions = [test_configurations]
 
 
-class ScriptSuricataAdmin(MarkedRuleMixin, admin.ModelAdmin):
-
+class ScriptSuricataAdmin(RuleMixin, admin.ModelAdmin):
     search_fields = ('rule_full',)
     list_filter = ('enabled', 'created_date', 'updated_date', 'rulesetsuricata__name')
     list_display = ('id', 'name', 'enabled')
-    actions = [MarkedRuleMixin.make_enabled, MarkedRuleMixin.make_disabled]
+    action_form = RuleMixin.UpdateActionForm
+    actions = [RuleMixin.make_enabled, RuleMixin.make_disabled, RuleMixin.add_ruleset, RuleMixin.remove_ruleset]
 
 
-class SignatureSuricataAdmin(MarkedRuleMixin, admin.ModelAdmin):
-
-    def add_ruleset(self, request, queryset):
-        ruleset_id = request.POST['ruleset']
-        if ruleset_id:
-            ruleset = RuleSetSuricata.get_by_id(ruleset_id)
-            for signature in queryset:
-                ruleset.signatures.add(signature)
-            ruleset.save()
-
-    add_ruleset.short_description = 'Add ruleset'
-
-    def remove_ruleset(self, request, queryset):
-        ruleset_id = request.POST['ruleset']
-        if ruleset_id:
-            ruleset = RuleSetSuricata.get_by_id(ruleset_id)
-            for signature in queryset:
-                ruleset.signatures.remove(signature)
-            ruleset.save()
-
-    remove_ruleset.short_description = 'Remove ruleset'
-
-    class UpdateActionForm(ActionForm):
-        ruleset = forms.ModelChoiceField(queryset=RuleSetSuricata.get_all(), empty_label="Select a ruleset",
-                                         required=False)
-
-    def test_signatures(self, request, obj):
-        test = True
-        errors = list()
-        for signature in obj:
-            response = signature.test_all()
-            if not response['status']:
-                test = False
-                errors.append(str(signature) + " : " + str(response['errors']))
-        if test:
-            messages.add_message(request, messages.SUCCESS, "Test signatures OK")
-        else:
-            messages.add_message(request, messages.ERROR, "Test signatures failed ! " + str(errors))
-
+class SignatureSuricataAdmin(RuleMixin, admin.ModelAdmin):
+    RuleMixin.test.short_description = "Test Signature"
     search_fields = ('rule_full',)
     list_filter = ('enabled', 'created_date', 'updated_date', 'rulesetsuricata__name')
     list_display = ('sid', 'msg', 'enabled')
-    action_form = UpdateActionForm
-    actions = [MarkedRuleMixin.make_enabled, MarkedRuleMixin.make_disabled,
-               add_ruleset, remove_ruleset, test_signatures]
+    action_form = RuleMixin.UpdateActionForm
+    actions = [RuleMixin.make_enabled, RuleMixin.make_disabled,
+               RuleMixin.add_ruleset, RuleMixin.remove_ruleset, RuleMixin.test]
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
@@ -188,12 +196,6 @@ class SignatureSuricataAdmin(MarkedRuleMixin, admin.ModelAdmin):
             messages.add_message(request, messages.SUCCESS, "Test signature OK")
         else:
             messages.add_message(request, messages.ERROR, "Test signature failed ! " + str(response['errors']))
-
-    class Media:
-        js = (
-            'suricata/js/add-link-reference.js',
-            'suricata/js/mask-ruleset-field.js',
-        )
 
 
 class SourceSuricataAdmin(admin.ModelAdmin):

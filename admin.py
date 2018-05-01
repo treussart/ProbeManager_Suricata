@@ -13,7 +13,7 @@ from django.utils.safestring import mark_safe
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
 
 from core.models import Configuration as CoreConfiguration
-from core.utils import create_deploy_rules_task, add_1_hour, create_check_task
+from core.utils import create_deploy_rules_task, add_1_hour
 from core.utils import generic_import_csv
 from .forms import SuricataChangeForm
 from .models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, Configuration, \
@@ -76,12 +76,6 @@ class SuricataAdmin(admin.ModelAdmin):
             return super(SuricataAdmin, self).get_form(request, obj, **kwargs)
         else:
             return SuricataChangeForm
-
-    def save_model(self, request, obj, form, change):
-        logger.debug("create scheduled for " + str(obj))
-        create_deploy_rules_task(obj)
-        create_check_task(obj)
-        super().save_model(request, obj, form, change)
 
     def test_signatures(self, request, obj):
         test = True
@@ -203,35 +197,6 @@ class SignatureSuricataAdmin(MarkedRuleMixin, admin.ModelAdmin):
 
 
 class SourceSuricataAdmin(admin.ModelAdmin):
-
-    def get_actions(self, request):
-        actions = super(SourceSuricataAdmin, self).get_actions(request)
-        if 'delete_selected' in actions:
-            del actions['delete_selected']
-        return actions
-
-    def delete_source(self, request, obj):
-        for source in obj:
-            try:
-                periodic_task = PeriodicTask.objects.get(name=source.uri + '_download_from_http_task')
-                periodic_task.delete()
-                logger.debug(str(periodic_task) + " deleted")
-            except PeriodicTask.DoesNotExist:
-                pass
-            try:
-                for ruleset in source.rulesets.all():
-                    for probe in ruleset.suricata_set.all():
-                        periodic_task = PeriodicTask.objects.get(
-                            name__contains=probe.name + "_" + source.uri + "_deploy_rules_")
-                        periodic_task.delete()
-                        logger.debug(str(periodic_task) + " deleted")
-            except PeriodicTask.DoesNotExist:
-                pass
-            source.delete()
-            logger.debug(str(source) + " deleted")
-            messages.add_message(request, messages.SUCCESS, str(source) + " deleted")
-
-    actions = [delete_source]
     list_display = ('__str__',)
     list_display_links = None
 

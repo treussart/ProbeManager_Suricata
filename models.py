@@ -22,7 +22,7 @@ from core.models import Probe, ProbeConfiguration
 from core.modelsmixins import CommonMixin
 from core.notifications import send_notification
 from core.ssh import execute, execute_copy
-from core.utils import process_cmd
+from core.utils import process_cmd, create_deploy_rules_task, create_check_task
 from rules.models import RuleSet, Rule, Source
 from .exceptions import RuleNotFoundParam
 
@@ -462,6 +462,24 @@ class SourceSuricata(Source):
         super().__init__(*args, **kwargs)
         self.type = self.__class__.__name__
 
+    def delete(self, **kwargs):
+        try:
+            periodic_task = PeriodicTask.objects.get(name=self.uri + '_download_from_http_task')
+            periodic_task.delete()
+            logger.debug(str(periodic_task) + " deleted")
+        except PeriodicTask.DoesNotExist:
+            pass
+        try:
+            for ruleset in self.rulesets.all():
+                for probe in ruleset.suricata_set.all():
+                    periodic_task = PeriodicTask.objects.get(
+                        name__contains=probe.name + "_" + self.uri + "_deploy_rules_")
+                    periodic_task.delete()
+                    logger.debug(str(periodic_task) + " deleted")
+        except PeriodicTask.DoesNotExist:
+            pass
+        return super().delete(**kwargs)
+
     @staticmethod
     def find_rules(file, file_name, rulesets):
         count_signature_created = 0
@@ -568,6 +586,11 @@ class Suricata(Probe):
 
     def __str__(self):
         return self.name + "  " + self.description
+
+    def save(self, **kwargs):
+        super().save(**kwargs)
+        create_deploy_rules_task(self)
+        create_check_task(self)
 
     def delete(self, **kwargs):
         try:

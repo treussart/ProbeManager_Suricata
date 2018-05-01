@@ -437,7 +437,7 @@ class ScriptSuricata(Rule):
             return process_cmd(cmd, tmp_dir)
 
     def test_pcap(self):  # TODO
-        pass
+        return {'status': True}
 
     def test_all(self):
         test = True

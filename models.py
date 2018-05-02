@@ -25,6 +25,7 @@ from core.ssh import execute, execute_copy
 from core.utils import process_cmd, create_deploy_rules_task, create_check_task
 from rules.models import RuleSet, Rule, Source
 from .exceptions import RuleNotFoundParam
+from .utils import create_conf, convert_conf
 
 logger = logging.getLogger('suricata')
 
@@ -169,6 +170,13 @@ class Configuration(ProbeConfiguration):
 
     def __str__(self):
         return self.name
+
+    def save(self, **kwargs):
+        if not self.conf_advanced:
+            create_conf(self)
+        else:
+            convert_conf(self)
+        super().save(**kwargs)
 
     def test(self):
         with self.get_tmp_dir(self.pk) as tmp_dir:
@@ -481,6 +489,23 @@ class RuleSetSuricata(RuleSet):
 
     def __str__(self):
         return self.name
+
+    def test_rules(self):
+        test = True
+        errors = list()
+        for signature in self.signatures.all():
+            response = signature.test()
+            if not response['status']:
+                test = False
+                errors.append(str(signature) + " : " + str(response['errors']))
+        for script in self.scripts.all():
+            response = script.test()
+            if not response['status']:
+                test = False
+                errors.append(str(script) + " : " + str(response['errors']))
+        if not test:
+            return {'status': False, 'errors': str(errors)}
+        return {'status': True}
 
 
 class SourceSuricata(Source):

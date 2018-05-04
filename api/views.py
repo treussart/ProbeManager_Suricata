@@ -133,12 +133,6 @@ class ScriptSuricataViewSet(viewsets.ModelViewSet):
     queryset = ScriptSuricata.objects.all()
     serializer_class = serializers.ScriptSuricataSerializer
 
-    @action(detail=True)
-    def test(self, request, pk=None):
-        obj = self.get_object()
-        response = obj.test_all()
-        return Response(response)
-
 
 class SourceSuricataViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     queryset = SourceSuricata.objects.all()

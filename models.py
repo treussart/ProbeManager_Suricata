@@ -217,6 +217,7 @@ class SignatureSuricata(Rule):
                                         "href='http://doc.emergingthreats.net/bin/view/Main/SidAllocation'>help</a>")
     classtype = models.ForeignKey(ClassType, on_delete=models.CASCADE)
     msg = models.CharField(max_length=1000)
+    file_test_success = models.FileField(name='file_test_success', upload_to='file_test_success', blank=True)
 
     def __str__(self):
         return str(self.sid) + " : " + str(self.msg)
@@ -389,9 +390,10 @@ class ScriptSuricata(Rule):
     see : http://suricata.readthedocs.io/en/latest/rules/rule-lua-scripting.html
     """
     name = models.CharField(max_length=1000, unique=True, db_index=True)
+    signature = models.ForeignKey(SignatureSuricata, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     @classmethod
     def get_by_name(cls, name):
@@ -432,38 +434,6 @@ class ScriptSuricata(Rule):
                 ruleset.save()
         return rule_created, rule_updated
 
-    def test(self):
-        with self.get_tmp_dir("test_script") as tmp_dir:
-            rule_file = tmp_dir + str(self.id) + ".rules"
-            with open(rule_file, 'w', encoding='utf_8') as f:
-                f.write(self.rule_full)
-            cmd = [settings.SURICATA_BINARY, '-T',
-                   '-l', tmp_dir,
-                   '-S', rule_file,
-                   '-c', settings.SURICATA_CONFIG
-                   ]
-            return process_cmd(cmd, tmp_dir)
-
-    def test_pcap(self):  # TODO
-        return {'status': True}
-
-    def test_all(self):
-        test = True
-        errors = list()
-        response = self.test()
-        if not response['status']:
-            test = False
-            errors.append(str(self) + " : " + str(response['errors']))
-        if self.file_test_success:
-            response_pcap = self.test_pcap()
-            if not response_pcap['status']:
-                test = False
-                errors.append(str(self) + " : " + str(response_pcap['errors']))
-        if test:
-            return {'status': True}
-        else:
-            return {'status': False, 'errors': errors}
-
 
 class RuleSetSuricata(RuleSet):
     """
@@ -488,7 +458,7 @@ class RuleSetSuricata(RuleSet):
     # scripts = models.ManyToManyField(ScriptSuricata, blank=True)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     def test_rules(self):
         test = True
@@ -498,11 +468,6 @@ class RuleSetSuricata(RuleSet):
             if not response['status']:
                 test = False
                 errors.append(str(signature) + " : " + str(response['errors']))
-        for script in self.scripts.all():
-            response = script.test()
-            if not response['status']:
-                test = False
-                errors.append(str(script) + " : " + str(response['errors']))
         if not test:
             return {'status': False, 'errors': str(errors)}
         return {'status': True}

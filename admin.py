@@ -14,7 +14,7 @@ from django_celery_beat.models import CrontabSchedule
 
 from core.models import Configuration as CoreConfiguration
 from core.utils import create_deploy_rules_task, add_1_hour
-from core.utils import generic_import_csv
+from core.views import generic_import_csv
 from .forms import SuricataChangeForm
 from .models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, Configuration, \
     SourceSuricata, BlackList, IPReputation, CategoryReputation, ClassType

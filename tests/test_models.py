@@ -273,7 +273,7 @@ class SuricataTest(TestCase):
         suricata = Suricata.get_by_id(1)
         response = suricata.server.test()
         self.assertTrue(response)
-        response = suricata.server.test_root()
+        response = suricata.server.test_become()
         self.assertTrue(response)
 
     def test_reload(self):

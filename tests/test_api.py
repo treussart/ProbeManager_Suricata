@@ -22,6 +22,11 @@ class APITest(APITestCase):
     def tearDown(self):
         self.client.logout()
 
+    def test_conf(self):
+        response = self.client.get('/api/v1/suricata/configuration/1/test/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
     def test_suricata(self):
         response = self.client.get('/api/v1/suricata/suricata/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -87,6 +92,65 @@ class APITest(APITestCase):
             PeriodicTask.objects.get(name="test_deploy_rules_" + str(CrontabSchedule.objects.get(id=4)))
         with self.assertRaises(ObjectDoesNotExist):
             PeriodicTask.objects.get(name="test_check_task")
+
+        response = self.client.get('/api/v1/suricata/suricata/1/test_rules/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/start/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/stop/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/restart/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/reload/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/status/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/uptime/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['uptime'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/deploy_rules/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/deploy_conf/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        # response = self.client.get('/api/v1/suricata/suricata/1/install/')
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # self.assertTrue(response.data['status'])
+        #
+        # response = self.client.get('/api/v1/suricata/suricata/1/install/?version=' + settings.SURICATA_VERSION)
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # self.assertTrue(response.data['status'])
+
+    def test_signature(self):
+        response = self.client.get('/api/v1/suricata/signature/1/test/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+    # def test_script(self):
+    #     response = self.client.get('/api/v1/suricata/script/3/test/')
+    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
+    #     self.assertTrue(response.data['status'])
+
+    def test_ruleset(self):
+        response = self.client.get('/api/v1/suricata/ruleset/2/test_rules/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
 
     def test_blacklist(self):
         response = self.client.get('/api/v1/suricata/blacklist/')

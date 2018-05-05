@@ -121,16 +121,14 @@ class ConfigurationAdmin(admin.ModelAdmin):
         )
 
     def save_model(self, request, obj, form, change):
-        if not obj.conf_advanced:
-            obj = create_conf(obj)
-        else:
-            obj = convert_conf(obj)
-        response = obj.test()
+        super().save_model(request, obj, form, change)
+        conf = Configuration.objects.get(name=obj.name)
+        response = conf.test()
         if response['status']:
             messages.add_message(request, messages.SUCCESS, "Test configuration OK")
         else:
             messages.add_message(request, messages.ERROR, "Test configuration failed ! " + str(response['errors']))
-        super().save_model(request, obj, form, change)
+
 
     def test_configurations(self, request, obj):
         test = True

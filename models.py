@@ -641,7 +641,7 @@ class Suricata(Probe):
                 sudo tee -a /etc/apt/sources.list.d/stretch-backports.list
                 apt update
                 apt -y -t stretch-backports install suricata
-                mkdir /etc/suricata/iprep 
+                mkdir /etc/suricata/iprep
                 touch /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list
                 chown -R $(whoami) /etc/suricata
                 exit 0

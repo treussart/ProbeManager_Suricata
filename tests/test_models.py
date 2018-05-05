@@ -1,4 +1,5 @@
 """ venv/bin/python probemanager/manage.py test suricata.tests.test_models --settings=probemanager.settings.dev """
+import subprocess
 from django.conf import settings
 from django.db.utils import IntegrityError
 from django.test import TestCase
@@ -361,7 +362,9 @@ class SignatureSuricataTest(TestCase):
                                                             enabled=True,
                                                             created_date=self.date_now
                                                             )
+        print(subprocess.check_output(['ls', '-l', settings.SURICATA_RULES]))
         print(signature_script.test())
+        print(subprocess.check_output(['ls', '-l', settings.SURICATA_RULES]))
         self.assertTrue(signature_script.test()['status'])
 
         with self.assertRaises(IntegrityError):

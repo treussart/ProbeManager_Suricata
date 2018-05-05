@@ -177,7 +177,7 @@ class RuleSetSuricataTest(TestCase):
 
 
 class ScriptSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-script']
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-signature', 'test-suricata-script']
 
     @classmethod
     def setUpTestData(cls):
@@ -211,7 +211,7 @@ class ScriptSuricataTest(TestCase):
 
 
 class SignatureSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-signature']
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-signature', 'test-suricata-script']
 
     @classmethod
     def setUpTestData(cls):

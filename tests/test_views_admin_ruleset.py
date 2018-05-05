@@ -28,7 +28,7 @@ class ViewsRuleSetAdminTest(TestCase):
                                                                          '_selected_action': '1'},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Test signatures OK', str(response.content))
+        self.assertIn('Test rules OK', str(response.content))
         # test fail test signature
         response = self.client.post('/admin/suricata/signaturesuricata/add/', {'rev': '0',
                                                                                'rule_full': '1',

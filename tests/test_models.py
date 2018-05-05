@@ -362,6 +362,7 @@ class SignatureSuricataTest(TestCase):
                                                             created_date=self.date_now
                                                             )
         self.assertTrue(signature_script.test()['status'])
+        print(signature_script.test())
         with self.assertRaises(IntegrityError):
             SignatureSuricata.objects.create(sid=20402000,
                                              rev=0,

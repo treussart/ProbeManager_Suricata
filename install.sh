@@ -11,24 +11,25 @@ if [[ "$SURICATA_VERSION" == "" ]]; then
 fi
 config=""
 rules=""
-# OSX with brew
+# OSX
 if [[ $OSTYPE = *"darwin"* ]]; then
-    if brew --version | grep -qw Homebrew ; then
-        if ! brew list | grep -qw suricata ; then
-            brew install suricata
-        fi
-        config="/usr/local/etc/suricata/suricata.yaml"
-        rules="/usr/local/etc/suricata/rules"
+    if ! type suricata ; then
+        brew install luajit
+        wget https://www.openinfosecfoundation.org/download/suricata-"$SURICATA_VERSION".tar.gz
+        tar -xzf suricata-"$SURICATA_VERSION".tar.gz
+        (cd suricata-"$SURICATA_VERSION" && ./configure --prefix=/usr/local --sysconfdir=/usr/local/etc --localstatedir=/var --enable-luajit && make && sudo make install && sudo make install-conf)
     fi
+    config="/usr/local/etc/suricata/suricata.yaml"
+    rules="/usr/local/etc/suricata/rules"
 # Debian and Ubuntu
 elif [ -f /etc/debian_version ]; then
     cat /etc/issue.net
     if ! type suricata ; then
         sudo apt update
-        sudo apt -y install libpcre3 libpcre3-dbg libpcre3-dev build-essential autoconf automake libtool libpcap-dev libnet1-dev libyaml-0-2 libyaml-dev zlib1g zlib1g-dev libmagic-dev libcap-ng-dev libjansson-dev pkg-config
+        sudo apt -y install libpcre3 libpcre3-dbg libpcre3-dev build-essential autoconf automake libtool libpcap-dev libnet1-dev libyaml-0-2 libyaml-dev zlib1g zlib1g-dev libmagic-dev libcap-ng-dev libjansson-dev pkg-config lua5.1
         wget https://www.openinfosecfoundation.org/download/suricata-"$SURICATA_VERSION".tar.gz
         tar -xzf suricata-"$SURICATA_VERSION".tar.gz
-        (cd suricata-"$SURICATA_VERSION" && ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var && make && sudo make install && sudo make install-conf)
+        (cd suricata-"$SURICATA_VERSION" && ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --enable-luajit && make && sudo make install && sudo make install-conf)
     fi
     config="/etc/suricata/suricata.yaml"
     rules="/etc/suricata/rules"

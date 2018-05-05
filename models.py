@@ -390,16 +390,16 @@ class ScriptSuricata(Rule):
     Stores a script Suricata compatible.
     see : http://suricata.readthedocs.io/en/latest/rules/rule-lua-scripting.html
     """
-    name = models.CharField(max_length=1000, unique=True, db_index=True)
+    filename = models.CharField(max_length=1000, unique=True, db_index=True)
     signature = models.ForeignKey(SignatureSuricata, on_delete=models.CASCADE)
 
     def __str__(self):
-        return str(self.name)
+        return str(self.filename)
 
     @classmethod
-    def get_by_name(cls, name):
+    def get_by_filename(cls, filename):
         try:
-            obj = cls.objects.get(name=name)
+            obj = cls.objects.get(filename=filename)
         except cls.DoesNotExist as e:
             logger.debug('Tries to access an object that does not exist : ' + str(e))
             return None
@@ -415,16 +415,16 @@ class ScriptSuricata(Rule):
         """ A script by file """
         rule_created = False
         rule_updated = False
-        if not cls.get_by_name(os.path.basename(file.name)):
+        if not cls.get_by_filename(os.path.basename(file.name)):
             rule_created = True
             script = ScriptSuricata()
-            script.name = os.path.basename(file.name)
+            script.filename = os.path.basename(file.name)
             script.created_date = timezone.now()
             script.rev = 0
             script.rule_full = file.read()
         else:
             rule_updated = True
-            script = cls.get_by_name(file.name)
+            script = cls.get_by_filename(file.name)
             script.rule_full = file.read()
             script.rev = script.rev + 1
             script.updated_date = timezone.now()
@@ -438,7 +438,7 @@ class ScriptSuricata(Rule):
     @classmethod
     def copy_to_rules_directory_for_test(cls):
         for script in cls.get_all():
-            with open(settings.SURICATA_CONFIG + script.name, 'w') as f:
+            with open(settings.SURICATA_RULES + '/' + script.filename, 'w') as f:
                 f.write(script.rule_full)
 
 
@@ -456,13 +456,11 @@ class RuleSetSuricata(RuleSet):
     scripts = select2.fields.ManyToManyField(ScriptSuricata,
                                              blank=True,
                                              ajax=True,
-                                             search_field=lambda q: Q(sid__icontains=q) | Q(name__icontains=q),
+                                             search_field=lambda q: Q(sid__icontains=q) | Q(filename__icontains=q),
                                              sort_field='sid',
                                              js_options={'quiet_millis': 200}
                                              )
 
-    # signatures = models.ManyToManyField(SignatureSuricata, blank=True)
-    # scripts = models.ManyToManyField(ScriptSuricata, blank=True)
 
     def __str__(self):
         return str(self.name)
@@ -816,12 +814,12 @@ class Suricata(Probe):
             for ruleset in self.rulesets.all():
                 for script in ruleset.scripts.all():
                     if script.enabled:
-                        with open(tmp_dir + script.name, 'w', encoding='utf_8') as f:
+                        with open(tmp_dir + script.filename, 'w', encoding='utf_8') as f:
                             f.write(script.rule_full)
                         try:
-                            response = execute_copy(self.server, src=tmp_dir + script.name,
+                            response = execute_copy(self.server, src=tmp_dir + script.filename,
                                                     dest=self.configuration.conf_rules_directory.rstrip(
-                                                        '/') + '/' + script.name, become=True)
+                                                        '/') + '/' + script.filename, become=True)
                         except Exception as e:
                             logger.exception('excecute_copy failed')
                             deploy = False

@@ -15,7 +15,7 @@
     "model": "suricata.scriptsuricata",
     "pk": 3,
     "fields": {
-      "name": "test.lua",
+      "filename": "test.lua",
       "signature": 2
     }
   }

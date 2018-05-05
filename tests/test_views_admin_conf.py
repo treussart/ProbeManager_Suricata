@@ -149,7 +149,9 @@ class ViewsConfAdminTest(TestCase):
         self.assertIn('Test configuration OK', str(response.content))
         self.assertEqual(len(Configuration.get_all()), 4)
         response = self.client.post('/admin/suricata/configuration/', {'action': 'test_configurations',
-                                                                       '_selected_action': '2'},
+                                                                       '_selected_action':
+                                                                           Configuration.objects.
+                                    get(name='conftest-false').id},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn("Test configurations OK", str(response.content))

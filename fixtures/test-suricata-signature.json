@@ -17,7 +17,7 @@
     "fields": {
       "rev": 4729,
       "reference": "www.shadowserver.org",
-      "rule_full": "alert tcp any any −> any any (msg: 'Lua rule'; lua:test.lua; sid: 1;)",
+      "rule_full": "alert tcp $HOME_NET any -> [83.68.16.30,91.214.111.26,91.243.115.100,149.56.153.98,154.35.64.82] 80 (msg:\"ET CNC Shadowserver DNS Reported CnC Server Port 80 Group 1\"; flow:to_server,established; flags:S; reference:url,doc.emergingthreats.net/bin/view/Main/BotCC; reference:url,www.shadowserver.org; threshold: type limit, track by_src, seconds 360, count 1; classtype:trojan-activity; flowbits:set,ET.Evil; flowbits:set,ET.BotccIP; sid:2405001; rev:4729;)",
       "enabled": true,
       "created_date": "2017-09-23T21:19:58.020Z",
       "updated_date": "2017-09-23T21:19:58.020Z"

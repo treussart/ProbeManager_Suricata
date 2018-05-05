@@ -142,7 +142,6 @@ class ConfigurationTest(TestCase):
         self.assertEqual(len(all_conf_suricata), 2)
         self.assertEqual(conf_suricata.name, "configuration1")
         self.assertEqual(conf_suricata.conf_rules_directory, "/etc/suricata/rules")
-        self.assertEqual(conf_suricata.conf_script_directory, "/etc/suricata/lua")
         self.assertEqual(conf_suricata.conf_file, "/etc/suricata/suricata.yaml")
         self.assertTrue(conf_suricata.conf_advanced)
         self.assertEqual(str(conf_suricata), "configuration1")

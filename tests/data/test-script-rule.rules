@@ -1,0 +1,1 @@
+alert tcp any any −> any any (msg:"Lua rule"; lua:test-script.lua; classtype:misc-attack; sid:3011; rev:1;)

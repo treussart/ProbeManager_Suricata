@@ -82,7 +82,6 @@ class Configuration(ProbeConfiguration):
     with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
         CONF_FULL_DEFAULT = f.read()
     conf_rules_directory = models.CharField(max_length=400, default="/etc/suricata/rules")
-    conf_script_directory = models.CharField(max_length=400, default='/etc/suricata/lua')
     conf_iprep_directory = models.CharField(max_length=400, default='/etc/suricata/iprep')
     conf_file = models.CharField(max_length=400, default="/etc/suricata/suricata.yaml")
     conf_advanced = models.BooleanField(default=False)
@@ -307,6 +306,7 @@ class SignatureSuricata(Rule):
 
     def test(self):
         with self.get_tmp_dir("test_sig") as tmp_dir:
+            ScriptSuricata.copy_to_rules_directory_for_test()
             rule_file = tmp_dir + str(self.sid) + ".rules"
             with open(rule_file, 'w', encoding='utf_8') as f:
                 f.write(self.rule_full)
@@ -319,6 +319,7 @@ class SignatureSuricata(Rule):
 
     def test_pcap(self):
         with self.get_tmp_dir("test_pcap") as tmp_dir:
+            ScriptSuricata.copy_to_rules_directory_for_test()
             rule_file = tmp_dir + "rule.rules"
             conf_file = tmp_dir + "suricata.yaml"
             with open(rule_file, 'w', encoding='utf_8') as f:
@@ -433,6 +434,12 @@ class ScriptSuricata(Rule):
                 ruleset.scripts.add(script)
                 ruleset.save()
         return rule_created, rule_updated
+
+    @classmethod
+    def copy_to_rules_directory_for_test(cls):
+        for script in cls.get_all():
+            with open(settings.SURICATA_CONFIG + script.name, 'w') as f:
+                f.write(script.rule_full)
 
 
 class RuleSetSuricata(RuleSet):
@@ -637,7 +644,7 @@ class Suricata(Probe):
                 sudo tee -a /etc/apt/sources.list.d/stretch-backports.list
                 apt update
                 apt -y -t stretch-backports install suricata
-                mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep && touch \
+                mkdir /etc/suricata/lua-output && mkdir /etc/suricata/iprep && touch \
                 /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list
                 chown -R $(whoami) /etc/suricata
                 exit 0
@@ -652,7 +659,7 @@ class Suricata(Probe):
                 add-apt-repository -y ppa:oisf/suricata-stable
                 apt update
                 apt -y install suricata
-                mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep
+                mkdir /etc/suricata/lua-output && mkdir /etc/suricata/iprep
                 touch /etc/suricata/iprep/reputation.list && touch /etc/suricata/iprep/categories.txt
                 chown -R $(whoami) /etc/suricata
                 exit 0
@@ -813,7 +820,7 @@ class Suricata(Probe):
                             f.write(script.rule_full)
                         try:
                             response = execute_copy(self.server, src=tmp_dir + script.name,
-                                                    dest=self.configuration.conf_script_directory.rstrip(
+                                                    dest=self.configuration.conf_rules_directory.rstrip(
                                                         '/') + '/' + script.name, become=True)
                         except Exception as e:
                             logger.exception('excecute_copy failed')

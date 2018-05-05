@@ -18,7 +18,6 @@
     "pk": 1,
     "fields": {
       "conf_rules_directory": "/etc/suricata/rules",
-      "conf_script_directory": "/etc/suricata/lua",
       "conf_iprep_directory": "/etc/suricata/iprep",
       "conf_file": "/etc/suricata/suricata.yaml",
       "conf_advanced": true,
@@ -75,7 +74,6 @@
     "pk": 2,
     "fields": {
       "conf_rules_directory": "/etc/suricata/rules",
-      "conf_script_directory": "/etc/suricata/lua",
       "conf_iprep_directory": "/etc/suricata/iprep",
       "conf_file": "/etc/suricata/suricata.yaml",
       "conf_advanced": false,

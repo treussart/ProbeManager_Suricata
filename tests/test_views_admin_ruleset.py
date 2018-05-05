@@ -49,7 +49,7 @@ class ViewsRuleSetAdminTest(TestCase):
                                                                          '_selected_action': '4'},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Test signatures failed !', str(response.content))
+        self.assertIn('Test rules failed !', str(response.content))
         response = self.client.post('/admin/suricata/rulesetsuricata/', {'action': 'delete_selected',
                                                                          '_selected_action': '4'},
                                     follow=True)

@@ -391,7 +391,6 @@ class ScriptSuricata(Rule):
     see : http://suricata.readthedocs.io/en/latest/rules/rule-lua-scripting.html
     """
     filename = models.CharField(max_length=1000, unique=True, db_index=True)
-    signature = models.ForeignKey(SignatureSuricata, on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.filename)
@@ -519,6 +518,7 @@ class SourceSuricata(Source):
                 if rule_updated:
                     count_signature_updated += 1
         elif os.path.splitext(file_name)[1] == '.lua':
+
             rule_created, rule_updated = ScriptSuricata.extract_attributs(file, rulesets)
             if rule_created:
                 count_script_created += 1

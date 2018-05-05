@@ -15,6 +15,8 @@ rules=""
 if [[ $OSTYPE = *"darwin"* ]]; then
     if ! type suricata ; then
         brew install luajit
+        brew install lua
+        brew install pcre
         wget https://www.openinfosecfoundation.org/download/suricata-"$SURICATA_VERSION".tar.gz
         tar -xzf suricata-"$SURICATA_VERSION".tar.gz
         (cd suricata-"$SURICATA_VERSION" && ./configure --prefix=/usr/local --sysconfdir=/usr/local/etc --localstatedir=/var --enable-luajit && make && sudo make install && sudo make install-conf)
@@ -26,7 +28,7 @@ elif [ -f /etc/debian_version ]; then
     cat /etc/issue.net
     if ! type suricata ; then
         sudo apt update
-        sudo apt -y install libpcre3 libpcre3-dbg libpcre3-dev build-essential autoconf automake libtool libpcap-dev libnet1-dev libyaml-0-2 libyaml-dev zlib1g zlib1g-dev libmagic-dev libcap-ng-dev libjansson-dev pkg-config lua5.1
+        sudo apt -y install libpcre3 libpcre3-dbg libpcre3-dev build-essential autoconf automake libtool libpcap-dev libnet1-dev libyaml-0-2 libyaml-dev zlib1g zlib1g-dev libmagic-dev libcap-ng-dev libjansson-dev pkg-config lua5.1 luajit
         wget https://www.openinfosecfoundation.org/download/suricata-"$SURICATA_VERSION".tar.gz
         tar -xzf suricata-"$SURICATA_VERSION".tar.gz
         (cd suricata-"$SURICATA_VERSION" && ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --enable-luajit && make && sudo make install && sudo make install-conf)

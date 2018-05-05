@@ -173,7 +173,7 @@ class ScriptSuricataAdmin(RuleMixin, admin.ModelAdmin):
     remove_ruleset.short_description = 'Remove ruleset'
     search_fields = ('rule_full',)
     list_filter = ('enabled', 'created_date', 'updated_date', 'rulesetsuricata__name')
-    list_display = ('id', 'name', 'enabled')
+    list_display = ('id', 'filename', 'enabled')
     action_form = RuleMixin.UpdateActionForm
     actions = [RuleMixin.make_enabled, RuleMixin.make_disabled, add_ruleset, remove_ruleset]
 

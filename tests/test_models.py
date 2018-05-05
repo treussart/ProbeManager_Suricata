@@ -187,18 +187,18 @@ class ScriptSuricataTest(TestCase):
         script_suricata = ScriptSuricata.get_by_id(3)
         script_suricatas = ScriptSuricata.find(".php")
         self.assertEqual(len(all_script_suricata), 1)
-        self.assertEqual(script_suricata.name, "test.lua")
+        self.assertEqual(script_suricata.filename, "test.lua")
         self.assertEqual(script_suricata.rev, 0)
         self.assertEqual(script_suricata.reference, None)
         self.assertTrue(script_suricata.enabled)
-        self.assertEqual(script_suricatas[0].name, "test.lua")
+        self.assertEqual(script_suricatas[0].filename, "test.lua")
         self.assertEqual(str(script_suricata), "test.lua")
-        self.assertEqual(ScriptSuricata.get_by_name("test.lua").rev, 0)
+        self.assertEqual(ScriptSuricata.get_by_filename("test.lua").rev, 0)
         script_suricata = ScriptSuricata.get_by_id(99)
         self.assertEqual(script_suricata, None)
-        self.assertEqual(ScriptSuricata.get_by_name('does not exist'), None)
+        self.assertEqual(ScriptSuricata.get_by_filename('does not exist'), None)
         with self.assertRaises(IntegrityError):
-            ScriptSuricata.objects.create(name="test.lua",
+            ScriptSuricata.objects.create(filename="test.lua",
                                           rev=0,
                                           reference="http://doc.emergingthreats.net/2000026",
                                           rule_full="alert dns any any -> any any (msg:\"SURICATA DNS flow "

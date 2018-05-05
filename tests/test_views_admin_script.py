@@ -40,7 +40,7 @@ class ViewsScriptAdminTest(TestCase):
 
         response = self.client.post('/admin/suricata/scriptsuricata/add/', {'rev': '0',
                                                                             'rule_full': '1',
-                                                                            'name': 'fail script test',
+                                                                            'filename': 'fail_script_test.lua',
                                                                             },
                                     follow=True)
         self.assertEqual(response.status_code, 200)

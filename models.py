@@ -461,7 +461,6 @@ class RuleSetSuricata(RuleSet):
                                              js_options={'quiet_millis': 200}
                                              )
 
-
     def __str__(self):
         return str(self.name)
 
@@ -642,8 +641,8 @@ class Suricata(Probe):
                 sudo tee -a /etc/apt/sources.list.d/stretch-backports.list
                 apt update
                 apt -y -t stretch-backports install suricata
-                mkdir /etc/suricata/lua-output && mkdir /etc/suricata/iprep && touch \
-                /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list
+                mkdir /etc/suricata/iprep 
+                touch /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list
                 chown -R $(whoami) /etc/suricata
                 exit 0
             else
@@ -657,7 +656,7 @@ class Suricata(Probe):
                 add-apt-repository -y ppa:oisf/suricata-stable
                 apt update
                 apt -y install suricata
-                mkdir /etc/suricata/lua-output && mkdir /etc/suricata/iprep
+                mkdir /etc/suricata/iprep
                 touch /etc/suricata/iprep/reputation.list && touch /etc/suricata/iprep/categories.txt
                 chown -R $(whoami) /etc/suricata
                 exit 0

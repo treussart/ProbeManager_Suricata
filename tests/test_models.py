@@ -350,6 +350,18 @@ class SignatureSuricataTest(TestCase):
                          str(signature_suricata.sid) + " : " + "ET DROP Dshield Block Listed Source group 1")
         signature_suricata = SignatureSuricata.get_by_id(99)
         self.assertEqual(signature_suricata, None)
+        signature_script = SignatureSuricata.objects.create(sid=2040203,
+                                                            rev=0,
+                                                            msg="Test script lua",
+                                                            reference="http://doc.emergingthreats.net/2000026",
+                                                            classtype=ClassType.get_by_id(1),
+                                                            rule_full="alert tcp any any −> any any (msg:\"Lua rule\"; "
+                                                                      "lua:test.lua; classtype:misc-attack; sid:3011; "
+                                                                      "rev:1;)",
+                                                            enabled=True,
+                                                            created_date=self.date_now
+                                                            )
+        self.assertTrue(signature_script.test()['status'])
         with self.assertRaises(IntegrityError):
             SignatureSuricata.objects.create(sid=20402000,
                                              rev=0,

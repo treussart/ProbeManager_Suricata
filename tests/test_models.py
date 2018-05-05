@@ -364,7 +364,7 @@ class SignatureSuricataTest(TestCase):
                                                             )
         print(signature_script.test())
         print(subprocess.check_output(['ls', '-l', settings.SURICATA_RULES]))
-        print(subprocess.check_output(['cat', settings.SURICATA_RULES, '/test.lua']))
+        print(subprocess.check_output(['cat', settings.SURICATA_RULES + '/test.lua']))
         print(subprocess.check_output([settings.SURICATA_BINARY, '--build-info']))
         self.assertTrue(signature_script.test()['status'])
 

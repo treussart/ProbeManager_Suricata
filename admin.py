@@ -19,7 +19,7 @@ from .forms import SuricataChangeForm
 from .models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, Configuration, \
     SourceSuricata, BlackList, IPReputation, CategoryReputation, ClassType
 from .tasks import download_from_http, download_from_misp
-from .utils import create_download_from_http_task, create_conf, convert_conf
+from .utils import create_download_from_http_task
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +128,6 @@ class ConfigurationAdmin(admin.ModelAdmin):
             messages.add_message(request, messages.SUCCESS, "Test configuration OK")
         else:
             messages.add_message(request, messages.ERROR, "Test configuration failed ! " + str(response['errors']))
-
 
     def test_configurations(self, request, obj):
         test = True

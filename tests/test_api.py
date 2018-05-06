@@ -1,12 +1,13 @@
 """ venv/bin/python probemanager/manage.py test suricata.tests.test_api --settings=probemanager.settings.dev """
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
 from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework.test import APITestCase
 
-from suricata.models import Suricata, BlackList
+from suricata.models import Suricata, BlackList, ValidationType, AppLayerType, Configuration
 
 
 class APITest(APITestCase):
@@ -21,6 +22,140 @@ class APITest(APITestCase):
 
     def tearDown(self):
         self.client.logout()
+
+    def test_conf(self):
+        response = self.client.get('/api/v1/suricata/configuration/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 2)
+        with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
+            CONF_FULL_DEFAULT = f.read()
+        conftest_advanced = Configuration.objects.create(
+            name='conftest_advanced',
+            conf_rules_directory='/etc/suricata/rules',
+            conf_iprep_directory='/etc/suricata/iprep',
+            conf_lua_directory='/etc/suricata/lua-output',
+            conf_file='/etc/suricata/suricata.yaml',
+            conf_advanced=True,
+            conf_advanced_text=CONF_FULL_DEFAULT,
+            conf_HOME_NET="[192.168.0.0/24]",
+            conf_EXTERNAL_NET="!$HOME_NET",
+            conf_HTTP_SERVERS="$HOME_NET",
+            conf_SMTP_SERVERS="$HOME_NET",
+            conf_SQL_SERVERS="$HOME_NET",
+            conf_DNS_SERVERS="$HOME_NET",
+            conf_TELNET_SERVERS="$HOME_NET",
+            conf_AIM_SERVERS="$EXTERNAL_NET",
+            conf_DNP3_SERVER="$HOME_NET",
+            conf_DNP3_CLIENT="$HOME_NET",
+            conf_MODBUS_CLIENT="$HOME_NET",
+            conf_MODBUS_SERVER="$HOME_NET",
+            conf_ENIP_CLIENT="$HOME_NET",
+            conf_ENIP_SERVER="$HOME_NET",
+            conf_HTTP_PORTS="80",
+            conf_SHELLCODE_PORTS="!80",
+            conf_ORACLE_PORTS="1521",
+            conf_SSH_PORTS="22",
+            conf_DNP3_PORTS="20000",
+            conf_MODBUS_PORTS="502",
+            conf_stats=ValidationType.get_by_id(1),
+            conf_afpacket_interface='eth0',
+            conf_outputs_fast=ValidationType.get_by_id(1),
+            conf_outputs_evelog=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_http=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_tls=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_ssh=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_smtp=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_dnp3=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_taggedpackets=ValidationType.get_by_id(0),
+            conf_outputs_evelog_xff=ValidationType.get_by_id(0),
+            conf_outputs_evelog_dns_query=ValidationType.get_by_id(0),
+            conf_outputs_evelog_dns_answer=ValidationType.get_by_id(0),
+            conf_outputs_evelog_http_extended=ValidationType.get_by_id(0),
+            conf_outputs_evelog_tls_extended=ValidationType.get_by_id(0),
+            conf_outputs_evelog_files_forcemagic=ValidationType.get_by_id(1),
+            conf_outputs_unified2alert=ValidationType.get_by_id(1),
+            conf_lua=ValidationType.get_by_id(1),
+            conf_applayer_tls=AppLayerType.get_by_id(0),
+            conf_applayer_dcerpc=AppLayerType.get_by_id(0),
+            conf_applayer_ftp=AppLayerType.get_by_id(0),
+            conf_applayer_ssh=AppLayerType.get_by_id(0),
+            conf_applayer_smtp=AppLayerType.get_by_id(0),
+            conf_applayer_imap=AppLayerType.get_by_id(1),
+            conf_applayer_msn=AppLayerType.get_by_id(1),
+            conf_applayer_smb=AppLayerType.get_by_id(0),
+            conf_applayer_dns=AppLayerType.get_by_id(0),
+            conf_applayer_http=AppLayerType.get_by_id(0)
+        )
+        response = self.client.get('/api/v1/suricata/configuration/' + str(conftest_advanced.id) + '/test/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
+            CONF_FULL_DEFAULT = f.read()
+        conftest = Configuration.objects.create(
+            name='conftest',
+            conf_rules_directory='/etc/suricata/rules',
+            conf_iprep_directory='/etc/suricata/iprep',
+            conf_lua_directory='/etc/suricata/lua-output',
+            conf_file='/etc/suricata/suricata.yaml',
+            conf_advanced=False,
+            conf_advanced_text=CONF_FULL_DEFAULT,
+            conf_HOME_NET="[192.168.0.0/24]",
+            conf_EXTERNAL_NET="!$HOME_NET",
+            conf_HTTP_SERVERS="$HOME_NET",
+            conf_SMTP_SERVERS="$HOME_NET",
+            conf_SQL_SERVERS="$HOME_NET",
+            conf_DNS_SERVERS="$HOME_NET",
+            conf_TELNET_SERVERS="$HOME_NET",
+            conf_AIM_SERVERS="$EXTERNAL_NET",
+            conf_DNP3_SERVER="$HOME_NET",
+            conf_DNP3_CLIENT="$HOME_NET",
+            conf_MODBUS_CLIENT="$HOME_NET",
+            conf_MODBUS_SERVER="$HOME_NET",
+            conf_ENIP_CLIENT="$HOME_NET",
+            conf_ENIP_SERVER="$HOME_NET",
+            conf_HTTP_PORTS="80",
+            conf_SHELLCODE_PORTS="!80",
+            conf_ORACLE_PORTS="1521",
+            conf_SSH_PORTS="22",
+            conf_DNP3_PORTS="20000",
+            conf_MODBUS_PORTS="502",
+            conf_stats=ValidationType.get_by_id(1),
+            conf_afpacket_interface='eth0',
+            conf_outputs_fast=ValidationType.get_by_id(1),
+            conf_outputs_evelog=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_http=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_tls=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_ssh=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_smtp=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_dnp3=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_taggedpackets=ValidationType.get_by_id(0),
+            conf_outputs_evelog_xff=ValidationType.get_by_id(0),
+            conf_outputs_evelog_dns_query=ValidationType.get_by_id(0),
+            conf_outputs_evelog_dns_answer=ValidationType.get_by_id(0),
+            conf_outputs_evelog_http_extended=ValidationType.get_by_id(0),
+            conf_outputs_evelog_tls_extended=ValidationType.get_by_id(0),
+            conf_outputs_evelog_files_forcemagic=ValidationType.get_by_id(1),
+            conf_outputs_unified2alert=ValidationType.get_by_id(1),
+            conf_lua=ValidationType.get_by_id(1),
+            conf_applayer_tls=AppLayerType.get_by_id(0),
+            conf_applayer_dcerpc=AppLayerType.get_by_id(0),
+            conf_applayer_ftp=AppLayerType.get_by_id(0),
+            conf_applayer_ssh=AppLayerType.get_by_id(0),
+            conf_applayer_smtp=AppLayerType.get_by_id(0),
+            conf_applayer_imap=AppLayerType.get_by_id(1),
+            conf_applayer_msn=AppLayerType.get_by_id(1),
+            conf_applayer_smb=AppLayerType.get_by_id(0),
+            conf_applayer_dns=AppLayerType.get_by_id(0),
+            conf_applayer_http=AppLayerType.get_by_id(0)
+        )
+        response = self.client.get('/api/v1/suricata/configuration/' + str(conftest.id) + '/test/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        response = self.client.get('/api/v1/suricata/configuration/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 4)
 
     def test_suricata(self):
         response = self.client.get('/api/v1/suricata/suricata/')
@@ -87,6 +222,66 @@ class APITest(APITestCase):
             PeriodicTask.objects.get(name="test_deploy_rules_" + str(CrontabSchedule.objects.get(id=4)))
         with self.assertRaises(ObjectDoesNotExist):
             PeriodicTask.objects.get(name="test_check_task")
+
+        response = self.client.get('/api/v1/suricata/suricata/1/test_rules/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/start/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/stop/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/restart/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/reload/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/status/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/uptime/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['uptime'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/deploy_rules/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        response = self.client.get('/api/v1/suricata/suricata/1/deploy_conf/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+        # response = self.client.get('/api/v1/suricata/suricata/1/install/')
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # self.assertTrue(response.data['status'])
+        #
+        # response = self.client.get('/api/v1/suricata/suricata/1/install/?version=' + settings.SURICATA_VERSION)
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # self.assertTrue(response.data['status'])
+
+    def test_signature(self):
+        response = self.client.get('/api/v1/suricata/signature/1/test/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
+
+    def test_script(self):
+        response = self.client.get('/api/v1/suricata/script/3/test_lua_output/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data['status'])
+        self.assertEqual(response.data['errors'], 'Not a Lua script used to generate output from Suricata.')
+
+    def test_ruleset(self):
+        response = self.client.get('/api/v1/suricata/ruleset/2/test_rules/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
 
     def test_blacklist(self):
         response = self.client.get('/api/v1/suricata/blacklist/')

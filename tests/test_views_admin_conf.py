@@ -32,8 +32,8 @@ class ViewsConfAdminTest(TestCase):
         response = self.client.post('/admin/suricata/configuration/add/',
                                     {'name': 'conftest',
                                      'conf_rules_directory': '/etc/suricata/rules',
-                                     'conf_script_directory': '/etc/suricata/lua',
                                      'conf_iprep_directory': '/etc/suricata/iprep',
+                                     'conf_lua_directory': '/etc/suricata/lua-output',
                                      'conf_file': '/etc/suricata/suricata.yaml',
                                      'conf_advanced': True,
                                      'conf_advanced_text': CONF_FULL_DEFAULT,
@@ -92,8 +92,8 @@ class ViewsConfAdminTest(TestCase):
         response = self.client.post('/admin/suricata/configuration/add/',
                                     {'name': 'conftest-false',
                                      'conf_rules_directory': '/etc/suricata/rules',
-                                     'conf_script_directory': '/etc/suricata/lua',
                                      'conf_iprep_directory': '/etc/suricata/iprep',
+                                     'conf_lua_directory': '/etc/suricata/lua-output',
                                      'conf_file': '/etc/suricata/suricata.yaml',
                                      'conf_advanced': False,
                                      'conf_advanced_text': CONF_FULL_DEFAULT,
@@ -151,7 +151,9 @@ class ViewsConfAdminTest(TestCase):
         self.assertIn('Test configuration OK', str(response.content))
         self.assertEqual(len(Configuration.get_all()), 4)
         response = self.client.post('/admin/suricata/configuration/', {'action': 'test_configurations',
-                                                                       '_selected_action': '2'},
+                                                                       '_selected_action':
+                                                                           Configuration.objects.
+                                    get(name='conftest-false').id},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn("Test configurations OK", str(response.content))
@@ -159,8 +161,8 @@ class ViewsConfAdminTest(TestCase):
         response = self.client.post('/admin/suricata/configuration/add/',
                                     {'name': 'conftest-failed',
                                      'conf_rules_directory': '/etc/suricata/rules',
-                                     'conf_script_directory': '/etc/suricata/lua',
                                      'conf_iprep_directory': '/etc/suricata/iprep',
+                                     'conf_lua_directory': '/etc/suricata/lua-output',
                                      'conf_file': '/etc/suricata/suricata.yaml',
                                      'conf_advanced': True,
                                      'conf_advanced_text': "FAILED",

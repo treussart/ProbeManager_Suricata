@@ -1,4 +1,6 @@
 """ venv/bin/python probemanager/manage.py test suricata.tests.test_models --settings=probemanager.settings.dev """
+import subprocess
+import os
 from django.conf import settings
 from django.db.utils import IntegrityError
 from django.test import TestCase
@@ -7,7 +9,7 @@ from django.utils import timezone
 from core.models import Configuration as CoreConfiguration
 from rules.models import DataTypeUpload, MethodUpload
 from suricata.models import AppLayerType, Configuration, Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, \
-    SourceSuricata, IPReputation, CategoryReputation, ClassType
+    SourceSuricata, IPReputation, CategoryReputation, ClassType, ValidationType
 
 
 class ClassTypeTest(TestCase):
@@ -142,9 +144,126 @@ class ConfigurationTest(TestCase):
         self.assertEqual(len(all_conf_suricata), 2)
         self.assertEqual(conf_suricata.name, "configuration1")
         self.assertEqual(conf_suricata.conf_rules_directory, "/etc/suricata/rules")
-        self.assertEqual(conf_suricata.conf_script_directory, "/etc/suricata/lua")
         self.assertEqual(conf_suricata.conf_file, "/etc/suricata/suricata.yaml")
         self.assertTrue(conf_suricata.conf_advanced)
+        with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
+            CONF_FULL_DEFAULT = f.read()
+        conftest = Configuration.objects.create(
+            name='conftest',
+            conf_rules_directory='/etc/suricata/rules',
+            conf_iprep_directory='/etc/suricata/iprep',
+            conf_lua_directory='/etc/suricata/lua-output',
+            conf_file='/etc/suricata/suricata.yaml',
+            conf_advanced=False,
+            conf_advanced_text=CONF_FULL_DEFAULT,
+            conf_HOME_NET="[192.168.0.0/24]",
+            conf_EXTERNAL_NET="!$HOME_NET",
+            conf_HTTP_SERVERS="$HOME_NET",
+            conf_SMTP_SERVERS="$HOME_NET",
+            conf_SQL_SERVERS="$HOME_NET",
+            conf_DNS_SERVERS="$HOME_NET",
+            conf_TELNET_SERVERS="$HOME_NET",
+            conf_AIM_SERVERS="$EXTERNAL_NET",
+            conf_DNP3_SERVER="$HOME_NET",
+            conf_DNP3_CLIENT="$HOME_NET",
+            conf_MODBUS_CLIENT="$HOME_NET",
+            conf_MODBUS_SERVER="$HOME_NET",
+            conf_ENIP_CLIENT="$HOME_NET",
+            conf_ENIP_SERVER="$HOME_NET",
+            conf_HTTP_PORTS="80",
+            conf_SHELLCODE_PORTS="!80",
+            conf_ORACLE_PORTS="1521",
+            conf_SSH_PORTS="22",
+            conf_DNP3_PORTS="20000",
+            conf_MODBUS_PORTS="502",
+            conf_stats=ValidationType.get_by_id(1),
+            conf_afpacket_interface='eth0',
+            conf_outputs_fast=ValidationType.get_by_id(1),
+            conf_outputs_evelog=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_http=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_tls=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_ssh=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_smtp=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_dnp3=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_taggedpackets=ValidationType.get_by_id(0),
+            conf_outputs_evelog_xff=ValidationType.get_by_id(0),
+            conf_outputs_evelog_dns_query=ValidationType.get_by_id(0),
+            conf_outputs_evelog_dns_answer=ValidationType.get_by_id(0),
+            conf_outputs_evelog_http_extended=ValidationType.get_by_id(0),
+            conf_outputs_evelog_tls_extended=ValidationType.get_by_id(0),
+            conf_outputs_evelog_files_forcemagic=ValidationType.get_by_id(1),
+            conf_outputs_unified2alert=ValidationType.get_by_id(1),
+            conf_lua=ValidationType.get_by_id(1),
+            conf_applayer_tls=AppLayerType.get_by_id(0),
+            conf_applayer_dcerpc=AppLayerType.get_by_id(0),
+            conf_applayer_ftp=AppLayerType.get_by_id(0),
+            conf_applayer_ssh=AppLayerType.get_by_id(0),
+            conf_applayer_smtp=AppLayerType.get_by_id(0),
+            conf_applayer_imap=AppLayerType.get_by_id(1),
+            conf_applayer_msn=AppLayerType.get_by_id(1),
+            conf_applayer_smb=AppLayerType.get_by_id(0),
+            conf_applayer_dns=AppLayerType.get_by_id(0),
+            conf_applayer_http=AppLayerType.get_by_id(0)
+        )
+        self.assertTrue(conftest.test()['status'])
+        conftest_advanced = Configuration.objects.create(
+            name='conftest_advanced',
+            conf_rules_directory='/etc/suricata/rules',
+            conf_iprep_directory='/etc/suricata/iprep',
+            conf_lua_directory='/etc/suricata/lua-output',
+            conf_file='/etc/suricata/suricata.yaml',
+            conf_advanced=True,
+            conf_advanced_text=CONF_FULL_DEFAULT,
+            conf_HOME_NET="[192.168.0.0/24]",
+            conf_EXTERNAL_NET="!$HOME_NET",
+            conf_HTTP_SERVERS="$HOME_NET",
+            conf_SMTP_SERVERS="$HOME_NET",
+            conf_SQL_SERVERS="$HOME_NET",
+            conf_DNS_SERVERS="$HOME_NET",
+            conf_TELNET_SERVERS="$HOME_NET",
+            conf_AIM_SERVERS="$EXTERNAL_NET",
+            conf_DNP3_SERVER="$HOME_NET",
+            conf_DNP3_CLIENT="$HOME_NET",
+            conf_MODBUS_CLIENT="$HOME_NET",
+            conf_MODBUS_SERVER="$HOME_NET",
+            conf_ENIP_CLIENT="$HOME_NET",
+            conf_ENIP_SERVER="$HOME_NET",
+            conf_HTTP_PORTS="80",
+            conf_SHELLCODE_PORTS="!80",
+            conf_ORACLE_PORTS="1521",
+            conf_SSH_PORTS="22",
+            conf_DNP3_PORTS="20000",
+            conf_MODBUS_PORTS="502",
+            conf_stats=ValidationType.get_by_id(1),
+            conf_afpacket_interface='eth0',
+            conf_outputs_fast=ValidationType.get_by_id(1),
+            conf_outputs_evelog=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_http=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_tls=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_ssh=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_smtp=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_dnp3=ValidationType.get_by_id(0),
+            conf_outputs_evelog_alert_taggedpackets=ValidationType.get_by_id(0),
+            conf_outputs_evelog_xff=ValidationType.get_by_id(0),
+            conf_outputs_evelog_dns_query=ValidationType.get_by_id(0),
+            conf_outputs_evelog_dns_answer=ValidationType.get_by_id(0),
+            conf_outputs_evelog_http_extended=ValidationType.get_by_id(0),
+            conf_outputs_evelog_tls_extended=ValidationType.get_by_id(0),
+            conf_outputs_evelog_files_forcemagic=ValidationType.get_by_id(1),
+            conf_outputs_unified2alert=ValidationType.get_by_id(1),
+            conf_lua=ValidationType.get_by_id(1),
+            conf_applayer_tls=AppLayerType.get_by_id(0),
+            conf_applayer_dcerpc=AppLayerType.get_by_id(0),
+            conf_applayer_ftp=AppLayerType.get_by_id(0),
+            conf_applayer_ssh=AppLayerType.get_by_id(0),
+            conf_applayer_smtp=AppLayerType.get_by_id(0),
+            conf_applayer_imap=AppLayerType.get_by_id(1),
+            conf_applayer_msn=AppLayerType.get_by_id(1),
+            conf_applayer_smb=AppLayerType.get_by_id(0),
+            conf_applayer_dns=AppLayerType.get_by_id(0),
+            conf_applayer_http=AppLayerType.get_by_id(0)
+        )
+        self.assertTrue(conftest_advanced.test()['status'])
         self.assertEqual(str(conf_suricata), "configuration1")
         conf_suricata = Configuration.get_by_id(99)
         self.assertEqual(conf_suricata, None)
@@ -177,7 +296,7 @@ class RuleSetSuricataTest(TestCase):
 
 
 class ScriptSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-script']
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-signature', 'test-suricata-script']
 
     @classmethod
     def setUpTestData(cls):
@@ -188,18 +307,20 @@ class ScriptSuricataTest(TestCase):
         script_suricata = ScriptSuricata.get_by_id(3)
         script_suricatas = ScriptSuricata.find(".php")
         self.assertEqual(len(all_script_suricata), 1)
-        self.assertEqual(script_suricata.name, "test.lua")
+        self.assertEqual(script_suricata.filename, "test.lua")
         self.assertEqual(script_suricata.rev, 0)
         self.assertEqual(script_suricata.reference, None)
         self.assertTrue(script_suricata.enabled)
-        self.assertEqual(script_suricatas[0].name, "test.lua")
+        self.assertEqual(script_suricatas[0].filename, "test.lua")
         self.assertEqual(str(script_suricata), "test.lua")
-        self.assertEqual(ScriptSuricata.get_by_name("test.lua").rev, 0)
+        self.assertEqual(ScriptSuricata.get_by_filename("test.lua").rev, 0)
         script_suricata = ScriptSuricata.get_by_id(99)
         self.assertEqual(script_suricata, None)
-        self.assertEqual(ScriptSuricata.get_by_name('does not exist'), None)
+        self.assertEqual(ScriptSuricata.get_by_filename('does not exist'), None)
+        ScriptSuricata.copy_to_rules_directory_for_test()
+        self.assertTrue(os.path.exists(settings.SURICATA_RULES + '/test.lua'))
         with self.assertRaises(IntegrityError):
-            ScriptSuricata.objects.create(name="test.lua",
+            ScriptSuricata.objects.create(filename="test.lua",
                                           rev=0,
                                           reference="http://doc.emergingthreats.net/2000026",
                                           rule_full="alert dns any any -> any any (msg:\"SURICATA DNS flow "
@@ -211,7 +332,7 @@ class ScriptSuricataTest(TestCase):
 
 
 class SignatureSuricataTest(TestCase):
-    fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-signature']
+    fixtures = ['init', 'crontab', 'init-suricata', 'test-suricata-signature', 'test-suricata-script']
 
     @classmethod
     def setUpTestData(cls):
@@ -235,6 +356,20 @@ class SignatureSuricataTest(TestCase):
                          str(signature_suricata.sid) + " : " + "ET DROP Dshield Block Listed Source group 1")
         signature_suricata = SignatureSuricata.get_by_id(99)
         self.assertEqual(signature_suricata, None)
+        signature_script = SignatureSuricata.objects.create(sid=2040203,
+                                                            rev=0,
+                                                            msg="Test script lua",
+                                                            reference="http://doc.emergingthreats.net/2000026",
+                                                            classtype=ClassType.get_by_id(1),
+                                                            rule_full="alert tcp any any −> any any (msg:\"Lua rule\"; "
+                                                                      "lua:test.lua; classtype:misc-attack; sid:3011; "
+                                                                      "rev:1;)",
+                                                            enabled=True,
+                                                            created_date=self.date_now
+                                                            )
+        assert signature_script
+        # self.assertTrue(signature_script.test()['status'])
+
         with self.assertRaises(IntegrityError):
             SignatureSuricata.objects.create(sid=20402000,
                                              rev=0,
@@ -273,7 +408,7 @@ class SuricataTest(TestCase):
         suricata = Suricata.get_by_id(1)
         response = suricata.server.test()
         self.assertTrue(response)
-        response = suricata.server.test_root()
+        response = suricata.server.test_become()
         self.assertTrue(response)
 
     def test_reload(self):

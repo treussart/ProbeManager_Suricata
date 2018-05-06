@@ -14,12 +14,12 @@ from django_celery_beat.models import CrontabSchedule
 
 from core.models import Configuration as CoreConfiguration
 from core.utils import create_deploy_rules_task, add_1_hour
-from core.utils import generic_import_csv
+from core.views import generic_import_csv
 from .forms import SuricataChangeForm
 from .models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, Configuration, \
-    SourceSuricata, BlackList, IPReputation, CategoryReputation, ClassType
+    SourceSuricata, BlackList, IPReputation, CategoryReputation
 from .tasks import download_from_http, download_from_misp
-from .utils import create_download_from_http_task, create_conf, convert_conf
+from .utils import create_download_from_http_task
 
 logger = logging.getLogger(__name__)
 
@@ -69,21 +69,20 @@ class RuleMixin(admin.ModelAdmin):
 
 
 class RuleSetSuricataAdmin(admin.ModelAdmin):
-    def test_signatures(self, request, obj):
+    def test_rules(self, request, obj):
         test = True
         errors = list()
         for ruleset in obj:
-            for signature in ruleset.signatures.all():
-                response = signature.test()
-                if not response['status']:
-                    test = False
-                    errors.append(str(signature) + " : " + str(response['errors']))
+            response = ruleset.test_rules()
+            if not response['status']:
+                test = False
+                errors.append(response['errors'])
         if test:
-            messages.add_message(request, messages.SUCCESS, "Test signatures OK")
+            messages.add_message(request, messages.SUCCESS, "Test rules OK")
         else:
-            messages.add_message(request, messages.ERROR, "Test signatures failed ! " + str(errors))
+            messages.add_message(request, messages.ERROR, "Test rules failed ! " + str(errors))
 
-    actions = [test_signatures]
+    actions = [test_rules]
 
 
 class SuricataAdmin(admin.ModelAdmin):
@@ -122,16 +121,13 @@ class ConfigurationAdmin(admin.ModelAdmin):
         )
 
     def save_model(self, request, obj, form, change):
-        if not obj.conf_advanced:
-            obj = create_conf(obj)
-        else:
-            obj = convert_conf(obj)
-        response = obj.test()
+        super().save_model(request, obj, form, change)
+        conf = Configuration.objects.get(name=obj.name)
+        response = conf.test()
         if response['status']:
             messages.add_message(request, messages.SUCCESS, "Test configuration OK")
         else:
             messages.add_message(request, messages.ERROR, "Test configuration failed ! " + str(response['errors']))
-        super().save_model(request, obj, form, change)
 
     def test_configurations(self, request, obj):
         test = True
@@ -174,7 +170,7 @@ class ScriptSuricataAdmin(RuleMixin, admin.ModelAdmin):
     remove_ruleset.short_description = 'Remove ruleset'
     search_fields = ('rule_full',)
     list_filter = ('enabled', 'created_date', 'updated_date', 'rulesetsuricata__name')
-    list_display = ('id', 'name', 'enabled')
+    list_display = ('id', 'filename', 'enabled')
     action_form = RuleMixin.UpdateActionForm
     actions = [RuleMixin.make_enabled, RuleMixin.make_disabled, add_ruleset, remove_ruleset]
 
@@ -342,4 +338,3 @@ admin.site.register(SourceSuricata, SourceSuricataAdmin)
 admin.site.register(BlackList, BlackListAdmin)
 admin.site.register(IPReputation, IPReputationAdmin)
 admin.site.register(CategoryReputation, CategoryReputationAdmin)
-admin.site.register(ClassType)

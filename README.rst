@@ -43,7 +43,6 @@ Features
 * Group rules into groups and assign this to probes.
 * Possibility to add into blacklist an IP, Domain or MD5.
 * Implements IP reputation.
-* Modify and create ClassType.
 
 Installation
 ============

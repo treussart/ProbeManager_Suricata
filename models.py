@@ -3,6 +3,7 @@ import io
 import logging
 import os
 import re
+import glob
 import ssl
 import subprocess
 import tarfile
@@ -25,6 +26,7 @@ from core.ssh import execute, execute_copy
 from core.utils import process_cmd, create_deploy_rules_task, create_check_task
 from rules.models import RuleSet, Rule, Source
 from .exceptions import RuleNotFoundParam
+from .utils import create_conf, convert_conf
 
 logger = logging.getLogger('suricata')
 
@@ -81,8 +83,8 @@ class Configuration(ProbeConfiguration):
     with open(settings.BASE_DIR + "/suricata/default-Suricata-conf.yaml", encoding='utf_8') as f:
         CONF_FULL_DEFAULT = f.read()
     conf_rules_directory = models.CharField(max_length=400, default="/etc/suricata/rules")
-    conf_script_directory = models.CharField(max_length=400, default='/etc/suricata/lua')
     conf_iprep_directory = models.CharField(max_length=400, default='/etc/suricata/iprep')
+    conf_lua_directory = models.CharField(max_length=400, default='/etc/suricata/lua-output')
     conf_file = models.CharField(max_length=400, default="/etc/suricata/suricata.yaml")
     conf_advanced = models.BooleanField(default=False)
     conf_advanced_text = models.TextField(default=CONF_FULL_DEFAULT)
@@ -170,6 +172,13 @@ class Configuration(ProbeConfiguration):
     def __str__(self):
         return self.name
 
+    def save(self, **kwargs):
+        if not self.conf_advanced:
+            create_conf(self)
+        else:
+            convert_conf(self)
+        super().save(**kwargs)
+
     def test(self):
         with self.get_tmp_dir(self.pk) as tmp_dir:
             rule_file = settings.BASE_DIR + "/suricata/tests/data/test.rules"
@@ -209,6 +218,7 @@ class SignatureSuricata(Rule):
                                         "href='http://doc.emergingthreats.net/bin/view/Main/SidAllocation'>help</a>")
     classtype = models.ForeignKey(ClassType, on_delete=models.CASCADE)
     msg = models.CharField(max_length=1000)
+    file_test_success = models.FileField(name='file_test_success', upload_to='file_test_success', blank=True)
 
     def __str__(self):
         return str(self.sid) + " : " + str(self.msg)
@@ -298,6 +308,7 @@ class SignatureSuricata(Rule):
 
     def test(self):
         with self.get_tmp_dir("test_sig") as tmp_dir:
+            ScriptSuricata.copy_to_rules_directory_for_test()
             rule_file = tmp_dir + str(self.sid) + ".rules"
             with open(rule_file, 'w', encoding='utf_8') as f:
                 f.write(self.rule_full)
@@ -310,6 +321,7 @@ class SignatureSuricata(Rule):
 
     def test_pcap(self):
         with self.get_tmp_dir("test_pcap") as tmp_dir:
+            ScriptSuricata.copy_to_rules_directory_for_test()
             rule_file = tmp_dir + "rule.rules"
             conf_file = tmp_dir + "suricata.yaml"
             with open(rule_file, 'w', encoding='utf_8') as f:
@@ -380,15 +392,15 @@ class ScriptSuricata(Rule):
     Stores a script Suricata compatible.
     see : http://suricata.readthedocs.io/en/latest/rules/rule-lua-scripting.html
     """
-    name = models.CharField(max_length=1000, unique=True, db_index=True)
+    filename = models.CharField(max_length=1000, unique=True, db_index=True)
 
     def __str__(self):
-        return self.name
+        return str(self.filename)
 
     @classmethod
-    def get_by_name(cls, name):
+    def get_by_filename(cls, filename):
         try:
-            obj = cls.objects.get(name=name)
+            obj = cls.objects.get(filename=filename)
         except cls.DoesNotExist as e:
             logger.debug('Tries to access an object that does not exist : ' + str(e))
             return None
@@ -404,16 +416,16 @@ class ScriptSuricata(Rule):
         """ A script by file """
         rule_created = False
         rule_updated = False
-        if not cls.get_by_name(os.path.basename(file.name)):
+        if not cls.get_by_filename(os.path.basename(file.name)):
             rule_created = True
             script = ScriptSuricata()
-            script.name = os.path.basename(file.name)
+            script.filename = os.path.basename(file.name)
             script.created_date = timezone.now()
             script.rev = 0
             script.rule_full = file.read()
         else:
             rule_updated = True
-            script = cls.get_by_name(file.name)
+            script = cls.get_by_filename(file.name)
             script.rule_full = file.read()
             script.rev = script.rev + 1
             script.updated_date = timezone.now()
@@ -424,37 +436,29 @@ class ScriptSuricata(Rule):
                 ruleset.save()
         return rule_created, rule_updated
 
-    def test(self):
-        with self.get_tmp_dir("test_script") as tmp_dir:
-            rule_file = tmp_dir + str(self.id) + ".rules"
-            with open(rule_file, 'w', encoding='utf_8') as f:
-                f.write(self.rule_full)
-            cmd = [settings.SURICATA_BINARY, '-T',
-                   '-l', tmp_dir,
-                   '-S', rule_file,
-                   '-c', settings.SURICATA_CONFIG
-                   ]
-            return process_cmd(cmd, tmp_dir)
-
-    def test_pcap(self):  # TODO
-        return {'status': True}
-
-    def test_all(self):
-        test = True
-        errors = list()
-        response = self.test()
-        if not response['status']:
-            test = False
-            errors.append(str(self) + " : " + str(response['errors']))
-        if self.file_test_success:
-            response_pcap = self.test_pcap()
-            if not response_pcap['status']:
-                test = False
-                errors.append(str(self) + " : " + str(response_pcap['errors']))
-        if test:
-            return {'status': True}
+    def test_lua_output(self):
+        for f in glob.glob(settings.SURICATA_LUA + '/*'):
+            os.remove(f)
+        if 'function setup' in self.rule_full and 'function deinit' in self.rule_full:
+            with open(settings.SURICATA_LUA + '/' + self.filename, 'w') as f:
+                f.write(self.rule_full.replace('\r', ''))
+            with self.get_tmp_dir("test_script") as tmp_dir:
+                rule_file = settings.BASE_DIR + "/suricata/tests/data/test.rules"
+                cmd = [settings.SURICATA_BINARY, '-T',
+                       '-l', tmp_dir,
+                       '-S', rule_file,
+                       '-c', settings.SURICATA_CONFIG
+                       ]
+                return process_cmd(cmd, tmp_dir)
         else:
-            return {'status': False, 'errors': errors}
+            return {'status': False, 'errors': "Not a Lua script used to generate output from Suricata."}
+
+    @classmethod
+    def copy_to_rules_directory_for_test(cls):
+        for script in cls.get_all():
+            if 'function setup' not in script.rule_full and 'function deinit' not in script.rule_full:
+                with open(settings.SURICATA_RULES + '/' + script.filename, 'w') as f:
+                    f.write(script.rule_full.replace('\r', ''))
 
 
 class RuleSetSuricata(RuleSet):
@@ -471,16 +475,25 @@ class RuleSetSuricata(RuleSet):
     scripts = select2.fields.ManyToManyField(ScriptSuricata,
                                              blank=True,
                                              ajax=True,
-                                             search_field=lambda q: Q(sid__icontains=q) | Q(name__icontains=q),
+                                             search_field=lambda q: Q(sid__icontains=q) | Q(filename__icontains=q),
                                              sort_field='sid',
                                              js_options={'quiet_millis': 200}
                                              )
 
-    # signatures = models.ManyToManyField(SignatureSuricata, blank=True)
-    # scripts = models.ManyToManyField(ScriptSuricata, blank=True)
-
     def __str__(self):
-        return self.name
+        return str(self.name)
+
+    def test_rules(self):
+        test = True
+        errors = list()
+        for signature in self.signatures.all():
+            response = signature.test()
+            if not response['status']:
+                test = False
+                errors.append(str(signature) + " : " + str(response['errors']))
+        if not test:
+            return {'status': False, 'errors': str(errors)}
+        return {'status': True}
 
 
 class SourceSuricata(Source):
@@ -525,6 +538,7 @@ class SourceSuricata(Source):
                 if rule_updated:
                     count_signature_updated += 1
         elif os.path.splitext(file_name)[1] == '.lua':
+
             rule_created, rule_updated = ScriptSuricata.extract_attributs(file, rulesets)
             if rule_created:
                 count_script_created += 1
@@ -647,8 +661,9 @@ class Suricata(Probe):
                 sudo tee -a /etc/apt/sources.list.d/stretch-backports.list
                 apt update
                 apt -y -t stretch-backports install suricata
-                mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep && touch \
-                /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list
+                mkdir /etc/suricata/lua-output
+                mkdir /etc/suricata/iprep
+                touch /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list
                 chown -R $(whoami) /etc/suricata
                 exit 0
             else
@@ -662,7 +677,8 @@ class Suricata(Probe):
                 add-apt-repository -y ppa:oisf/suricata-stable
                 apt update
                 apt -y install suricata
-                mkdir /etc/suricata/lua && mkdir /etc/suricata/iprep
+                mkdir /etc/suricata/lua-output
+                mkdir /etc/suricata/iprep
                 touch /etc/suricata/iprep/reputation.list && touch /etc/suricata/iprep/categories.txt
                 chown -R $(whoami) /etc/suricata
                 exit 0
@@ -787,7 +803,7 @@ class Suricata(Probe):
         for ruleset in self.rulesets.all():
             for signature in ruleset.signatures.all():
                 if signature.enabled:
-                    value += signature.rule_full + '\n'
+                    value += signature.rule_full.replace('\r', '') + '\n'
         with self.get_tmp_dir(self.pk) as tmp_dir:
             with open(tmp_dir + "temp.rules", 'w', encoding='utf_8') as f:
                 f.write(value)
@@ -819,12 +835,17 @@ class Suricata(Probe):
             for ruleset in self.rulesets.all():
                 for script in ruleset.scripts.all():
                     if script.enabled:
-                        with open(tmp_dir + script.name, 'w', encoding='utf_8') as f:
-                            f.write(script.rule_full)
+                        with open(tmp_dir + script.filename, 'w', encoding='utf_8') as f:
+                            f.write(script.rule_full.replace('\r', ''))
                         try:
-                            response = execute_copy(self.server, src=tmp_dir + script.name,
-                                                    dest=self.configuration.conf_script_directory.rstrip(
-                                                        '/') + '/' + script.name, become=True)
+                            if 'function setup' in script.rule_full and 'function deinit' in script.rule_full:
+                                response = execute_copy(self.server, src=tmp_dir + script.filename,
+                                                        dest=self.configuration.conf_lua_directory.rstrip(
+                                                            '/') + '/' + script.filename, become=True)
+                            else:
+                                response = execute_copy(self.server, src=tmp_dir + script.filename,
+                                                        dest=self.configuration.conf_rules_directory.rstrip(
+                                                            '/') + '/' + script.filename, become=True)
                         except Exception as e:
                             logger.exception('excecute_copy failed')
                             deploy = False

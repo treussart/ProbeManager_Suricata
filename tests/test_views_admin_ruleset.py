@@ -24,11 +24,11 @@ class ViewsRuleSetAdminTest(TestCase):
     def test_rule_set(self):
         response = self.client.get('/admin/suricata/rulesetsuricata/', follow=True)
         self.assertEqual(response.status_code, 200)
-        response = self.client.post('/admin/suricata/rulesetsuricata/', {'action': 'test_signatures',
+        response = self.client.post('/admin/suricata/rulesetsuricata/', {'action': 'test_rules',
                                                                          '_selected_action': '1'},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Test signatures OK', str(response.content))
+        self.assertIn('Test rules OK', str(response.content))
         # test fail test signature
         response = self.client.post('/admin/suricata/signaturesuricata/add/', {'rev': '0',
                                                                                'rule_full': '1',
@@ -45,11 +45,11 @@ class ViewsRuleSetAdminTest(TestCase):
                                                                              },
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        response = self.client.post('/admin/suricata/rulesetsuricata/', {'action': 'test_signatures',
+        response = self.client.post('/admin/suricata/rulesetsuricata/', {'action': 'test_rules',
                                                                          '_selected_action': '4'},
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Test signatures failed !', str(response.content))
+        self.assertIn('Test rules failed !', str(response.content))
         response = self.client.post('/admin/suricata/rulesetsuricata/', {'action': 'delete_selected',
                                                                          '_selected_action': '4'},
                                     follow=True)

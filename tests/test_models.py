@@ -1,5 +1,6 @@
 """ venv/bin/python probemanager/manage.py test suricata.tests.test_models --settings=probemanager.settings.dev """
 import subprocess
+import os
 from django.conf import settings
 from django.db.utils import IntegrityError
 from django.test import TestCase
@@ -316,6 +317,8 @@ class ScriptSuricataTest(TestCase):
         script_suricata = ScriptSuricata.get_by_id(99)
         self.assertEqual(script_suricata, None)
         self.assertEqual(ScriptSuricata.get_by_filename('does not exist'), None)
+        ScriptSuricata.copy_to_rules_directory_for_test()
+        self.assertTrue(os.path.exists(settings.SURICATA_RULES + '/test.lua'))
         with self.assertRaises(IntegrityError):
             ScriptSuricata.objects.create(filename="test.lua",
                                           rev=0,

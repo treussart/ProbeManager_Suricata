@@ -457,7 +457,7 @@ class ScriptSuricata(Rule):
     def copy_to_rules_directory_for_test(cls):
         for script in cls.get_all():
             if 'function setup' not in script.rule_full and 'function deinit' not in script.rule_full:
-                with open(settings.SURICATA_LUA + '/' + script.filename, 'w') as f:
+                with open(settings.SURICATA_RULES + '/' + script.filename, 'w') as f:
                     f.write(script.rule_full.replace('\r', ''))
 
 

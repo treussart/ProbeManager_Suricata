@@ -76,6 +76,7 @@ class ViewsSuricataTest(TestCase):
             name='conftest',
             conf_rules_directory='/etc/suricata/rules',
             conf_iprep_directory='/etc/suricata/iprep',
+            conf_lua_directory='/etc/suricata/lua-output',
             conf_file='/etc/suricata/suricata.yaml',
             conf_advanced=False,
             conf_advanced_text=CONF_FULL_DEFAULT,

@@ -10,5 +10,4 @@ urls_to_register = [
     (r'^suricata/blacklist', views.BlackListViewSet),
     (r'^suricata/ipreputation', views.IPReputationViewSet),
     (r'^suricata/categoryreputation', views.CategoryReputationViewSet),
-    (r'^suricata/classtype', views.ClassTypeViewSet),
 ]

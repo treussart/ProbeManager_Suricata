@@ -3,6 +3,7 @@ import io
 import logging
 import os
 import re
+import shutil
 import ssl
 import subprocess
 import tarfile
@@ -83,6 +84,7 @@ class Configuration(ProbeConfiguration):
         CONF_FULL_DEFAULT = f.read()
     conf_rules_directory = models.CharField(max_length=400, default="/etc/suricata/rules")
     conf_iprep_directory = models.CharField(max_length=400, default='/etc/suricata/iprep')
+    conf_lua_directory = models.CharField(max_length=400, default='/etc/suricata/lua-output')
     conf_file = models.CharField(max_length=400, default="/etc/suricata/suricata.yaml")
     conf_advanced = models.BooleanField(default=False)
     conf_advanced_text = models.TextField(default=CONF_FULL_DEFAULT)
@@ -436,9 +438,14 @@ class ScriptSuricata(Rule):
 
     @classmethod
     def copy_to_rules_directory_for_test(cls):
+        shutil.rmtree(settings.SURICATA_LUA + '/')
         for script in cls.get_all():
-            with open(settings.SURICATA_RULES + '/' + script.filename, 'w') as f:
-                f.write(script.rule_full.replace('\r', ''))
+            if 'function setup' in script.rule_full and 'function deinit' in script.rule_full:
+                with open(settings.SURICATA_LUA + '/' + script.filename, 'w') as f:
+                    f.write(script.rule_full.replace('\r', ''))
+            else:
+                with open(settings.SURICATA_RULES + '/' + script.filename, 'w') as f:
+                    f.write(script.rule_full.replace('\r', ''))
 
 
 class RuleSetSuricata(RuleSet):
@@ -641,6 +648,7 @@ class Suricata(Probe):
                 sudo tee -a /etc/apt/sources.list.d/stretch-backports.list
                 apt update
                 apt -y -t stretch-backports install suricata
+                mkdir /etc/suricata/lua-output
                 mkdir /etc/suricata/iprep
                 touch /etc/suricata/iprep/categories.txt && touch /etc/suricata/iprep/reputation.list
                 chown -R $(whoami) /etc/suricata
@@ -656,6 +664,7 @@ class Suricata(Probe):
                 add-apt-repository -y ppa:oisf/suricata-stable
                 apt update
                 apt -y install suricata
+                mkdir /etc/suricata/lua-output
                 mkdir /etc/suricata/iprep
                 touch /etc/suricata/iprep/reputation.list && touch /etc/suricata/iprep/categories.txt
                 chown -R $(whoami) /etc/suricata
@@ -781,7 +790,7 @@ class Suricata(Probe):
         for ruleset in self.rulesets.all():
             for signature in ruleset.signatures.all():
                 if signature.enabled:
-                    value += signature.rule_full + '\n'
+                    value += signature.rule_full.replace('\r', '') + '\n'
         with self.get_tmp_dir(self.pk) as tmp_dir:
             with open(tmp_dir + "temp.rules", 'w', encoding='utf_8') as f:
                 f.write(value)
@@ -814,11 +823,16 @@ class Suricata(Probe):
                 for script in ruleset.scripts.all():
                     if script.enabled:
                         with open(tmp_dir + script.filename, 'w', encoding='utf_8') as f:
-                            f.write(script.rule_full)
+                            f.write(script.rule_full.replace('\r', ''))
                         try:
-                            response = execute_copy(self.server, src=tmp_dir + script.filename,
-                                                    dest=self.configuration.conf_rules_directory.rstrip(
-                                                        '/') + '/' + script.filename, become=True)
+                            if 'function setup' in script.rule_full and 'function deinit' in script.rule_full:
+                                response = execute_copy(self.server, src=tmp_dir + script.filename,
+                                                        dest=self.configuration.conf_lua_directory.rstrip(
+                                                            '/') + '/' + script.filename, become=True)
+                            else:
+                                response = execute_copy(self.server, src=tmp_dir + script.filename,
+                                                        dest=self.configuration.conf_rules_directory.rstrip(
+                                                            '/') + '/' + script.filename, become=True)
                         except Exception as e:
                             logger.exception('excecute_copy failed')
                             deploy = False

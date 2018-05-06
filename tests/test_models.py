@@ -359,7 +359,7 @@ class SignatureSuricataTest(TestCase):
                                                             reference="http://doc.emergingthreats.net/2000026",
                                                             classtype=ClassType.get_by_id(1),
                                                             rule_full="alert tcp any any −> any any (msg:\"Lua rule\"; "
-                                                                      "luajit:test.lua; classtype:misc-attack; sid:3011; "
+                                                                      "lua:test.lua; classtype:misc-attack; sid:3011; "
                                                                       "rev:1;)",
                                                             enabled=True,
                                                             created_date=self.date_now

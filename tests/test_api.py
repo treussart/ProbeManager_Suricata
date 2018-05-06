@@ -272,6 +272,12 @@ class APITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data['status'])
 
+    def test_script(self):
+        response = self.client.get('/api/v1/suricata/script/3/test_lua_output/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data['status'])
+        self.assertEqual(response.data['errors'], 'Not a Lua script used to generate output from Suricata.')
+
     def test_ruleset(self):
         response = self.client.get('/api/v1/suricata/ruleset/2/test_rules/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)

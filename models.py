@@ -3,7 +3,7 @@ import io
 import logging
 import os
 import re
-import shutil
+import glob
 import ssl
 import subprocess
 import tarfile
@@ -436,15 +436,28 @@ class ScriptSuricata(Rule):
                 ruleset.save()
         return rule_created, rule_updated
 
+    def test_lua_output(self):
+        for f in glob.glob(settings.SURICATA_LUA + '/*'):
+            os.remove(f)
+        if 'function setup' in self.rule_full and 'function deinit' in self.rule_full:
+            with open(settings.SURICATA_LUA + '/' + self.filename, 'w') as f:
+                f.write(self.rule_full.replace('\r', ''))
+            with self.get_tmp_dir("test_script") as tmp_dir:
+                rule_file = settings.BASE_DIR + "/suricata/tests/data/test.rules"
+                cmd = [settings.SURICATA_BINARY, '-T',
+                       '-l', tmp_dir,
+                       '-S', rule_file,
+                       '-c', settings.SURICATA_CONFIG
+                       ]
+                return process_cmd(cmd, tmp_dir)
+        else:
+            return {'status': False, 'errors': "Not a Lua script used to generate output from Suricata."}
+
     @classmethod
     def copy_to_rules_directory_for_test(cls):
-        shutil.rmtree(settings.SURICATA_LUA + '/')
         for script in cls.get_all():
-            if 'function setup' in script.rule_full and 'function deinit' in script.rule_full:
+            if 'function setup' not in script.rule_full and 'function deinit' not in script.rule_full:
                 with open(settings.SURICATA_LUA + '/' + script.filename, 'w') as f:
-                    f.write(script.rule_full.replace('\r', ''))
-            else:
-                with open(settings.SURICATA_RULES + '/' + script.filename, 'w') as f:
                     f.write(script.rule_full.replace('\r', ''))
 
 

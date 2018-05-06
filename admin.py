@@ -17,7 +17,7 @@ from core.utils import create_deploy_rules_task, add_1_hour
 from core.views import generic_import_csv
 from .forms import SuricataChangeForm
 from .models import Suricata, SignatureSuricata, ScriptSuricata, RuleSetSuricata, Configuration, \
-    SourceSuricata, BlackList, IPReputation, CategoryReputation, ClassType
+    SourceSuricata, BlackList, IPReputation, CategoryReputation
 from .tasks import download_from_http, download_from_misp
 from .utils import create_download_from_http_task
 

@@ -909,7 +909,7 @@ def increment_sid():
 
 class BlackList(CommonMixin, models.Model):
     """
-    Stores an instance of a pattern in blacklist.
+    Stores an instance of a pattern in blacklist. TODO SHA1 SHA256
     """
     TYPE_CHOICES = (
         ('IP', 'IP'),

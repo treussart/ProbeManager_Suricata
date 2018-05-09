@@ -43,7 +43,7 @@ Features
 * Group rules into groups and assign this to probes.
 * Possibility to add into blacklist an IP, Domain or MD5.
 * Implements IP reputation.
-* Ability to have scripts called via rules and scripts Lua (output).
+* Ability to have scripts called via rules as a filter condition in signatures and to write arbitrary output.
 
 
 Installation

@@ -6,11 +6,11 @@ Suricata for Probe Manager
 |Licence| |Version|
 
 
-.. image:: https://api.codacy.com/project/badge/Grade/8ed3ca514eaa4aeb8941b082273444f3?branch=develop
+.. image:: https://api.codacy.com/project/badge/Grade/8ed3ca514eaa4aeb8941b082273444f3?branch=master
    :alt: Codacy Badge
    :target: https://www.codacy.com/app/treussart/ProbeManager_Suricata?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=treussart/ProbeManager_Suricata&amp;utm_campaign=Badge_Grade
 
-.. image:: https://api.codacy.com/project/badge/Coverage/8ed3ca514eaa4aeb8941b082273444f3?branch=develop
+.. image:: https://api.codacy.com/project/badge/Coverage/8ed3ca514eaa4aeb8941b082273444f3?branch=master
    :alt: Codacy Coverage
    :target: https://www.codacy.com/app/treussart/ProbeManager_Suricata?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=treussart/ProbeManager_Suricata&amp;utm_campaign=Badge_Coverage
 
@@ -57,7 +57,7 @@ Usage
 Administration Page of the module :
 -----------------------------------
 
-.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-index.png
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/master/data/admin-index.png
   :align: center
   :width: 80%
 
@@ -65,7 +65,7 @@ Administration Page of the module :
 Page to add a Suricata IDS instance :
 -------------------------------------
 
-.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-suricata-add.png
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/master/data/admin-suricata-add.png
     :align: center
     :width: 80%
 
@@ -87,7 +87,7 @@ Allows you to modify the `Suricata configuration <http://suricata.readthedocs.io
 Simple
 ^^^^^^
 
-.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-conf-add.png
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/master/data/admin-conf-add.png
   :align: center
   :width: 70%
 
@@ -96,7 +96,7 @@ Simple
 Advanced
 ^^^^^^^^
 
-.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-conf-add-advanced.png
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/master/data/admin-conf-add-advanced.png
   :align: center
   :width: 90%
 
@@ -105,7 +105,7 @@ Advanced
 Page to add a value in Blacklist :
 ----------------------------------
 
-.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-blacklist-add.png
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/master/data/admin-blacklist-add.png
   :align: center
   :width: 80%
 
@@ -119,7 +119,7 @@ Page to add a reputation on an IP :
 
 Allows you to use the `IP Reputation of Suricata <http://suricata.readthedocs.io/en/latest/reputation/index.html>`_.
 
-.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-ipreputation-add.png
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/master/data/admin-ipreputation-add.png
   :align: center
   :width: 55%
 
@@ -132,7 +132,7 @@ Page to add a value in Classtype :
 
 Allows to modify and create new `Classtype <http://suricata.readthedocs.io/en/latest/rules/meta.html?#classtype>`_
 
-.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/admin-classtype-add.png
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/master/data/admin-classtype-add.png
   :align: center
   :width: 60%
 
@@ -143,7 +143,7 @@ Allows to modify and create new `Classtype <http://suricata.readthedocs.io/en/la
 Page of an instance :
 ---------------------
 
-.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/develop/data/instance-index.png
+.. image:: https://raw.githubusercontent.com/treussart/ProbeManager_Suricata/master/data/instance-index.png
   :align: center
   :width: 80%
 

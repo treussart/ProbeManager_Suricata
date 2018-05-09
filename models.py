@@ -982,7 +982,7 @@ class BlackList(CommonMixin, models.Model):
         return signature
 
     def create_blacklist(self):
-        rule_ip_template = "alert ip amy any -> ${value} any (msg:\"${comment}\"; " \
+        rule_ip_template = "alert ip any any -> ${value} any (msg:\"${comment}\"; " \
                            "classtype:misc-attack; sid:${sid}; rev:1;)\n"
         rule_md5_template = "alert ip any any -> any any (msg:\"MD5 in blacklist\"; " \
                             "filemd5:md5-blacklist; classtype:misc-attack; sid:${sid}; rev:1;)\n"

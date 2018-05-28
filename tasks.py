@@ -5,8 +5,7 @@ from celery.utils.log import get_task_logger
 
 from core.models import Job, Probe
 from core.notifications import send_notification
-from rules.models import Source
-from suricata.models import RuleSetSuricata, IPReputation, CategoryReputation
+from suricata.models import RuleSetSuricata, IPReputation, CategoryReputation, SourceSuricata
 
 logger = get_task_logger(__name__)
 
@@ -19,12 +18,10 @@ def download_from_http(source_uri, rulesets_id=None):
         for ruleset_id in rulesets_id:
             rulesets.append(RuleSetSuricata.get_by_id(ruleset_id))
     try:
-        source = Source.get_by_uri(source_uri)
+        source = SourceSuricata.get_by_uri(source_uri)
         if source is None:
-            job.update_job("Error - source is None - param id not set : " + str(source_uri), 'Error')
-            return {"message": "Error - source is None - param id not set : " + str(source_uri)}
-        my_class = getattr(importlib.import_module(source.type.lower().split('source')[1] + ".models"), source.type)
-        source = my_class.get_by_uri(source_uri)
+            job.update_job("Error - source is None : " + str(source_uri), 'Error')
+            return {"message": "Error - source is None : " + str(source_uri)}
     except Exception as e:
         logger.exception("Error for source to upload")
         job.update_job(str(e), 'Error')

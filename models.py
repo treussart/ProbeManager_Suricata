@@ -531,12 +531,15 @@ class SourceSuricata(Source):
         count_script_created = 0
         count_script_updated = 0
         if os.path.splitext(file_name)[1] == '.rules':
-            for line in file.readlines():
-                rule_created, rule_updated = SignatureSuricata.extract_attributs(line, rulesets)
-                if rule_created:
-                    count_signature_created += 1
-                if rule_updated:
-                    count_signature_updated += 1
+            try:
+                for line in file.readlines():
+                    rule_created, rule_updated = SignatureSuricata.extract_attributs(line, rulesets)
+                    if rule_created:
+                        count_signature_created += 1
+                    if rule_updated:
+                        count_signature_updated += 1
+            except UnicodeDecodeError as e:
+                logger.warning("UnicodeDecodeError: " + str(e))
         elif os.path.splitext(file_name)[1] == '.lua':
 
             rule_created, rule_updated = ScriptSuricata.extract_attributs(file, rulesets)
@@ -554,7 +557,7 @@ class SourceSuricata(Source):
             with tarfile.open(tmp_dir + "temp.tar.gz", encoding='utf_8') as tar:
                 for member in tar.getmembers():
                     if member.isfile():
-                        file = io.TextIOWrapper(tar.extractfile(member))
+                        file = io.TextIOWrapper(tar.extractfile(member),  encoding='utf_8')
                         count = tuple(map(sum, zip(count, self.find_rules(file, member.name, rulesets))))
                 return count
 

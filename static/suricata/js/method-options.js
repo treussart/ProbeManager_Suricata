@@ -2,6 +2,7 @@ function fadeHttp() {
     django.jQuery(".field-uri").fadeIn("slow");
     django.jQuery(".field-scheduled_rules_deployment_enabled").fadeIn("slow");
     django.jQuery(".field-file").fadeOut("fast");
+    django.jQuery(".field-data_type").fadeIn("slow");
 }
 function fade() {
     django.jQuery(".field-uri").fadeOut("fast");
@@ -10,9 +11,11 @@ function fade() {
     django.jQuery(".field-scheduled_deploy").fadeOut("fast");
     django.jQuery("#id_scheduled_deploy").prop("checked", false);
     django.jQuery("#id_scheduled_rules_deployment_enabled").prop("checked", false);
+    django.jQuery(".field-data_type").fadeIn("slow");
 }
 function fadeFile() {
     django.jQuery(".field-file").fadeIn("slow");
+    django.jQuery(".field-data_type").fadeIn("slow");
     fade();
 }
 function fadeMisp() {
@@ -23,6 +26,7 @@ function fadeMisp() {
 }
 function fadeElse() {
     django.jQuery(".field-file").fadeOut("fast");
+    django.jQuery(".field-data_type").fadeIn("slow");
     fade();
 }
 function wraper() {

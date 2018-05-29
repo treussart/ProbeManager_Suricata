@@ -636,9 +636,13 @@ class Suricata(Probe):
         return self.name + "  " + self.description
 
     def save(self, **kwargs):
+        update = False
+        if self.id:
+            update = True
         super().save(**kwargs)
-        create_deploy_rules_task(self)
-        create_check_task(self)
+        if not update:
+            create_deploy_rules_task(self)
+            create_check_task(self)
 
     def delete(self, **kwargs):
         try:

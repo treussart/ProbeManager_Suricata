@@ -637,8 +637,9 @@ class Suricata(Probe):
 
     def save(self, **kwargs):
         super().save(**kwargs)
-        create_deploy_rules_task(self)
-        create_check_task(self)
+        if not self.pk:
+            create_deploy_rules_task(self)
+            create_check_task(self)
 
     def delete(self, **kwargs):
         try:

@@ -1,4 +1,5 @@
 import importlib
+import reprlib
 
 from celery import task
 from celery.utils.log import get_task_logger
@@ -8,6 +9,9 @@ from core.notifications import send_notification
 from suricata.models import RuleSetSuricata, IPReputation, CategoryReputation, SourceSuricata
 
 logger = get_task_logger(__name__)
+
+repr_instance = reprlib.Repr()
+repr_instance.maxstring = 200
 
 
 @task
@@ -24,7 +28,7 @@ def download_from_http(source_uri, rulesets_id=None):
             return {"message": "Error - source is None : " + str(source_uri)}
     except Exception as e:
         logger.exception("Error for source to upload")
-        job.update_job(str(e), 'Error')
+        job.update_job(repr_instance.repr(e), 'Error')
         return {"message": "Error for source to upload", "exception": str(e)}
     try:
         message = source.download_from_http(rulesets)
@@ -32,7 +36,7 @@ def download_from_http(source_uri, rulesets_id=None):
         logger.info("task - download_from_http : " + str(source_uri) + " - " + str(message))
     except Exception as e:
         logger.exception("Error for source to upload")
-        job.update_job(str(e), 'Error')
+        job.update_job(repr_instance.repr(e), 'Error')
         send_notification("Error for source " + str(source.uri), str(e))
         return {"message": "Error for source " + str(source.uri) + " to upload", "exception": str(e)}
     return {"message": "Source " + str(source.uri) + " uploaded successfully by HTTP", "upload_message": message}
@@ -62,7 +66,7 @@ def deploy_reputation_list(probe_name):
                     "exception": str(response_cat) + " - " + str(response_ip)}
     except Exception as e:  # pragma: no cover
         logger.exception(str(e))
-        job.update_job(str(e), 'Error')
+        job.update_job(repr_instance.repr(e), 'Error')
         send_notification("Error during deploy reputation list for " + str(probe.name), str(e))
         return {"message": "Error for probe " + str(probe.name) + " to deploy reputation list", "exception": str(e)}
     return {"message": "Probe " + str(probe.name) + " deployed successfully reputation list"}
@@ -82,7 +86,7 @@ def download_from_misp(source_uri, rulesets_id=None):
             return {"message": "Error - source is None - param id not set : " + str(source_uri)}
     except Exception as e:
         logger.exception("Error for source to upload")
-        job.update_job(str(e), 'Error')
+        job.update_job(repr_instance.repr(e), 'Error')
         return {"message": "Error for source to upload", "exception": str(e)}
     try:
         message = source.download_from_misp(rulesets)
@@ -90,7 +94,7 @@ def download_from_misp(source_uri, rulesets_id=None):
         logger.info("task - download_from_misp : " + str(source_uri) + " - " + str(message))
     except Exception as e:
         logger.exception("Error for source to upload")
-        job.update_job(str(e), 'Error')
+        job.update_job(repr_instance.repr(e), 'Error')
         send_notification("Error for source " + str(source.uri), str(e))
         return {"message": "Error for source " + str(source.uri) + " to download", "exception": str(e)}
     return {"message": "Source " + str(source.uri) + " uploaded successfully by MISP", "upload_message": message}

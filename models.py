@@ -557,7 +557,7 @@ class SourceSuricata(Source):
             with tarfile.open(tmp_dir + "temp.tar.gz", encoding='utf_8') as tar:
                 for member in tar.getmembers():
                     if member.isfile():
-                        file = io.TextIOWrapper(tar.extractfile(member),  encoding='utf_8')
+                        file = io.TextIOWrapper(tar.extractfile(member), encoding='utf_8')
                         count = tuple(map(sum, zip(count, self.find_rules(file, member.name, rulesets))))
                 return count
 

@@ -15,7 +15,7 @@
                 {% load status %}
                 {% for instance in instances.suricata %}
                 <a class="list-group-item list-group-item-{{ instance.id|status }} list-group-item-action"
-                   href="{% url 'suricata:probe_index' instance.id %}">{{ instance }} - {{ instance.host }}
+                   href="{% url 'suricata:probe_index' instance.id %}">{{ instance }} - {{ instance.server.host }}
                 </a>
                 {% endfor %}
             </div>

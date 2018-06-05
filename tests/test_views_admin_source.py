@@ -29,7 +29,7 @@ class ViewsSourceAdminTest(TestCase):
         """ Upload Signature page."""
         response = self.client.get('/admin/suricata/sourcesuricata/add/')
         self.assertEqual(response.status_code, 200)
-        self.assertIn('<title>Add source suricata | Probe Manager site admin</title>', str(response.content))
+        self.assertIn('<title>Add Source | Probe Manager site admin</title>', str(response.content))
         self.assertEqual('admin/change_form.html', response.templates[0].name)
         self.assertIn('admin', response.resolver_match.app_names)
         self.assertIn('function ModelAdmin.add_view', str(response.resolver_match.func))

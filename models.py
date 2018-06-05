@@ -220,6 +220,10 @@ class SignatureSuricata(Rule):
     msg = models.CharField(max_length=1000)
     file_test_success = models.FileField(name='file_test_success', upload_to='file_test_success', blank=True)
 
+    class Meta:
+        verbose_name = 'Signature'
+        verbose_name_plural = 'Signatures'
+
     def __str__(self):
         return str(self.sid) + " : " + str(self.msg)
 
@@ -394,6 +398,10 @@ class ScriptSuricata(Rule):
     """
     filename = models.CharField(max_length=1000, unique=True, db_index=True)
 
+    class Meta:
+        verbose_name = 'Script'
+        verbose_name_plural = 'Scripts'
+
     def __str__(self):
         return str(self.filename)
 
@@ -480,6 +488,10 @@ class RuleSetSuricata(RuleSet):
                                              js_options={'quiet_millis': 200}
                                              )
 
+    class Meta:
+        verbose_name = 'Ruleset'
+        verbose_name_plural = 'Rulesets'
+
     def __str__(self):
         return str(self.name)
 
@@ -501,6 +513,10 @@ class SourceSuricata(Source):
     Set of Suricata Source. For scheduled upload of signatures.
     """
     rulesets = models.ManyToManyField(RuleSetSuricata, blank=True)
+
+    class Meta:
+        verbose_name = 'Source'
+        verbose_name_plural = 'Sources'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -627,6 +643,10 @@ class Suricata(Probe):
     """
     rulesets = models.ManyToManyField(RuleSetSuricata, blank=True)
     configuration = models.ForeignKey(Configuration, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = 'Suricata instance'
+        verbose_name_plural = 'Suricata instances'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
